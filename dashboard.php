@@ -17,11 +17,11 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
 <body>
     <main class="dashboard-page">
         <header class="dashboard-header">
-            <?php // Future header include goes here ?>
+            <?php include 'customer_header.php'; ?>
         </header>
 
         <section class="dashboard-content">
-            <?php // Future content include goes here ?>
+            <?php include 'dashboard_content.php'; ?>
         </section>
     </main>
 </body>

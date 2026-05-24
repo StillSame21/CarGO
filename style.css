@@ -156,9 +156,189 @@ button:hover {
     box-shadow: 0 4px 16px rgba(29, 39, 51, 0.08);
 }
 
+.customer-header-inner {
+    min-height: 72px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 28px;
+    width: 100%;
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 0 28px;
+}
+
+.dashboard-logo {
+    color: #17212b;
+    font-size: 26px;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+.dashboard-logo::first-letter {
+    color: #f4b932;
+}
+
+.customer-nav {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.customer-nav a,
+.customer-account a {
+    padding: 10px 12px;
+    border-radius: 6px;
+    color: #46576a;
+    font-size: 14px;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+.customer-nav a:hover,
+.customer-nav a.active,
+.customer-account a:hover {
+    color: #17212b;
+    background: #fff4d2;
+}
+
+.customer-account {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #697887;
+    font-size: 14px;
+    white-space: nowrap;
+}
+
 .dashboard-content {
     flex: 1;
     padding: 28px;
+}
+
+.dashboard-shell {
+    width: 100%;
+    max-width: 1180px;
+    margin: 0 auto;
+}
+
+.product-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 480px);
+    gap: 32px;
+    align-items: center;
+    margin-bottom: 28px;
+    padding: 34px;
+    border-radius: 8px;
+    background: #ffffff;
+    box-shadow: 0 10px 30px rgba(29, 39, 51, 0.08);
+}
+
+.product-hero-copy {
+    max-width: 560px;
+}
+
+.eyebrow {
+    margin-bottom: 10px;
+    color: #b58517;
+    font-size: 13px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.product-hero h1 {
+    margin-bottom: 16px;
+    color: #17212b;
+    font-size: 42px;
+    line-height: 1.12;
+}
+
+.product-hero p {
+    color: #5d6d7e;
+    font-size: 17px;
+    line-height: 1.6;
+}
+
+.product-hero img {
+    width: 100%;
+    height: 320px;
+    border-radius: 8px;
+    object-fit: cover;
+}
+
+.hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 26px;
+}
+
+.primary-action,
+.secondary-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 46px;
+    padding: 0 18px;
+    border-radius: 6px;
+    font-size: 15px;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+.primary-action {
+    color: #17212b;
+    background: #f9c74f;
+}
+
+.primary-action:hover {
+    background: #f4b932;
+}
+
+.secondary-action {
+    color: #253447;
+    border: 1px solid #cbd5df;
+    background: #ffffff;
+}
+
+.secondary-action:hover {
+    border-color: #f4b932;
+    background: #fff9e8;
+}
+
+.product-highlights {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.highlight-card {
+    overflow: hidden;
+    border-radius: 8px;
+    background: #ffffff;
+    box-shadow: 0 8px 24px rgba(29, 39, 51, 0.07);
+}
+
+.highlight-card img {
+    width: 100%;
+    height: 170px;
+    object-fit: cover;
+}
+
+.highlight-card div {
+    padding: 20px;
+}
+
+.highlight-card h2 {
+    margin-bottom: 10px;
+    color: #17212b;
+    font-size: 20px;
+}
+
+.highlight-card p {
+    color: #697887;
+    font-size: 14px;
+    line-height: 1.55;
 }
 
 @media (max-width: 820px) {
@@ -173,5 +353,43 @@ button:hover {
 
     .brand-panel h1 {
         font-size: 34px;
+    }
+
+    .customer-header-inner {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 14px;
+        padding: 18px 24px;
+    }
+
+    .customer-nav {
+        flex-wrap: wrap;
+    }
+
+    .customer-account {
+        width: 100%;
+        justify-content: space-between;
+        white-space: normal;
+    }
+
+    .dashboard-content {
+        padding: 20px;
+    }
+
+    .product-hero {
+        grid-template-columns: 1fr;
+        padding: 24px;
+    }
+
+    .product-hero h1 {
+        font-size: 32px;
+    }
+
+    .product-hero img {
+        height: 240px;
+    }
+
+    .product-highlights {
+        grid-template-columns: 1fr;
     }
 }
