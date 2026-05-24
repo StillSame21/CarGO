@@ -1,0 +1,177 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    min-height: 100vh;
+    font-family: Arial, sans-serif;
+    color: #1d2733;
+    background: #edf2f7;
+}
+
+.login-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 48px;
+    padding: 40px 24px;
+    background:
+        linear-gradient(rgba(10, 28, 43, 0.68), rgba(10, 28, 43, 0.68)),
+        url("https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=1600&q=80");
+    background-size: cover;
+    background-position: center;
+}
+
+.brand-panel {
+    max-width: 460px;
+    color: #ffffff;
+}
+
+.logo {
+    display: inline-block;
+    margin-bottom: 28px;
+    padding: 10px 18px;
+    border: 2px solid #f9c74f;
+    border-radius: 6px;
+    color: #f9c74f;
+    font-size: 28px;
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
+.brand-panel h1 {
+    margin-bottom: 18px;
+    font-size: 44px;
+    line-height: 1.1;
+}
+
+.brand-panel p {
+    font-size: 18px;
+    line-height: 1.6;
+    color: #e8eef5;
+}
+
+.login-card {
+    width: 100%;
+    max-width: 390px;
+    padding: 34px;
+    border-radius: 8px;
+    background: #ffffff;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.24);
+}
+
+.login-card h2 {
+    margin-bottom: 8px;
+    font-size: 30px;
+}
+
+.subtitle {
+    margin-bottom: 22px;
+    color: #697887;
+}
+
+.message {
+    margin-bottom: 18px;
+    padding: 12px 14px;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.error {
+    color: #9f1d1d;
+    background: #ffe8e8;
+    border: 1px solid #ffc9c9;
+}
+
+.success {
+    color: #176b3a;
+    background: #e7f7ee;
+    border: 1px solid #bce8cc;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+}
+
+label {
+    margin-bottom: 7px;
+    font-weight: bold;
+    color: #253447;
+}
+
+input {
+    width: 100%;
+    margin-bottom: 18px;
+    padding: 13px 14px;
+    border: 1px solid #cbd5df;
+    border-radius: 6px;
+    font-size: 15px;
+}
+
+input:focus {
+    outline: none;
+    border-color: #2f80ed;
+    box-shadow: 0 0 0 3px rgba(47, 128, 237, 0.15);
+}
+
+button {
+    margin-top: 4px;
+    padding: 14px;
+    border: none;
+    border-radius: 6px;
+    background: #f9c74f;
+    color: #17212b;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #f4b932;
+}
+
+.demo-note {
+    margin-top: 18px;
+    color: #697887;
+    font-size: 13px;
+    text-align: center;
+}
+
+/* Dashboard Page */
+.dashboard-page {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: #edf2f7;
+}
+
+.dashboard-header {
+    min-height: 72px;
+    background: #ffffff;
+    border-bottom: 1px solid #d8e0e8;
+    box-shadow: 0 4px 16px rgba(29, 39, 51, 0.08);
+}
+
+.dashboard-content {
+    flex: 1;
+    padding: 28px;
+}
+
+@media (max-width: 820px) {
+    .login-page {
+        flex-direction: column;
+        gap: 28px;
+    }
+
+    .brand-panel {
+        text-align: center;
+    }
+
+    .brand-panel h1 {
+        font-size: 34px;
+    }
+}
