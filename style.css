@@ -215,6 +215,7 @@ button:hover {
 }
 
 .customer-nav a,
+.customer-nav span,
 .customer-account a {
     padding: 10px 12px;
     border-radius: 6px;
@@ -224,11 +225,24 @@ button:hover {
     text-decoration: none;
 }
 
+.customer-nav span {
+    cursor: default;
+}
+
 .customer-nav a:hover,
 .customer-nav a.active,
 .customer-account a:hover {
     color: #17212b;
     background: #fff4d2;
+}
+
+.admin-nav a {
+    color: #17212b;
+    background: #f9c74f;
+}
+
+.admin-nav a:hover {
+    background: #f4b932;
 }
 
 .customer-account {
@@ -368,6 +382,36 @@ button:hover {
     color: #697887;
     font-size: 14px;
     line-height: 1.55;
+}
+
+.empty-admin-panel {
+    min-height: 280px;
+    padding: 34px;
+    border-radius: 8px;
+    background: #ffffff;
+    box-shadow: 0 10px 30px rgba(29, 39, 51, 0.08);
+}
+
+.empty-admin-panel h1 {
+    margin-bottom: 14px;
+    color: #17212b;
+    font-size: 34px;
+}
+
+.empty-admin-panel p {
+    max-width: 620px;
+    color: #5d6d7e;
+    font-size: 16px;
+    line-height: 1.6;
+}
+
+.admin-form-shell {
+    display: flex;
+    justify-content: center;
+}
+
+.admin-form-card {
+    max-width: 520px;
 }
 
 @media (max-width: 820px) {
