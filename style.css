@@ -63,6 +63,10 @@ body {
     box-shadow: 0 16px 40px rgba(0, 0, 0, 0.24);
 }
 
+.register-card {
+    max-width: 430px;
+}
+
 .login-card h2 {
     margin-bottom: 8px;
     font-size: 30px;
@@ -103,16 +107,24 @@ label {
     color: #253447;
 }
 
-input {
+input,
+textarea {
     width: 100%;
     margin-bottom: 18px;
     padding: 13px 14px;
     border: 1px solid #cbd5df;
     border-radius: 6px;
+    color: #1d2733;
+    font-family: Arial, sans-serif;
     font-size: 15px;
 }
 
-input:focus {
+textarea {
+    resize: vertical;
+}
+
+input:focus,
+textarea:focus {
     outline: none;
     border-color: #2f80ed;
     box-shadow: 0 0 0 3px rgba(47, 128, 237, 0.15);
@@ -139,6 +151,23 @@ button:hover {
     color: #697887;
     font-size: 13px;
     text-align: center;
+}
+
+.auth-link {
+    margin-top: 14px;
+    color: #697887;
+    font-size: 14px;
+    text-align: center;
+}
+
+.auth-link a {
+    color: #1f6fd1;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+.auth-link a:hover {
+    text-decoration: underline;
 }
 
 /* Dashboard Page */

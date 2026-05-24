@@ -1,5 +1,6 @@
 <?php
 session_start();
+require_once 'db_connect.php';
 
 if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
     header('Location: dashboard.php');
@@ -15,14 +16,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($email === '' || $password === '') {
         $error = 'Please enter both email and password.';
-    } elseif ($email === 'admin@cargo.com' && $password === 'password123') {
-        $_SESSION['logged_in'] = true;
-        $_SESSION['user_email'] = $email;
-
-        header('Location: dashboard.php');
-        exit;
     } else {
-        $error = 'Invalid email or password.';
+        try {
+            $conn = getDbConnection();
+            $stmt = $conn->prepare(
+                'SELECT id, name, email, password, status FROM customers WHERE email = ? LIMIT 1'
+            );
+            $stmt->bind_param('s', $email);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $customer = $result->fetch_assoc();
+
+            if (!$customer || !password_verify($password, $customer['password'])) {
+                $error = 'Invalid email or password.';
+            } elseif ($customer['status'] !== 'active') {
+                $error = 'Your account is not active. Please contact support.';
+            } else {
+                session_regenerate_id(true);
+
+                $_SESSION['logged_in'] = true;
+                $_SESSION['customer_id'] = $customer['id'];
+                $_SESSION['customer_name'] = $customer['name'];
+                $_SESSION['user_email'] = $customer['email'];
+
+                header('Location: dashboard.php');
+                exit;
+            }
+        } catch (mysqli_sql_exception $e) {
+            $error = 'Login failed. Please check the database connection and try again.';
+        }
     }
 }
 ?>
@@ -73,7 +95,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <button type="submit">Login</button>
             </form>
 
-            <p class="demo-note">Demo: admin@cargo.com / password123</p>
+            <p class="auth-link">New customer? <a href="register.php">Create an account</a></p>
         </section>
     </main>
 </body>
