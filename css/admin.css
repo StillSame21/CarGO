@@ -1,0 +1,149 @@
+/* Admin Dashboard */
+.admin-nav a {
+    color: #17212b;
+    background: #f9c74f;
+}
+
+.admin-nav a:hover {
+    background: #f4b932;
+}
+
+.empty-admin-panel {
+    min-height: 280px;
+    padding: 34px;
+    border-radius: 8px;
+    background: #ffffff;
+    box-shadow: 0 10px 30px rgba(29, 39, 51, 0.08);
+}
+
+.empty-admin-panel h1 {
+    margin-bottom: 14px;
+    color: #17212b;
+    font-size: 34px;
+}
+
+.empty-admin-panel p {
+    max-width: 620px;
+    color: #5d6d7e;
+    font-size: 16px;
+    line-height: 1.6;
+}
+
+.admin-form-shell {
+    display: flex;
+    justify-content: center;
+}
+
+.admin-form-card {
+    max-width: 520px;
+}
+
+.manage-cars-layout {
+    display: grid;
+    grid-template-columns: minmax(340px, 460px) minmax(0, 1fr);
+    gap: 24px;
+    align-items: flex-start;
+}
+
+.car-form-card {
+    max-width: none;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 14px;
+}
+
+.form-grid label {
+    margin-bottom: 0;
+}
+
+.form-grid input,
+.form-grid select {
+    margin-top: 7px;
+}
+
+.form-grid-full {
+    grid-column: 1 / -1;
+}
+
+.form-grid button {
+    grid-column: 1 / -1;
+}
+
+.cars-list-panel {
+    overflow: hidden;
+    border-radius: 8px;
+    background: #ffffff;
+    box-shadow: 0 10px 30px rgba(29, 39, 51, 0.08);
+}
+
+.panel-heading {
+    display: flex;
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+    padding: 24px 24px 14px;
+}
+
+.panel-heading h2 {
+    color: #17212b;
+    font-size: 24px;
+}
+
+.empty-table-message {
+    padding: 0 24px 24px;
+    color: #697887;
+}
+
+.table-wrap {
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th,
+td {
+    padding: 15px 18px;
+    border-top: 1px solid #e3e9ef;
+    text-align: left;
+    vertical-align: top;
+    font-size: 14px;
+}
+
+th {
+    color: #697887;
+    font-size: 12px;
+    text-transform: uppercase;
+}
+
+td strong {
+    display: block;
+    margin-bottom: 5px;
+    color: #17212b;
+}
+
+td span {
+    color: #697887;
+    font-size: 13px;
+}
+
+.status-pill {
+    display: inline-flex;
+    padding: 6px 10px;
+    border-radius: 999px;
+    color: #176b3a;
+    background: #e7f7ee;
+    font-weight: bold;
+}
+
+@media (max-width: 820px) {
+    .manage-cars-layout,
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+}

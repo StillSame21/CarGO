@@ -1,9 +1,9 @@
 <?php
 session_start();
-require_once 'db_connect.php';
+require_once '../db_connect.php';
 
 if (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true) {
-    header('Location: admin_dashboard.php');
+    header('Location: dashboard.php');
     exit;
 }
 
@@ -37,7 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['admin_name'] = $admin['name'];
                 $_SESSION['admin_email'] = $admin['email'];
 
-                header('Location: admin_dashboard.php');
+                header('Location: dashboard.php');
                 exit;
             }
         } catch (mysqli_sql_exception $e) {
@@ -52,7 +52,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CarGo Admin Login</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="../css/admin.css">
 </head>
 <body>
     <main class="login-page">
@@ -70,7 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="message error"><?php echo htmlspecialchars($error, ENT_QUOTES, 'UTF-8'); ?></div>
             <?php endif; ?>
 
-            <form method="post" action="admin_login.php">
+            <form method="post" action="login.php">
                 <label for="email">Email</label>
                 <input
                     type="email"
@@ -93,7 +94,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <button type="submit">Login</button>
             </form>
 
-            <p class="auth-link">Customer login? <a href="login.php">Go to customer login</a></p>
+            <p class="auth-link">Customer login? <a href="../customer/login.php">Go to customer login</a></p>
         </section>
     </main>
 </body>

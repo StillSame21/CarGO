@@ -2,7 +2,7 @@
 session_start();
 
 if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
-    header('Location: admin_login.php');
+    header('Location: login.php');
     exit;
 }
 ?>
@@ -12,12 +12,13 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CarGo Admin Dashboard</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="../css/admin.css">
 </head>
 <body>
     <main class="dashboard-page">
         <header class="dashboard-header">
-            <?php include 'admin_header.php'; ?>
+            <?php include 'header.php'; ?>
         </header>
 
         <section class="dashboard-content">

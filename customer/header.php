@@ -13,6 +13,6 @@ $customerDisplayName = $_SESSION['customer_name'] ?? $_SESSION['user_email'] ?? 
 
     <div class="customer-account">
         <span><?php echo htmlspecialchars($customerDisplayName, ENT_QUOTES, 'UTF-8'); ?></span>
-        <a href="logout.php">Logout</a>
+        <a href="../logout.php">Logout</a>
     </div>
 </div>
