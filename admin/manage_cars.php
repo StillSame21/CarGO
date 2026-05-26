@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once '../db_connect.php';
+require_once __DIR__ . '/../util/car_image.php';
 
 function h($value): string
 {
@@ -45,7 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $fuelType = $_POST['fuel_type'] ?? '';
     $seats = trim($_POST['seats'] ?? '');
     $dailyRate = trim($_POST['daily_rate'] ?? '');
-    $image = trim($_POST['image'] ?? '');
+    $image = '';
     $status = $_POST['status'] ?? '';
 
     if (
@@ -70,6 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = 'Daily rate must be greater than zero.';
     } else {
         try {
+            $image = processCarImageUpload($_FILES['image'] ?? null);
             $conn = getDbConnection();
             $adminId = (int) $_SESSION['admin_id'];
             $seatsValue = (int) $seats;
@@ -107,7 +109,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $dailyRate = '';
             $image = '';
             $status = 'available';
+        } catch (InvalidArgumentException $e) {
+            $error = $e->getMessage();
         } catch (mysqli_sql_exception $e) {
+            deleteCarImageFile($image);
+
             if ((int) $e->getCode() === 1062) {
                 $error = 'This plate number already exists.';
             } else {
@@ -160,7 +166,7 @@ try {
                     <p class="message success"><?php echo h($success); ?></p>
                 <?php endif; ?>
 
-                <form class="form-grid" method="post" action="manage_cars.php">
+                <form class="form-grid" method="post" action="manage_cars.php" enctype="multipart/form-data">
                     <label for="brand">
                         Brand
                         <input type="text" id="brand" name="brand" value="<?php echo h($brand); ?>" maxlength="100" required>
@@ -231,8 +237,9 @@ try {
                     </label>
 
                     <label class="form-grid-full" for="image">
-                        Image Path
-                        <input type="text" id="image" name="image" value="<?php echo h($image); ?>" maxlength="255" placeholder="images/car.jpg">
+                        Car Image
+                        <input type="hidden" name="MAX_FILE_SIZE" value="<?php echo CAR_IMAGE_MAX_BYTES; ?>">
+                        <input type="file" id="image" name="image" accept="image/*">
                     </label>
 
                     <button type="submit">Add Car</button>
