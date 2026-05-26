@@ -110,6 +110,332 @@
     line-height: 1.55;
 }
 
+.page-heading {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 18px;
+    margin-bottom: 24px;
+}
+
+.page-heading h1 {
+    color: #17212b;
+    font-size: 34px;
+    line-height: 1.2;
+}
+
+.empty-state-panel {
+    padding: 34px;
+    border-radius: 8px;
+    background: #ffffff;
+    box-shadow: 0 10px 30px rgba(29, 39, 51, 0.08);
+}
+
+.empty-state-panel h2 {
+    margin-bottom: 10px;
+    color: #17212b;
+    font-size: 24px;
+}
+
+.empty-state-panel p {
+    color: #697887;
+    line-height: 1.6;
+}
+
+.car-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 20px;
+}
+
+.car-card {
+    overflow: hidden;
+    border-radius: 8px;
+    background: #ffffff;
+    box-shadow: 0 8px 24px rgba(29, 39, 51, 0.07);
+}
+
+.car-card a {
+    display: flex;
+    min-height: 100%;
+    flex-direction: column;
+    color: inherit;
+    text-decoration: none;
+}
+
+.car-card a:hover h2 {
+    color: #1f6fd1;
+}
+
+.car-card img {
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    object-fit: cover;
+}
+
+.car-card-body {
+    display: flex;
+    min-height: 190px;
+    flex-direction: column;
+    gap: 14px;
+    padding: 20px;
+}
+
+.car-type {
+    margin-bottom: 8px;
+    color: #b58517;
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.car-card h2 {
+    color: #17212b;
+    font-size: 22px;
+    line-height: 1.25;
+}
+
+.car-summary {
+    color: #697887;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.car-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: auto;
+    color: #253447;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.back-link {
+    display: inline-flex;
+    margin-bottom: 18px;
+    color: #1f6fd1;
+    font-size: 14px;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+.back-link:hover {
+    text-decoration: underline;
+}
+
+.vehicle-profile {
+    display: grid;
+    gap: 22px;
+}
+
+.vehicle-profile-header,
+.vehicle-profile-main,
+.booking-panel {
+    border-radius: 8px;
+    background: #ffffff;
+    box-shadow: 0 10px 30px rgba(29, 39, 51, 0.08);
+}
+
+.vehicle-profile-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 30px;
+}
+
+.vehicle-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+.vehicle-badges span {
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+    padding: 0 10px;
+    border-radius: 999px;
+    color: #176b3a;
+    background: #e7f7ee;
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.vehicle-badges span:first-child {
+    color: #8a650f;
+    background: #fff4d2;
+}
+
+.vehicle-profile-header h1 {
+    margin-bottom: 10px;
+    color: #17212b;
+    font-size: 42px;
+    line-height: 1.1;
+}
+
+.vehicle-profile-header p {
+    max-width: 560px;
+    color: #697887;
+    font-size: 16px;
+    line-height: 1.55;
+}
+
+.vehicle-rate {
+    min-width: 190px;
+    padding: 18px;
+    border: 1px solid #e3e9ef;
+    border-radius: 8px;
+    background: #f8fafc;
+    text-align: right;
+}
+
+.vehicle-rate span,
+.vehicle-rate small {
+    display: block;
+    color: #697887;
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.vehicle-rate strong {
+    display: block;
+    margin: 7px 0 4px;
+    color: #17212b;
+    font-size: 28px;
+    line-height: 1;
+}
+
+.vehicle-profile-main {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(320px, 0.75fr);
+    gap: 0;
+    overflow: hidden;
+}
+
+.vehicle-media {
+    min-height: 480px;
+    background: #d8e0e8;
+}
+
+.vehicle-media img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-height: 480px;
+    object-fit: cover;
+}
+
+.vehicle-spec-panel {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 30px;
+}
+
+.section-heading {
+    margin-bottom: 20px;
+}
+
+.section-heading h2 {
+    color: #17212b;
+    font-size: 26px;
+}
+
+.vehicle-spec-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+}
+
+.vehicle-spec-grid div {
+    padding: 16px;
+    border: 1px solid #e3e9ef;
+    border-radius: 8px;
+    background: #f8fafc;
+}
+
+.vehicle-spec-grid dt {
+    margin-bottom: 7px;
+    color: #697887;
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.vehicle-spec-grid dd {
+    color: #17212b;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.booking-panel {
+    padding: 28px 30px 30px;
+}
+
+.booking-panel-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 22px;
+    margin-bottom: 20px;
+}
+
+.booking-panel h2 {
+    color: #17212b;
+    font-size: 26px;
+}
+
+.availability-form {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(180px, 1fr)) auto;
+    gap: 14px;
+    align-items: end;
+}
+
+.availability-form label {
+    margin-bottom: 0;
+}
+
+.availability-form input {
+    margin-bottom: 0;
+}
+
+.availability-note {
+    max-width: 360px;
+    margin-bottom: 0;
+    color: #697887;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.booking-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.booking-actions button {
+    min-width: 132px;
+    margin-top: 0;
+    white-space: nowrap;
+}
+
+.secondary-button {
+    color: #253447;
+    border: 1px solid #cbd5df;
+    background: #ffffff;
+}
+
+.secondary-button:hover {
+    border-color: #f4b932;
+    background: #fff9e8;
+}
+
 @media (max-width: 820px) {
     .product-hero {
         grid-template-columns: 1fr;
@@ -126,5 +452,60 @@
 
     .product-highlights {
         grid-template-columns: 1fr;
+    }
+
+    .page-heading {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .page-heading h1 {
+        font-size: 28px;
+    }
+
+    .car-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .vehicle-profile-header,
+    .booking-panel-heading {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .vehicle-profile-header {
+        padding: 24px;
+    }
+
+    .vehicle-profile-header h1 {
+        font-size: 32px;
+    }
+
+    .vehicle-rate {
+        width: 100%;
+        text-align: left;
+    }
+
+    .vehicle-profile-main,
+    .availability-form {
+        grid-template-columns: 1fr;
+    }
+
+    .vehicle-media,
+    .vehicle-media img {
+        min-height: 280px;
+    }
+
+    .vehicle-spec-panel,
+    .booking-panel {
+        padding: 24px;
+    }
+
+    .booking-actions {
+        flex-direction: column;
+    }
+
+    .booking-actions button {
+        width: 100%;
     }
 }

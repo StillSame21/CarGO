@@ -6,7 +6,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
     <a class="dashboard-logo" href="dashboard.php">CarGo</a>
 
     <nav class="dashboard-nav" aria-label="Customer navigation">
-        <a href="dashboard.php" class="<?php echo $currentPage === 'dashboard.php' ? 'active' : ''; ?>">Browse Cars</a>
+        <a href="browse_cars.php" class="<?php echo in_array($currentPage, ['browse_cars.php', 'car_detail.php'], true) ? 'active' : ''; ?>">Browse Cars</a>
         <a href="#">My Bookings</a>
         <a href="#">Payments</a>
         <a href="#">Support</a>

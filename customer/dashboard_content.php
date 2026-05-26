@@ -7,7 +7,7 @@
                 CarGo helps customers compare vehicles, check rental details, and prepare bookings from one simple dashboard.
             </p>
             <div class="hero-actions">
-                <a class="primary-action" href="#">Browse Available Cars</a>
+                <a class="primary-action" href="browse_cars.php">Browse Available Cars</a>
                 <a class="secondary-action" href="#">View My Bookings</a>
             </div>
         </div>
