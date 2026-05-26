@@ -148,13 +148,6 @@ button:hover {
     background: #f4b932;
 }
 
-.demo-note {
-    margin-top: 18px;
-    color: #697887;
-    font-size: 13px;
-    text-align: center;
-}
-
 .auth-link {
     margin-top: 14px;
     color: #697887;
@@ -187,11 +180,11 @@ button:hover {
     box-shadow: 0 4px 16px rgba(29, 39, 51, 0.08);
 }
 
-.customer-header-inner {
+.dashboard-header-inner {
     min-height: 72px;
-    display: flex;
+    display: grid;
+    grid-template-columns: minmax(180px, 1fr) auto minmax(180px, 1fr);
     align-items: center;
-    justify-content: space-between;
     gap: 28px;
     width: 100%;
     max-width: 1180px;
@@ -200,6 +193,7 @@ button:hover {
 }
 
 .dashboard-logo {
+    justify-self: start;
     color: #17212b;
     font-size: 26px;
     font-weight: bold;
@@ -210,15 +204,15 @@ button:hover {
     color: #f4b932;
 }
 
-.customer-nav {
+.dashboard-nav {
     display: flex;
     align-items: center;
     gap: 6px;
 }
 
-.customer-nav a,
-.customer-nav span,
-.customer-account a {
+.dashboard-nav a,
+.dashboard-nav span,
+.dashboard-account a {
     padding: 10px 12px;
     border-radius: 6px;
     color: #46576a;
@@ -227,20 +221,22 @@ button:hover {
     text-decoration: none;
 }
 
-.customer-nav span {
+.dashboard-nav span {
+    color: #8b98a6;
     cursor: default;
 }
 
-.customer-nav a:hover,
-.customer-nav a.active,
-.customer-account a:hover {
+.dashboard-nav a:hover,
+.dashboard-nav a.active,
+.dashboard-account a:hover {
     color: #17212b;
     background: #fff4d2;
 }
 
-.customer-account {
+.dashboard-account {
     display: flex;
     align-items: center;
+    justify-self: end;
     gap: 12px;
     color: #697887;
     font-size: 14px;
@@ -280,18 +276,19 @@ button:hover {
         font-size: 34px;
     }
 
-    .customer-header-inner {
+    .dashboard-header-inner {
         align-items: flex-start;
+        display: flex;
         flex-direction: column;
         gap: 14px;
         padding: 18px 24px;
     }
 
-    .customer-nav {
+    .dashboard-nav {
         flex-wrap: wrap;
     }
 
-    .customer-account {
+    .dashboard-account {
         width: 100%;
         justify-content: space-between;
         white-space: normal;
@@ -300,5 +297,4 @@ button:hover {
     .dashboard-content {
         padding: 20px;
     }
-
 }

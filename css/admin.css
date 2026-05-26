@@ -1,13 +1,3 @@
-/* Admin Dashboard */
-.admin-nav a {
-    color: #17212b;
-    background: #f9c74f;
-}
-
-.admin-nav a:hover {
-    background: #f4b932;
-}
-
 .empty-admin-panel {
     min-height: 280px;
     padding: 34px;
