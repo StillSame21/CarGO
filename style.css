@@ -148,6 +148,15 @@ button:hover {
     background: #f4b932;
 }
 
+button:disabled {
+    cursor: not-allowed;
+    opacity: 0.62;
+}
+
+button:disabled:hover {
+    background: #f9c74f;
+}
+
 .auth-link {
     margin-top: 14px;
     color: #697887;

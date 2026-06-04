@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once '../db_connect.php';
+require_once __DIR__ . '/../util/booking.php';
 require_once __DIR__ . '/../util/car_display.php';
 
 function h($value): string
@@ -15,11 +16,15 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
 
 $car = null;
 $error = '';
-$carId = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
+$carId = filter_input(INPUT_POST, 'car_id', FILTER_VALIDATE_INT) ?: filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
 $today = date('Y-m-d');
-$pickupDate = trim($_GET['pickup_date'] ?? '');
-$returnDate = trim($_GET['return_date'] ?? '');
-$availabilityMessage = 'Select your rental dates to prepare this booking.';
+$pickupDate = trim($_POST['pickup_date'] ?? $_GET['pickup_date'] ?? '');
+$returnDate = trim($_POST['return_date'] ?? $_GET['return_date'] ?? '');
+$availabilityChecked = $pickupDate !== '' || $returnDate !== '';
+$availabilityPassed = false;
+$availabilityTone = '';
+$availabilityMessage = 'Select your rental dates and check availability before booking.';
+$isBookRequest = $_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'book';
 
 if (!$carId) {
     $error = 'Please choose a valid car.';
@@ -39,19 +44,85 @@ if (!$carId) {
 
         if (!$car) {
             $error = 'This car is not available for booking.';
-        } elseif ($pickupDate !== '' || $returnDate !== '') {
-            if ($pickupDate === '' || $returnDate === '') {
-                $availabilityMessage = 'Please select both pickup and return dates.';
-            } elseif ($pickupDate < $today || $returnDate < $today) {
-                $availabilityMessage = 'Please choose today or a future date.';
-            } elseif ($returnDate < $pickupDate) {
-                $availabilityMessage = 'Return date must be the same as or later than pickup date.';
+        } elseif ($availabilityChecked) {
+            $dateError = validateBookingDates($pickupDate, $returnDate, $today);
+
+            if ($dateError !== null) {
+                unset($_SESSION['checked_car_availability']);
+                $availabilityTone = 'error';
+                $availabilityMessage = $dateError;
+            } elseif (carHasBookingConflict($conn, (int) $car['id'], $pickupDate, $returnDate)) {
+                unset($_SESSION['checked_car_availability']);
+                $availabilityTone = 'error';
+                $availabilityMessage = 'This car is already booked for the selected dates.';
             } else {
-                $availabilityMessage = 'This car is currently listed as available for the selected dates.';
+                $totalDays = bookingTotalDays($pickupDate, $returnDate);
+                $totalAmount = bookingTotalAmount($totalDays, (float) $car['daily_rate']);
+                $checkedAvailability = $_SESSION['checked_car_availability'] ?? [];
+                $availabilityPassed = !$isBookRequest || (
+                    is_array($checkedAvailability) &&
+                    (int) ($checkedAvailability['car_id'] ?? 0) === (int) $car['id'] &&
+                    ($checkedAvailability['pickup_date'] ?? '') === $pickupDate &&
+                    ($checkedAvailability['return_date'] ?? '') === $returnDate
+                );
+
+                if ($availabilityPassed) {
+                    $_SESSION['checked_car_availability'] = [
+                        'car_id' => (int) $car['id'],
+                        'pickup_date' => $pickupDate,
+                        'return_date' => $returnDate,
+                    ];
+
+                    $availabilityTone = 'success';
+                    $availabilityMessage = 'This car is available. Estimated total: RM ' . number_format($totalAmount, 2) . ' for ' . $totalDays . ' day' . ($totalDays === 1 ? '.' : 's.');
+                } else {
+                    $availabilityTone = 'error';
+                    $availabilityMessage = 'Please check availability successfully before booking.';
+                }
+            }
+        }
+
+        if ($isBookRequest && $error === '') {
+            $customerId = (int) ($_SESSION['customer_id'] ?? 0);
+
+            if ($customerId <= 0) {
+                $error = 'Please log in again before booking this car.';
+            } elseif (!$availabilityPassed) {
+                $availabilityTone = 'error';
+                $availabilityMessage = 'Please check availability successfully before booking.';
+            } else {
+                $totalDays = bookingTotalDays($pickupDate, $returnDate);
+                $totalAmount = bookingTotalAmount($totalDays, (float) $car['daily_rate']);
+                $bookingCarId = (int) $car['id'];
+                $pickupLocation = BOOKING_DEFAULT_PICKUP_LOCATION;
+                $bookingStatus = 'pending';
+
+                $stmt = $conn->prepare(
+                    'INSERT INTO bookings
+                        (customer_id, car_id, pickup_date, return_date, pickup_location, total_days, total_amount, booking_status)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+                );
+                $stmt->bind_param(
+                    'iisssids',
+                    $customerId,
+                    $bookingCarId,
+                    $pickupDate,
+                    $returnDate,
+                    $pickupLocation,
+                    $totalDays,
+                    $totalAmount,
+                    $bookingStatus
+                );
+                $stmt->execute();
+
+                header('Location: booking.php?id=' . $stmt->insert_id);
+                exit;
             }
         }
     } catch (mysqli_sql_exception $e) {
-        $error = 'Could not load car details. Please check the database connection.';
+        $error = $isBookRequest
+            ? 'Could not create this booking. Please confirm the database is available and the bookings table matches the expected structure.'
+            : 'Could not load car details. Please check the database connection.';
     }
 }
 ?>
@@ -140,39 +211,47 @@ if (!$carId) {
                                     <p class="eyebrow">Availability</p>
                                     <h2>Choose your rental dates</h2>
                                 </div>
-                                <p class="availability-note"><?php echo h($availabilityMessage); ?></p>
+                                <p class="availability-note <?php echo h($availabilityTone); ?>"><?php echo h($availabilityMessage); ?></p>
                             </div>
 
-                            <form method="get" action="car_detail.php" class="availability-form">
-                                <input type="hidden" name="id" value="<?php echo h($car['id']); ?>">
+                            <div class="booking-workflow">
+                                <form method="get" action="car_detail.php" id="availability-form" class="availability-date-form">
+                                    <input type="hidden" name="id" value="<?php echo h($car['id']); ?>">
+                                    <input type="hidden" name="car_id" value="<?php echo h($car['id']); ?>">
 
-                                <label for="pickup_date">
-                                    Pickup Date
-                                    <input
-                                        type="date"
-                                        id="pickup_date"
-                                        name="pickup_date"
-                                        value="<?php echo h($pickupDate); ?>"
-                                        min="<?php echo h($today); ?>"
-                                    >
-                                </label>
+                                    <label for="pickup_date">
+                                        Pickup Date
+                                        <input
+                                            type="date"
+                                            id="pickup_date"
+                                            name="pickup_date"
+                                            value="<?php echo h($pickupDate); ?>"
+                                            min="<?php echo h($today); ?>"
+                                        >
+                                    </label>
 
-                                <label for="return_date">
-                                    Return Date
-                                    <input
-                                        type="date"
-                                        id="return_date"
-                                        name="return_date"
-                                        value="<?php echo h($returnDate); ?>"
-                                        min="<?php echo h($pickupDate !== '' ? $pickupDate : $today); ?>"
-                                    >
-                                </label>
+                                    <label for="return_date">
+                                        Return Date
+                                        <input
+                                            type="date"
+                                            id="return_date"
+                                            name="return_date"
+                                            value="<?php echo h($returnDate); ?>"
+                                            min="<?php echo h($pickupDate !== '' ? $pickupDate : $today); ?>"
+                                        >
+                                    </label>
 
-                                <div class="booking-actions">
                                     <button type="submit" class="secondary-button">Check Availability</button>
-                                    <button type="button">Book</button>
-                                </div>
-                            </form>
+                                    <button
+                                        type="submit"
+                                        name="action"
+                                        value="book"
+                                        formmethod="post"
+                                        formaction="car_detail.php"
+                                        <?php echo $availabilityPassed ? '' : ' disabled'; ?>
+                                    >Book</button>
+                                </form>
+                            </div>
                         </section>
                     </section>
                 <?php endif; ?>
