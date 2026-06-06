@@ -3,6 +3,7 @@ session_start();
 require_once '../db_connect.php';
 require_once __DIR__ . '/../util/booking.php';
 require_once __DIR__ . '/../util/car_display.php';
+require_once __DIR__ . '/../util/payment.php';
 
 function h($value): string
 {
@@ -66,44 +67,79 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
 $bookingId = filter_input(INPUT_POST, 'booking_id', FILTER_VALIDATE_INT) ?: filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
 $customerId = (int) ($_SESSION['customer_id'] ?? 0);
 $booking = null;
+$payment = null;
+$lateFeeSummary = ['total_late_days' => 0, 'total_late_fee' => 0.0, 'fee_count' => 0];
 $error = '';
 $success = '';
+$showPaymentModal = isset($_GET['payment']);
 
 if (!$bookingId || $customerId <= 0) {
     $error = 'Please choose a valid booking.';
 } else {
     try {
         $conn = getDbConnection();
-
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'cancel') {
-            $cancelledStatus = 'cancelled';
-            $pendingStatus = BOOKING_CANCELLABLE_STATUSES[0];
-            $approvedStatus = BOOKING_CANCELLABLE_STATUSES[1];
-
-            $stmt = $conn->prepare(
-                'UPDATE bookings
-                 SET booking_status = ?
-                 WHERE id = ?
-                   AND customer_id = ?
-                   AND booking_status IN (?, ?)'
-            );
-            $stmt->bind_param('siiss', $cancelledStatus, $bookingId, $customerId, $pendingStatus, $approvedStatus);
-            $stmt->execute();
-
-            if ($stmt->affected_rows > 0) {
-                $success = 'Booking cancelled successfully.';
-            } else {
-                $error = 'This booking cannot be cancelled.';
-            }
-        }
-
         $booking = loadCustomerBooking($conn, $bookingId, $customerId);
 
         if (!$booking) {
             $error = 'Booking not found.';
         }
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'pay' && $booking) {
+            $paymentMethod = trim($_POST['payment_method'] ?? '');
+
+            try {
+                if (!canPayBooking((string) $booking['booking_status'])) {
+                    throw new InvalidArgumentException('This booking cannot be paid.');
+                }
+
+                $lateFeeSummary = loadLateFeeSummary($conn, $bookingId);
+                $paymentBreakdown = buildPaymentBreakdown((float) $booking['total_amount'], $lateFeeSummary['total_late_fee']);
+                markBookingPaymentPaid($conn, $bookingId, $paymentBreakdown['payable_total'], $paymentMethod);
+                header('Location: booking.php?id=' . $bookingId . '&payment=1');
+                exit;
+            } catch (InvalidArgumentException $e) {
+                $showPaymentModal = true;
+                $error = $e->getMessage();
+            }
+        }
+
+        $payment = loadPaymentByBookingId($conn, $bookingId);
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'cancel' && $booking) {
+            $cancelledStatus = 'cancelled';
+            $pendingStatus = BOOKING_CANCELLABLE_STATUSES[0];
+            $approvedStatus = BOOKING_CANCELLABLE_STATUSES[1];
+
+            if (($payment['payment_status'] ?? '') === PAYMENT_STATUS_PAID) {
+                $error = 'Paid bookings cannot be cancelled from the customer page.';
+            } else {
+                $stmt = $conn->prepare(
+                    'UPDATE bookings
+                     SET booking_status = ?
+                     WHERE id = ?
+                       AND customer_id = ?
+                       AND booking_status IN (?, ?)'
+                );
+                $stmt->bind_param('siiss', $cancelledStatus, $bookingId, $customerId, $pendingStatus, $approvedStatus);
+                $stmt->execute();
+
+                if ($stmt->affected_rows > 0) {
+                    $success = 'Booking cancelled successfully.';
+                } else {
+                    $error = 'This booking cannot be cancelled.';
+                }
+            }
+        }
+
+        $booking = loadCustomerBooking($conn, $bookingId, $customerId);
+        $payment = loadPaymentByBookingId($conn, $bookingId);
+        $lateFeeSummary = loadLateFeeSummary($conn, $bookingId);
+
+        if (!$booking) {
+            $error = 'Booking not found.';
+        }
     } catch (mysqli_sql_exception $e) {
-        $error = 'Could not load or update this booking. Please confirm the database is available and booking_status supports cancelled.';
+        $error = 'Could not load or update this booking. Please confirm the database tables match the expected structure.';
     }
 }
 ?>
@@ -130,7 +166,13 @@ if (!$bookingId || $customerId <= 0) {
                     <p class="message error"><?php echo h($error); ?></p>
                 <?php elseif ($booking): ?>
                     <?php $bookingStatus = (string) $booking['booking_status']; ?>
-                    <?php $statusClass = 'status-' . preg_replace('/[^a-z0-9-]/', '-', strtolower($bookingStatus)); ?>
+                    <?php $paymentStatus = $payment['payment_status'] ?? null; ?>
+                    <?php $displayStatus = bookingDisplayStatus($bookingStatus, $paymentStatus, $lateFeeSummary['total_late_fee']); ?>
+                    <?php $isPaid = $paymentStatus === PAYMENT_STATUS_PAID; ?>
+                    <?php $canPay = canPayBooking($bookingStatus); ?>
+                    <?php $paymentBreakdown = buildPaymentBreakdown((float) $booking['total_amount'], $lateFeeSummary['total_late_fee']); ?>
+                    <?php $amountDue = calculatePaymentAmountDue($paymentBreakdown['payable_total'], $paymentStatus, isset($payment['amount']) ? (float) $payment['amount'] : null); ?>
+                    <?php $amountDue = $canPay ? $amountDue : 0.0; ?>
 
                     <section class="booking-detail-layout">
                         <header class="booking-summary-panel">
@@ -145,7 +187,7 @@ if (!$bookingId || $customerId <= 0) {
                                         Rental days
                                     </span>
                                     <span>
-                                        <strong>RM <?php echo h(number_format((float) $booking['total_amount'], 2)); ?></strong>
+                                        <strong>RM <?php echo h(number_format($paymentBreakdown['payable_total'], 2)); ?></strong>
                                         Estimated total
                                     </span>
                                     <span>
@@ -156,7 +198,7 @@ if (!$bookingId || $customerId <= 0) {
                             </div>
 
                             <div class="booking-summary-side">
-                                <span class="booking-status-pill <?php echo h($statusClass); ?>"><?php echo h(ucfirst($bookingStatus)); ?></span>
+                                <span class="booking-status-pill <?php echo h($displayStatus['class']); ?>"><?php echo h($displayStatus['label']); ?></span>
                                 <img
                                     src="<?php echo h(carImageUrl($booking['image'], 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=700&q=80')); ?>"
                                     alt="<?php echo h($booking['brand'] . ' ' . $booking['model']); ?>"
@@ -272,19 +314,43 @@ if (!$bookingId || $customerId <= 0) {
                                         <dd><?php echo h($booking['total_days']); ?></dd>
                                     </div>
                                     <div>
-                                        <dt>Total Amount</dt>
-                                        <dd>RM <?php echo h(number_format((float) $booking['total_amount'], 2)); ?></dd>
-                                    </div>
-                                    <div>
                                         <dt>Payment Status</dt>
-                                        <dd>Payment not implemented yet</dd>
+                                        <dd><?php echo h($isPaid ? 'Paid' : 'Unpaid'); ?></dd>
+                                    </div>
+                                    <?php if ($isPaid): ?>
+                                        <div>
+                                            <dt>Method</dt>
+                                            <dd><?php echo h($payment['payment_method']); ?></dd>
+                                        </div>
+                                        <div>
+                                            <dt>Payment Date</dt>
+                                            <dd><?php echo h(formatBookingDate($payment['payment_date'])); ?></dd>
+                                        </div>
+                                    <?php endif; ?>
+                                    <?php if ($lateFeeSummary['total_late_fee'] > 0): ?>
+                                        <div>
+                                            <dt>Late Days</dt>
+                                            <dd><?php echo h($lateFeeSummary['total_late_days']); ?></dd>
+                                        </div>
+                                    <?php endif; ?>
+                                    <div class="total-amount-row payment-total-card">
+                                        <dt>Total Amount</dt>
+                                        <dd>RM <?php echo h(number_format($paymentBreakdown['payable_total'], 2)); ?></dd>
+                                        <?php if ($amountDue > 0): ?>
+                                            <p>
+                                                <span>Amount due</span>
+                                                <strong>RM <?php echo h(number_format($amountDue, 2)); ?></strong>
+                                            </p>
+                                        <?php endif; ?>
                                     </div>
                                 </dl>
 
                                 <div class="booking-page-actions">
-                                    <button type="button" class="pay-placeholder-button" disabled>Pay Now</button>
+                                    <a class="pay-placeholder-button" href="booking.php?id=<?php echo h($booking['id']); ?>&payment=1">
+                                        <?php echo $isPaid || !$canPay ? 'View Payment' : 'Pay Now'; ?>
+                                    </a>
 
-                                    <?php if (canCancelBooking($bookingStatus)): ?>
+                                    <?php if (canCancelBooking($bookingStatus) && !$isPaid): ?>
                                         <form method="post" action="booking.php?id=<?php echo h($booking['id']); ?>">
                                             <input type="hidden" name="action" value="cancel">
                                             <input type="hidden" name="booking_id" value="<?php echo h($booking['id']); ?>">
@@ -297,6 +363,88 @@ if (!$bookingId || $customerId <= 0) {
                             </aside>
                         </div>
                     </section>
+
+                    <?php if ($showPaymentModal): ?>
+                        <div class="modal-backdrop" role="presentation">
+                            <section class="payment-modal" role="dialog" aria-modal="true" aria-labelledby="payment-modal-title">
+                                <header class="payment-modal-header">
+                                    <div>
+                                        <p class="eyebrow">Payment</p>
+                                        <h2 id="payment-modal-title">Booking payment details</h2>
+                                    </div>
+                                    <a href="booking.php?id=<?php echo h($booking['id']); ?>" aria-label="Close payment details">Close</a>
+                                </header>
+
+                                <dl class="payment-itinerary">
+                                    <div>
+                                        <dt>Rental subtotal</dt>
+                                        <dd>RM <?php echo h(number_format($paymentBreakdown['rental_subtotal'], 2)); ?></dd>
+                                    </div>
+                                    <div>
+                                        <dt>Tax <?php echo h((int) round($paymentBreakdown['display_tax_rate'] * 100)); ?>% <span>display only</span></dt>
+                                        <dd>RM <?php echo h(number_format($paymentBreakdown['display_tax_amount'], 2)); ?></dd>
+                                    </div>
+                                    <div>
+                                        <dt>Late fees</dt>
+                                        <dd>RM <?php echo h(number_format($paymentBreakdown['late_fee_total'], 2)); ?></dd>
+                                    </div>
+                                    <div class="total-amount-row">
+                                        <dt>Total amount</dt>
+                                        <dd>RM <?php echo h(number_format($paymentBreakdown['payable_total'], 2)); ?></dd>
+                                    </div>
+                                </dl>
+
+                                <dl class="payment-modal-summary">
+                                    <div>
+                                        <dt>Payment Status</dt>
+                                        <dd><?php echo h($isPaid ? 'Paid' : 'Unpaid'); ?></dd>
+                                    </div>
+                                    <div>
+                                        <dt>Tax Note</dt>
+                                        <dd>Tax is shown for reference and is not charged in this version.</dd>
+                                    </div>
+                                    <?php if ($isPaid): ?>
+                                        <div>
+                                            <dt>Method</dt>
+                                            <dd><?php echo h($payment['payment_method']); ?></dd>
+                                        </div>
+                                        <div>
+                                            <dt>Payment Date</dt>
+                                            <dd><?php echo h(formatBookingDate($payment['payment_date'])); ?></dd>
+                                        </div>
+                                    <?php endif; ?>
+                                    <?php if ($lateFeeSummary['total_late_fee'] > 0): ?>
+                                        <div>
+                                            <dt>Late Days</dt>
+                                            <dd><?php echo h($lateFeeSummary['total_late_days']); ?></dd>
+                                        </div>
+                                    <?php endif; ?>
+                                </dl>
+
+                                <?php if (!$isPaid && $canPay): ?>
+                                    <form method="post" action="booking.php?id=<?php echo h($booking['id']); ?>&payment=1" class="payment-method-form">
+                                        <input type="hidden" name="action" value="pay">
+                                        <input type="hidden" name="booking_id" value="<?php echo h($booking['id']); ?>">
+
+                                        <label for="payment_method">
+                                            Payment Method
+                                            <select id="payment_method" name="payment_method" required>
+                                                <?php foreach (PAYMENT_METHODS as $method): ?>
+                                                    <option value="<?php echo h($method); ?>"><?php echo h($method); ?></option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        </label>
+
+                                        <button type="submit">Confirm Payment</button>
+                                    </form>
+                                <?php elseif (!$canPay): ?>
+                                    <p class="payment-unavailable-note">Payment is not available for this booking.</p>
+                                <?php else: ?>
+                                    <p class="payment-complete-note">This booking has already been paid.</p>
+                                <?php endif; ?>
+                            </section>
+                        </div>
+                    <?php endif; ?>
                 <?php endif; ?>
             </div>
         </section>

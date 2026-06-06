@@ -3,6 +3,8 @@ session_start();
 require_once '../db_connect.php';
 require_once __DIR__ . '/../util/booking.php';
 require_once __DIR__ . '/../util/car_display.php';
+require_once __DIR__ . '/../util/car_archive.php';
+require_once __DIR__ . '/../util/payment.php';
 
 function h($value): string
 {
@@ -25,16 +27,21 @@ $availabilityPassed = false;
 $availabilityTone = '';
 $availabilityMessage = 'Select your rental dates and check availability before booking.';
 $isBookRequest = $_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'book';
+$hasUnpaidLateFees = false;
 
 if (!$carId) {
     $error = 'Please choose a valid car.';
 } else {
     try {
         $conn = getDbConnection();
+        ensureCarArchiveColumn($conn);
+        $customerId = (int) ($_SESSION['customer_id'] ?? 0);
+        $hasUnpaidLateFees = $customerId > 0 && customerHasUnpaidLateFees($conn, $customerId);
+
         $stmt = $conn->prepare(
             'SELECT id, brand, model, plate_number, car_type, transmission, fuel_type, seats, daily_rate, image, status
              FROM cars
-             WHERE id = ? AND status = \'available\'
+             WHERE id = ? AND status = \'available\' AND archived_at IS NULL
              LIMIT 1'
         );
         $stmt->bind_param('i', $carId);
@@ -44,6 +51,10 @@ if (!$carId) {
 
         if (!$car) {
             $error = 'This car is not available for booking.';
+        } elseif ($hasUnpaidLateFees) {
+            unset($_SESSION['checked_car_availability']);
+            $availabilityTone = 'error';
+            $availabilityMessage = 'Please settle your unpaid late fees in My Bookings before booking another car.';
         } elseif ($availabilityChecked) {
             $dateError = validateBookingDates($pickupDate, $returnDate, $today);
 
@@ -83,10 +94,11 @@ if (!$carId) {
         }
 
         if ($isBookRequest && $error === '') {
-            $customerId = (int) ($_SESSION['customer_id'] ?? 0);
-
             if ($customerId <= 0) {
                 $error = 'Please log in again before booking this car.';
+            } elseif ($hasUnpaidLateFees) {
+                $availabilityTone = 'error';
+                $availabilityMessage = 'Please settle your unpaid late fees in My Bookings before booking another car.';
             } elseif (!$availabilityPassed) {
                 $availabilityTone = 'error';
                 $availabilityMessage = 'Please check availability successfully before booking.';

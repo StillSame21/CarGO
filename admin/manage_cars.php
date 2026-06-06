@@ -2,6 +2,7 @@
 session_start();
 require_once '../db_connect.php';
 require_once __DIR__ . '/../util/car_image.php';
+require_once __DIR__ . '/../util/car_archive.php';
 
 function h($value): string
 {
@@ -24,8 +25,16 @@ $fuelTypes = ['Petrol', 'Diesel', 'Hybrid', 'Electric'];
 $statuses = ['available', 'unavailable', 'maintenance'];
 
 $error = '';
-$success = '';
+$success = trim($_GET['success'] ?? '') === 'updated'
+    ? 'Car updated successfully.'
+    : (trim($_GET['success'] ?? '') === 'added'
+        ? 'Car added successfully.'
+        : (trim($_GET['success'] ?? '') === 'archived'
+            ? 'Car archived successfully.'
+            : ''));
 $cars = [];
+$editCarId = filter_input(INPUT_GET, 'edit', FILTER_VALIDATE_INT) ?: 0;
+$isEditMode = false;
 $brand = '';
 $model = '';
 $plateNumber = '';
@@ -36,8 +45,43 @@ $seats = '';
 $dailyRate = '';
 $image = '';
 $status = 'available';
+$uploadedImage = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $formAction = trim($_POST['form_action'] ?? 'save_car');
+    $postedCarId = filter_input(INPUT_POST, 'car_id', FILTER_VALIDATE_INT) ?: 0;
+
+    if ($formAction === 'archive_car') {
+        if ($postedCarId <= 0) {
+            $error = 'Please choose a valid car to archive.';
+        } else {
+            try {
+                $conn = getDbConnection();
+                ensureCarArchiveColumn($conn);
+
+                $archivedStatus = 'unavailable';
+                $stmt = $conn->prepare(
+                    'UPDATE cars
+                     SET archived_at = NOW(), status = ?
+                     WHERE id = ? AND archived_at IS NULL'
+                );
+                $stmt->bind_param('si', $archivedStatus, $postedCarId);
+                $stmt->execute();
+
+                if ($stmt->affected_rows > 0) {
+                    header('Location: manage_cars.php?success=archived');
+                    exit;
+                }
+
+                $error = 'Could not archive that car. It may already be archived.';
+            } catch (mysqli_sql_exception $e) {
+                $error = 'Could not archive car. Please check the database connection and try again.';
+            }
+        }
+    }
+
+    $editCarId = $formAction === 'update_car' ? $postedCarId : 0;
+    $isEditMode = $editCarId > 0;
     $brand = trim($_POST['brand'] ?? '');
     $model = trim($_POST['model'] ?? '');
     $plateNumber = strtoupper(trim($_POST['plate_number'] ?? ''));
@@ -49,7 +93,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $image = '';
     $status = $_POST['status'] ?? '';
 
-    if (
+    if ($formAction === 'archive_car') {
+        // The archive request has already been handled above.
+    } elseif ($formAction !== 'add_car' && $formAction !== 'update_car') {
+        $error = 'Please choose a valid car action.';
+    } elseif ($isEditMode && $editCarId <= 0) {
+        $error = 'Please choose a valid car to update.';
+    } elseif (
         $brand === '' ||
         $model === '' ||
         $plateNumber === '' ||
@@ -71,11 +121,75 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = 'Daily rate must be greater than zero.';
     } else {
         try {
-            $image = processCarImageUpload($_FILES['image'] ?? null);
             $conn = getDbConnection();
+            ensureCarArchiveColumn($conn);
             $adminId = (int) $_SESSION['admin_id'];
             $seatsValue = (int) $seats;
             $dailyRateValue = (float) $dailyRate;
+            $existingImage = '';
+
+            if ($isEditMode) {
+                $stmt = $conn->prepare('SELECT image FROM cars WHERE id = ? AND archived_at IS NULL LIMIT 1');
+                $stmt->bind_param('i', $editCarId);
+                $stmt->execute();
+                $existingCar = $stmt->get_result()->fetch_assoc();
+
+                if (!$existingCar) {
+                    throw new InvalidArgumentException('Please choose a valid car to update.');
+                }
+
+                $existingImage = (string) ($existingCar['image'] ?? '');
+            }
+
+            $stmt = $conn->prepare('SELECT id FROM cars WHERE plate_number = ? AND id <> ? LIMIT 1');
+            $stmt->bind_param('si', $plateNumber, $editCarId);
+            $stmt->execute();
+
+            if ($stmt->get_result()->fetch_assoc()) {
+                throw new InvalidArgumentException('This plate number already exists.');
+            }
+
+            $uploadedImage = processCarImageUpload($_FILES['image'] ?? null);
+            $image = $uploadedImage !== '' ? $uploadedImage : $existingImage;
+
+            if ($isEditMode) {
+                $stmt = $conn->prepare(
+                    'UPDATE cars
+                     SET brand = ?,
+                         model = ?,
+                         plate_number = ?,
+                         car_type = ?,
+                         transmission = ?,
+                         fuel_type = ?,
+                         seats = ?,
+                         daily_rate = ?,
+                         image = ?,
+                         status = ?
+                     WHERE id = ? AND archived_at IS NULL'
+                );
+                $stmt->bind_param(
+                    'ssssssidssi',
+                    $brand,
+                    $model,
+                    $plateNumber,
+                    $carType,
+                    $transmission,
+                    $fuelType,
+                    $seatsValue,
+                    $dailyRateValue,
+                    $image,
+                    $status,
+                    $editCarId
+                );
+                $stmt->execute();
+
+                if ($uploadedImage !== '' && $existingImage !== '' && $uploadedImage !== $existingImage) {
+                    deleteCarImageFile($existingImage);
+                }
+
+                header('Location: manage_cars.php?success=updated');
+                exit;
+            }
 
             $stmt = $conn->prepare(
                 'INSERT INTO cars
@@ -98,21 +212,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             );
             $stmt->execute();
 
-            $success = 'Car added successfully.';
-            $brand = '';
-            $model = '';
-            $plateNumber = '';
-            $carType = 'Sedan';
-            $transmission = 'Automatic';
-            $fuelType = 'Petrol';
-            $seats = '';
-            $dailyRate = '';
-            $image = '';
-            $status = 'available';
+            header('Location: manage_cars.php?success=added');
+            exit;
         } catch (InvalidArgumentException $e) {
+            deleteCarImageFile($uploadedImage);
             $error = $e->getMessage();
         } catch (mysqli_sql_exception $e) {
-            deleteCarImageFile($image);
+            deleteCarImageFile($uploadedImage !== '' ? $uploadedImage : $image);
 
             if ((int) $e->getCode() === 1062) {
                 $error = 'This plate number already exists.';
@@ -125,9 +231,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 try {
     $conn = getDbConnection();
+    ensureCarArchiveColumn($conn);
+
+    if ($editCarId > 0 && $_SERVER['REQUEST_METHOD'] !== 'POST') {
+        $stmt = $conn->prepare(
+            'SELECT id, brand, model, plate_number, car_type, transmission, fuel_type, seats, daily_rate, image, status
+             FROM cars
+             WHERE id = ? AND archived_at IS NULL
+             LIMIT 1'
+        );
+        $stmt->bind_param('i', $editCarId);
+        $stmt->execute();
+        $editCar = $stmt->get_result()->fetch_assoc();
+
+        if ($editCar) {
+            $isEditMode = true;
+            $brand = (string) $editCar['brand'];
+            $model = (string) $editCar['model'];
+            $plateNumber = (string) $editCar['plate_number'];
+            $carType = (string) $editCar['car_type'];
+            $transmission = (string) $editCar['transmission'];
+            $fuelType = (string) $editCar['fuel_type'];
+            $seats = (string) $editCar['seats'];
+            $dailyRate = (string) $editCar['daily_rate'];
+            $image = (string) ($editCar['image'] ?? '');
+            $status = (string) $editCar['status'];
+        } elseif ($error === '') {
+            $error = 'Could not find that car to edit.';
+            $editCarId = 0;
+        }
+    }
+
     $result = $conn->query(
-        'SELECT brand, model, plate_number, car_type, transmission, fuel_type, seats, daily_rate, status
+        'SELECT id, brand, model, plate_number, car_type, transmission, fuel_type, seats, daily_rate, status
          FROM cars
+         WHERE archived_at IS NULL
          ORDER BY created_at DESC
          LIMIT 10'
     );
@@ -155,8 +293,8 @@ try {
 
         <section class="dashboard-content dashboard-shell manage-cars-layout">
             <section class="login-card car-form-card">
-                <h2>Manage Cars</h2>
-                <p class="subtitle">Add vehicles that customers can rent.</p>
+                <h2><?php echo $isEditMode ? 'Update Car' : 'Manage Cars'; ?></h2>
+                <p class="subtitle"><?php echo $isEditMode ? 'Update this vehicle without creating a duplicate.' : 'Add vehicles that customers can rent.'; ?></p>
 
                 <?php if ($error !== ''): ?>
                     <p class="message error"><?php echo h($error); ?></p>
@@ -167,6 +305,9 @@ try {
                 <?php endif; ?>
 
                 <form class="form-grid" method="post" action="manage_cars.php" enctype="multipart/form-data">
+                    <input type="hidden" name="form_action" value="<?php echo $isEditMode ? 'update_car' : 'add_car'; ?>">
+                    <input type="hidden" name="car_id" value="<?php echo h($editCarId); ?>">
+
                     <label for="brand">
                         Brand
                         <input type="text" id="brand" name="brand" value="<?php echo h($brand); ?>" maxlength="100" required>
@@ -240,9 +381,17 @@ try {
                         Car Image
                         <input type="hidden" name="MAX_FILE_SIZE" value="<?php echo CAR_IMAGE_MAX_BYTES; ?>">
                         <input type="file" id="image" name="image" accept="image/*">
+                        <?php if ($isEditMode && $image !== ''): ?>
+                            <span class="field-note">Leave blank to keep the current image.</span>
+                        <?php endif; ?>
                     </label>
 
-                    <button type="submit">Add Car</button>
+                    <div class="form-actions">
+                        <button type="submit"><?php echo $isEditMode ? 'Update Car' : 'Add Car'; ?></button>
+                        <?php if ($isEditMode): ?>
+                            <a class="cancel-edit-link" href="manage_cars.php">Cancel Edit</a>
+                        <?php endif; ?>
+                    </div>
                 </form>
             </section>
 
@@ -264,6 +413,7 @@ try {
                                     <th>Type</th>
                                     <th>Rate</th>
                                     <th>Status</th>
+                                    <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -278,6 +428,16 @@ try {
                                         <td>RM <?php echo h(number_format((float) $car['daily_rate'], 2)); ?></td>
                                         <td>
                                             <span class="status-pill"><?php echo h(ucfirst($car['status'])); ?></span>
+                                        </td>
+                                        <td>
+                                            <div class="car-row-actions">
+                                                <a class="table-action-link" href="manage_cars.php?edit=<?php echo h($car['id']); ?>">Edit</a>
+                                                <form method="post" action="manage_cars.php" onsubmit="return confirm('Archive this car?');">
+                                                    <input type="hidden" name="form_action" value="archive_car">
+                                                    <input type="hidden" name="car_id" value="<?php echo h($car['id']); ?>">
+                                                    <button class="table-action-button danger" type="submit">Archive</button>
+                                                </form>
+                                            </div>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>

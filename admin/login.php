@@ -20,7 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             $conn = getDbConnection();
             $stmt = $conn->prepare(
-                'SELECT id, name, email, password FROM admins WHERE email = ? LIMIT 1'
+                'SELECT id, name, email, password, role, status FROM admins WHERE email = ? LIMIT 1'
             );
             $stmt->bind_param('s', $email);
             $stmt->execute();
@@ -29,6 +29,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if (!$admin || !password_verify($password, $admin['password'])) {
                 $error = 'Invalid admin email or password.';
+            } elseif ($admin['status'] !== 'active') {
+                $error = 'Your admin account is not active. Please contact a super admin.';
             } else {
                 session_regenerate_id(true);
 
@@ -36,6 +38,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['admin_id'] = $admin['id'];
                 $_SESSION['admin_name'] = $admin['name'];
                 $_SESSION['admin_email'] = $admin['email'];
+                $_SESSION['admin_role'] = $admin['role'];
+                $_SESSION['admin_status'] = $admin['status'];
 
                 header('Location: dashboard.php');
                 exit;

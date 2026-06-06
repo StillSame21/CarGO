@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once '../db_connect.php';
+require_once __DIR__ . '/../util/payment.php';
 
 function h($value): string
 {
@@ -35,11 +36,19 @@ try {
             b.total_days,
             b.total_amount,
             b.booking_status,
+            p.payment_status,
+            COALESCE(fees.total_late_fee, 0) AS total_late_fee,
             car.brand,
             car.model,
             car.plate_number
          FROM bookings b
          INNER JOIN cars car ON car.id = b.car_id
+         LEFT JOIN payments p ON p.booking_id = b.id
+         LEFT JOIN (
+            SELECT booking_id, SUM(late_fee_amount) AS total_late_fee
+            FROM late_fees
+            GROUP BY booking_id
+         ) fees ON fees.booking_id = b.id
          WHERE b.customer_id = ?
          ORDER BY b.created_at DESC, b.id DESC'
     );
@@ -84,7 +93,8 @@ try {
                 <?php else: ?>
                     <section class="booking-list" aria-label="My bookings">
                         <?php foreach ($bookings as $booking): ?>
-                            <?php $statusClass = 'status-' . preg_replace('/[^a-z0-9-]/', '-', strtolower((string) $booking['booking_status'])); ?>
+                            <?php $displayStatus = bookingDisplayStatus((string) $booking['booking_status'], $booking['payment_status'] ?? null, (float) $booking['total_late_fee']); ?>
+                            <?php $paymentBreakdown = buildPaymentBreakdown((float) $booking['total_amount'], (float) $booking['total_late_fee']); ?>
                             <article class="booking-list-card">
                                 <div>
                                     <p class="car-type">Booking #<?php echo h($booking['id']); ?></p>
@@ -99,11 +109,11 @@ try {
                                     </div>
                                     <div>
                                         <dt>Total</dt>
-                                        <dd>RM <?php echo h(number_format((float) $booking['total_amount'], 2)); ?></dd>
+                                        <dd>RM <?php echo h(number_format($paymentBreakdown['payable_total'], 2)); ?></dd>
                                     </div>
                                     <div>
                                         <dt>Status</dt>
-                                        <dd><span class="booking-status-pill <?php echo h($statusClass); ?>"><?php echo h(ucfirst($booking['booking_status'])); ?></span></dd>
+                                        <dd><span class="booking-status-pill <?php echo h($displayStatus['class']); ?>"><?php echo h($displayStatus['label']); ?></span></dd>
                                     </div>
                                 </dl>
 

@@ -2,6 +2,7 @@
 session_start();
 require_once '../db_connect.php';
 require_once __DIR__ . '/../util/car_display.php';
+require_once __DIR__ . '/../util/car_archive.php';
 
 function h($value): string
 {
@@ -18,10 +19,11 @@ $error = '';
 
 try {
     $conn = getDbConnection();
+    ensureCarArchiveColumn($conn);
     $result = $conn->query(
         'SELECT id, brand, model, plate_number, car_type, transmission, fuel_type, seats, daily_rate, image
          FROM cars
-         WHERE status = \'available\'
+         WHERE status = \'available\' AND archived_at IS NULL
          ORDER BY brand ASC, model ASC'
     );
     $cars = $result->fetch_all(MYSQLI_ASSOC);

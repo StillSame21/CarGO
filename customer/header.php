@@ -8,7 +8,6 @@ $currentPage = basename($_SERVER['PHP_SELF']);
     <nav class="dashboard-nav" aria-label="Customer navigation">
         <a href="browse_cars.php" class="<?php echo in_array($currentPage, ['browse_cars.php', 'car_detail.php'], true) ? 'active' : ''; ?>">Browse Cars</a>
         <a href="my_bookings.php" class="<?php echo in_array($currentPage, ['my_bookings.php', 'booking.php'], true) ? 'active' : ''; ?>">My Bookings</a>
-        <a href="#">Payments</a>
         <a href="#">Support</a>
     </nav>
 

@@ -569,6 +569,16 @@
     background: #e8edf3;
 }
 
+.booking-status-pill.status-paid {
+    color: #176b3a;
+    background: #e7f7ee;
+}
+
+.booking-status-pill.status-late-fees {
+    color: #9f1d1d;
+    background: #ffe8e8;
+}
+
 .booking-status-pill.status-ongoing,
 .booking-status-pill.status-approved {
     color: #175a9f;
@@ -746,18 +756,44 @@
     top: 92px;
 }
 
-.payment-summary div:nth-child(3) {
+.payment-summary .total-amount-row,
+.payment-modal-summary .total-amount-row,
+.payment-itinerary .total-amount-row {
     border-color: #f1cf6b;
     background: #fff9e8;
 }
 
-.payment-summary div:nth-child(3) dd {
+.payment-summary .total-amount-row dd,
+.payment-modal-summary .total-amount-row dd,
+.payment-itinerary .total-amount-row dd {
     font-size: 22px;
 }
 
-.payment-summary div:nth-child(4) {
+.payment-total-card p {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #f1cf6b;
+}
+
+.payment-total-card p span {
+    color: #9f1d1d;
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.payment-total-card p strong {
+    color: #9f1d1d;
+    font-size: 18px;
+    white-space: nowrap;
+}
+
+.payment-summary div {
     color: #46576a;
-    background: #edf2f7;
 }
 
 .booking-page-actions {
@@ -777,11 +813,161 @@
 }
 
 .pay-placeholder-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 46px;
+    min-width: 150px;
+    padding: 0 18px;
+    border-radius: 6px;
+    color: #17212b;
     background: #f9c74f;
+    font-size: 15px;
+    font-weight: bold;
+    text-decoration: none;
 }
 
-.pay-placeholder-button:disabled:hover {
-    background: #f9c74f;
+.pay-placeholder-button:hover {
+    background: #f4b932;
+}
+
+.modal-backdrop {
+    position: fixed;
+    z-index: 20;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(23, 33, 43, 0.56);
+}
+
+.payment-modal {
+    width: min(100%, 520px);
+    max-height: calc(100vh - 48px);
+    overflow: auto;
+    padding: 26px;
+    border-radius: 8px;
+    background: #ffffff;
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.28);
+}
+
+.payment-modal-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #edf2f7;
+}
+
+.payment-modal-header h2 {
+    color: #17212b;
+    font-size: 26px;
+}
+
+.payment-modal-header a {
+    color: #1f6fd1;
+    font-size: 14px;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+.payment-modal-header a:hover {
+    text-decoration: underline;
+}
+
+.payment-itinerary {
+    display: grid;
+    margin-bottom: 18px;
+    overflow: hidden;
+    border: 1px solid #e3e9ef;
+    border-radius: 8px;
+    background: #ffffff;
+}
+
+.payment-itinerary div {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 14px;
+    border-bottom: 1px solid #edf2f7;
+}
+
+.payment-itinerary div:last-child {
+    border-bottom: 0;
+}
+
+.payment-itinerary dt {
+    color: #697887;
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.payment-itinerary dt span {
+    display: block;
+    margin-top: 4px;
+    color: #8a98a8;
+    font-size: 11px;
+}
+
+.payment-itinerary dd {
+    color: #17212b;
+    font-size: 16px;
+    font-weight: bold;
+    text-align: right;
+    white-space: nowrap;
+}
+
+.payment-modal-summary {
+    display: grid;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.payment-modal-summary div {
+    padding: 14px;
+    border: 1px solid #e3e9ef;
+    border-radius: 8px;
+    background: #f8fafc;
+}
+
+.payment-modal-summary dt {
+    margin-bottom: 7px;
+    color: #697887;
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.payment-modal-summary dd {
+    color: #17212b;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.payment-method-form button,
+.payment-method-form select {
+    margin-bottom: 0;
+}
+
+.payment-complete-note {
+    padding: 14px;
+    border-radius: 8px;
+    color: #176b3a;
+    background: #e7f7ee;
+    font-weight: bold;
+}
+
+.payment-unavailable-note {
+    padding: 14px;
+    border-radius: 8px;
+    color: #9f1d1d;
+    background: #ffe8e8;
+    font-weight: bold;
 }
 
 .booking-list {
@@ -916,6 +1102,7 @@
 
     .booking-workflow button,
     .booking-page-actions button,
+    .pay-placeholder-button,
     .booking-list-card .primary-action {
         width: 100%;
     }
