@@ -24,13 +24,12 @@ CarGO is a PHP and MySQL car rental management system for customers and administ
 ## Tech Stack
 
 - PHP
-- MySQL / MariaDB
-- HTML, CSS, vanilla JavaScript
-- XAMPP / LAMPP local server
+- MySQL
+- HTML, CSS
+- XAMPP local server
 
 ## Project Structure
 
-```text
 CarGO/
 ├── admin/              # Admin pages and admin auth helpers
 ├── customer/           # Customer pages and customer auth helpers
@@ -48,9 +47,8 @@ CarGO/
 
 1. Place the project in your web server directory, for example:
 
-   ```text
    /opt/lampp/htdocs/CarGO
-   ```
+
 
 2. Create or import the `cargo_rental` MySQL database.
 
@@ -65,11 +63,9 @@ CarGO/
 
 4. Run the database helper scripts if needed:
 
-   ```text
    database/ensure_car_archived_at.sql
    database/ensure_cancelled_booking_status.sql
    database/ensure_completed_booking_status.sql
-   ```
 
 5. Start Apache and MySQL, then open:
 
@@ -97,19 +93,6 @@ CarGO/
 - Logout is POST-only.
 - Customer and admin sessions are checked against current database account status.
 - Passwords are stored with `password_hash()` and verified with `password_verify()`.
-
-## Testing Checklist
-
-- Register and log in as a customer.
-- Browse cars, check availability, create a booking, pay, and cancel where allowed.
-- Log in as an admin and manage cars, bookings, and customers.
-- Confirm blocked customers/admins cannot continue using protected pages.
-- Try invalid CSRF tokens and confirm requests are rejected.
-- Run PHP lint on changed files:
-
-  ```bash
-  php -l path/to/file.php
-  ```
 
 ## Notes
 
