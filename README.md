@@ -4,11 +4,17 @@ CarGO is a PHP and MySQL car rental management system for customers and administ
 
 ## Preview
 
-> Add screenshots here.
+| Customer Dashboard | Customer Booking | Customer Booking Record |
+| --- | --- | --- |
+| ![Customer Dashboard](asset/customer_dashboard.png) | ![Customer Booking](asset/customer_booking.png) | ![Customer Booking Record](asset/customer_booking_record.png) |
 
-| Customer Dashboard | Admin Dashboard |
+| Admin Dashboard | Admin Cars | Admin Booking |
+| --- | --- | --- |
+| ![Admin Dashboard](asset/admin_dashboard.png) | ![Admin Cars](asset/admin_cars.png) | ![Admin Booking](asset/admin_booking.png) |
+
+| Admin Customer | Admin Management |
 | --- | --- |
-| _Screenshot placeholder_ | _Screenshot placeholder_ |
+| ![Admin Customer](asset/admin_customer.png) | ![Admin Management](asset/admin_management.png) |
 
 ## Features
 
@@ -30,8 +36,10 @@ CarGO is a PHP and MySQL car rental management system for customers and administ
 
 ## Project Structure
 
+```text
 CarGO/
 ├── admin/              # Admin pages and admin auth helpers
+├── asset/              # README screenshots
 ├── customer/           # Customer pages and customer auth helpers
 ├── css/                # Admin and customer page styles
 ├── database/           # Small database update scripts
