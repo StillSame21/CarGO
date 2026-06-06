@@ -1,7 +1,9 @@
 <?php
-session_start();
+require_once __DIR__ . '/../includes/security.php';
 require_once '../db_connect.php';
 require_once __DIR__ . '/includes/auth.php';
+
+startSecureSession();
 
 function h($value): string
 {
@@ -117,6 +119,8 @@ try {
     $conn = getDbConnection();
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        requireValidCsrfToken();
+
         $action = trim($_POST['action'] ?? '');
 
         if ($action === 'create_admin') {
@@ -376,6 +380,7 @@ $createStatus = in_array($formStatus, $statuses, true) ? $formStatus : 'active';
                             <h2>Edit Admin</h2>
                             <p class="subtitle">Update account details without changing the password.</p>
                             <form method="post" action="add_admin.php?edit=<?php echo h($editAdmin['id']); ?>">
+                                <?php echo csrfInput(); ?>
                                 <input type="hidden" name="action" value="update_admin">
                                 <input type="hidden" name="admin_id" value="<?php echo h($editAdmin['id']); ?>">
 
@@ -411,6 +416,7 @@ $createStatus = in_array($formStatus, $statuses, true) ? $formStatus : 'active';
                             <h2>Reset Password</h2>
                             <p class="subtitle">Set a new password for <?php echo h($resetAdmin['name']); ?>.</p>
                             <form method="post" action="add_admin.php?reset=<?php echo h($resetAdmin['id']); ?>">
+                                <?php echo csrfInput(); ?>
                                 <input type="hidden" name="action" value="reset_password">
                                 <input type="hidden" name="admin_id" value="<?php echo h($resetAdmin['id']); ?>">
 
@@ -429,6 +435,7 @@ $createStatus = in_array($formStatus, $statuses, true) ? $formStatus : 'active';
                             <h2>Create Admin</h2>
                             <p class="subtitle">Create access for another CarGO admin.</p>
                             <form method="post" action="add_admin.php">
+                                <?php echo csrfInput(); ?>
                                 <input type="hidden" name="action" value="create_admin">
 
                                 <label for="name">Full Name</label>
@@ -507,6 +514,7 @@ $createStatus = in_array($formStatus, $statuses, true) ? $formStatus : 'active';
 
                                                         <?php if ($admin['status'] === 'active'): ?>
                                                             <form method="post" action="add_admin.php" onsubmit="return confirm('Block this admin account?');">
+                                                                <?php echo csrfInput(); ?>
                                                                 <input type="hidden" name="action" value="set_status">
                                                                 <input type="hidden" name="admin_id" value="<?php echo h($admin['id']); ?>">
                                                                 <input type="hidden" name="target_status" value="blocked">
@@ -514,6 +522,7 @@ $createStatus = in_array($formStatus, $statuses, true) ? $formStatus : 'active';
                                                             </form>
                                                         <?php else: ?>
                                                             <form method="post" action="add_admin.php">
+                                                                <?php echo csrfInput(); ?>
                                                                 <input type="hidden" name="action" value="set_status">
                                                                 <input type="hidden" name="admin_id" value="<?php echo h($admin['id']); ?>">
                                                                 <input type="hidden" name="target_status" value="active">

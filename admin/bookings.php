@@ -1,10 +1,13 @@
 <?php
-session_start();
+require_once __DIR__ . '/../includes/security.php';
 require_once '../db_connect.php';
 require_once __DIR__ . '/../util/payment.php';
 require_once __DIR__ . '/../util/booking.php';
 require_once __DIR__ . '/../util/car_display.php';
 require_once __DIR__ . '/includes/filter_bar.php';
+require_once __DIR__ . '/includes/auth.php';
+
+startSecureSession();
 
 function h($value): string
 {
@@ -267,10 +270,7 @@ function loadAdminBooking(mysqli $conn, int $bookingId): ?array
     return $booking ?: null;
 }
 
-if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
-    header('Location: login.php');
-    exit;
-}
+requireAdminLogin();
 
 $bookingId = filter_input(INPUT_POST, 'booking_id', FILTER_VALIDATE_INT) ?: filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
 $adminId = (int) ($_SESSION['admin_id'] ?? 0);
@@ -333,6 +333,8 @@ try {
     ]);
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && $bookingId && $adminId > 0) {
+        requireValidCsrfToken();
+
         $action = $_POST['action'] ?? '';
 
         if ($action === 'confirm_pickup') {
@@ -553,6 +555,7 @@ try {
 
                                     <?php if ($isPaid && !in_array($booking['booking_status'], [BOOKING_STATUS_ONGOING, BOOKING_STATUS_COMPLETED, 'cancelled', 'rejected'], true)): ?>
                                         <form method="post" action="bookings.php?id=<?php echo h($booking['id']); ?>">
+                                            <?php echo csrfInput(); ?>
                                             <input type="hidden" name="action" value="confirm_pickup">
                                             <input type="hidden" name="booking_id" value="<?php echo h($booking['id']); ?>">
                                             <button type="submit">Confirm Pickup</button>
@@ -561,6 +564,7 @@ try {
 
                                     <?php if ($booking['booking_status'] === BOOKING_STATUS_ONGOING): ?>
                                         <form method="post" action="bookings.php?id=<?php echo h($booking['id']); ?>" class="return-form">
+                                            <?php echo csrfInput(); ?>
                                             <input type="hidden" name="action" value="confirm_return">
                                             <input type="hidden" name="booking_id" value="<?php echo h($booking['id']); ?>">
                                             <label for="actual_return_date">

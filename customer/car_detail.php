@@ -1,5 +1,5 @@
 <?php
-session_start();
+require_once __DIR__ . '/includes/auth.php';
 require_once '../db_connect.php';
 require_once __DIR__ . '/../util/booking.php';
 require_once __DIR__ . '/../util/car_display.php';
@@ -11,10 +11,8 @@ function h($value): string
     return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
 }
 
-if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
-    header('Location: login.php');
-    exit;
-}
+startSecureSession();
+requireCustomerLogin();
 
 $car = null;
 $error = '';
@@ -35,6 +33,11 @@ if (!$carId) {
     try {
         $conn = getDbConnection();
         ensureCarArchiveColumn($conn);
+
+        if ($isBookRequest) {
+            requireValidCsrfToken();
+        }
+
         $customerId = (int) ($_SESSION['customer_id'] ?? 0);
         $hasUnpaidLateFees = $customerId > 0 && customerHasUnpaidLateFees($conn, $customerId);
 
@@ -131,6 +134,8 @@ if (!$carId) {
                 exit;
             }
         }
+    } catch (InvalidArgumentException $e) {
+        $error = $e->getMessage();
     } catch (mysqli_sql_exception $e) {
         $error = $isBookRequest
             ? 'Could not create this booking. Please confirm the database is available and the bookings table matches the expected structure.'
@@ -254,14 +259,15 @@ if (!$carId) {
                                     </label>
 
                                     <button type="submit" class="secondary-button">Check Availability</button>
-                                    <button
-                                        type="submit"
-                                        name="action"
-                                        value="book"
-                                        formmethod="post"
-                                        formaction="car_detail.php"
-                                        <?php echo $availabilityPassed ? '' : ' disabled'; ?>
-                                    >Book</button>
+                                </form>
+
+                                <form method="post" action="car_detail.php" class="availability-date-form">
+                                    <?php echo csrfInput(); ?>
+                                    <input type="hidden" name="action" value="book">
+                                    <input type="hidden" name="car_id" value="<?php echo h($car['id']); ?>">
+                                    <input type="hidden" name="pickup_date" value="<?php echo h($pickupDate); ?>">
+                                    <input type="hidden" name="return_date" value="<?php echo h($returnDate); ?>">
+                                    <button type="submit"<?php echo $availabilityPassed ? '' : ' disabled'; ?>>Book</button>
                                 </form>
                             </div>
                         </section>

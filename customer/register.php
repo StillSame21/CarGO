@@ -1,6 +1,8 @@
 <?php
-session_start();
+require_once __DIR__ . '/../includes/security.php';
 require_once '../db_connect.php';
+
+startSecureSession();
 
 if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
     header('Location: dashboard.php');
@@ -22,10 +24,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $password = $_POST['password'] ?? '';
     $confirmPassword = $_POST['confirm_password'] ?? '';
 
-    if ($name === '' || $email === '' || $password === '' || $confirmPassword === '') {
+    if (!isValidCsrfToken($_POST['csrf_token'] ?? null)) {
+        $error = 'Security token expired. Please refresh and try again.';
+    } elseif ($name === '' || $email === '' || $password === '' || $confirmPassword === '') {
         $error = 'Please complete all required fields.';
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $error = 'Please enter a valid email address.';
+    } elseif (strlen($name) > 100 || strlen($email) > 150 || strlen($phone) > 30 || strlen($address) > 255) {
+        $error = 'Please keep your profile details within the allowed length.';
     } elseif (strlen($password) < 6) {
         $error = 'Password must be at least 6 characters.';
     } elseif ($password !== $confirmPassword) {
@@ -86,6 +92,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <?php endif; ?>
 
             <form method="post" action="register.php">
+                <?php echo csrfInput(); ?>
+
                 <label for="name">Full Name</label>
                 <input
                     type="text"

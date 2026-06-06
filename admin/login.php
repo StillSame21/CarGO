@@ -1,6 +1,8 @@
 <?php
-session_start();
+require_once __DIR__ . '/../includes/security.php';
 require_once '../db_connect.php';
+
+startSecureSession();
 
 if (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true) {
     header('Location: dashboard.php');
@@ -14,8 +16,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = trim($_POST['email'] ?? '');
     $password = $_POST['password'] ?? '';
 
-    if ($email === '' || $password === '') {
+    if (!isValidCsrfToken($_POST['csrf_token'] ?? null)) {
+        $error = 'Security token expired. Please refresh and try again.';
+    } elseif ($email === '' || $password === '') {
         $error = 'Please enter both email and password.';
+    } elseif (strlen($email) > 150) {
+        $error = 'Please enter a valid email address.';
     } else {
         try {
             $conn = getDbConnection();
@@ -33,6 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $error = 'Your admin account is not active. Please contact a super admin.';
             } else {
                 session_regenerate_id(true);
+                regenerateCsrfToken();
 
                 $_SESSION['admin_logged_in'] = true;
                 $_SESSION['admin_id'] = $admin['id'];
@@ -76,6 +83,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <?php endif; ?>
 
             <form method="post" action="login.php">
+                <?php echo csrfInput(); ?>
+
                 <label for="email">Email</label>
                 <input
                     type="email"

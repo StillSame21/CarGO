@@ -65,8 +65,27 @@
     text-decoration: none;
 }
 
+.customer-account-dropdown form {
+    display: block;
+}
+
+.customer-account-dropdown button {
+    display: block;
+    width: 100%;
+    margin: 0;
+    padding: 13px 14px;
+    border: 0;
+    border-radius: 0;
+    color: #46576a;
+    background: #ffffff;
+    font-size: 14px;
+    font-weight: bold;
+    text-align: left;
+}
+
 .customer-account-dropdown a:hover,
-.customer-account-dropdown a.active {
+.customer-account-dropdown a.active,
+.customer-account-dropdown button:hover {
     color: #17212b;
     background: #fff9e8;
 }

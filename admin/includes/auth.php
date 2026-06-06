@@ -1,11 +1,52 @@
 <?php
 
+require_once __DIR__ . '/../../includes/security.php';
+require_once __DIR__ . '/../../db_connect.php';
+
 function requireAdminLogin(): void
 {
     if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
         header('Location: login.php');
         exit;
     }
+
+    $adminId = (int) ($_SESSION['admin_id'] ?? 0);
+
+    if ($adminId <= 0) {
+        destroySecureSession();
+        header('Location: login.php');
+        exit;
+    }
+
+    try {
+        $conn = getDbConnection();
+        $stmt = $conn->prepare(
+            'SELECT id, name, email, role, status
+             FROM admins
+             WHERE id = ?
+             LIMIT 1'
+        );
+        $stmt->bind_param('i', $adminId);
+        $stmt->execute();
+        $admin = $stmt->get_result()->fetch_assoc();
+    } catch (mysqli_sql_exception $e) {
+        destroySecureSession();
+        header('Location: login.php');
+        exit;
+    }
+
+    // Refresh role/status on every protected page so blocked admins lose access immediately.
+    if (!$admin || ($admin['status'] ?? '') !== 'active') {
+        destroySecureSession();
+        header('Location: login.php');
+        exit;
+    }
+
+    $_SESSION['admin_id'] = (int) $admin['id'];
+    $_SESSION['admin_name'] = (string) $admin['name'];
+    $_SESSION['admin_email'] = (string) $admin['email'];
+    $_SESSION['admin_role'] = (string) $admin['role'];
+    $_SESSION['admin_status'] = (string) $admin['status'];
 }
 
 function currentAdminRole(): string

@@ -1,5 +1,5 @@
 <?php
-session_start();
+require_once __DIR__ . '/includes/auth.php';
 require_once '../db_connect.php';
 require_once __DIR__ . '/../util/payment.php';
 
@@ -17,10 +17,8 @@ function formatBookingDate(?string $date): string
     return date('d M Y', strtotime($date));
 }
 
-if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
-    header('Location: login.php');
-    exit;
-}
+startSecureSession();
+requireCustomerLogin();
 
 $bookings = [];
 $error = '';

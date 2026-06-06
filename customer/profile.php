@@ -1,5 +1,5 @@
 <?php
-session_start();
+require_once __DIR__ . '/includes/auth.php';
 require_once '../db_connect.php';
 
 function h($value): string
@@ -32,10 +32,8 @@ function customerProfileEmailExists(mysqli $conn, string $email, int $customerId
     return $stmt->get_result()->num_rows > 0;
 }
 
-if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
-    header('Location: login.php');
-    exit;
-}
+startSecureSession();
+requireCustomerLogin();
 
 $customerId = (int) ($_SESSION['customer_id'] ?? 0);
 $customer = null;
@@ -65,6 +63,8 @@ try {
     $address = (string) ($customer['address'] ?? '');
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        requireValidCsrfToken();
+
         $name = trim($_POST['name'] ?? '');
         $email = trim($_POST['email'] ?? '');
         $phone = trim($_POST['phone'] ?? '');
@@ -196,6 +196,8 @@ try {
                         <?php endif; ?>
 
                         <form method="post" action="profile.php" class="profile-settings-form">
+                            <?php echo csrfInput(); ?>
+
                             <div class="profile-form-grid">
                                 <label for="name">
                                     Full Name

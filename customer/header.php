@@ -26,7 +26,10 @@ $isProfilePage = $currentPage === 'profile.php';
 
         <div class="customer-account-dropdown" data-customer-menu-dropdown>
             <a href="profile.php" class="<?php echo $isProfilePage ? 'active' : ''; ?>">Profile Settings</a>
-            <a href="../logout.php">Logout</a>
+            <form method="post" action="../logout.php">
+                <?php echo csrfInput(); ?>
+                <button type="submit">Logout</button>
+            </form>
         </div>
     </div>
 </div>

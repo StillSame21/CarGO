@@ -1,8 +1,11 @@
 <?php
-session_start();
+require_once __DIR__ . '/../includes/security.php';
 require_once '../db_connect.php';
 require_once __DIR__ . '/../util/car_image.php';
 require_once __DIR__ . '/../util/car_archive.php';
+require_once __DIR__ . '/includes/auth.php';
+
+startSecureSession();
 
 function h($value): string
 {
@@ -14,10 +17,7 @@ function selectedIf($currentValue, $optionValue): string
     return $currentValue === $optionValue ? ' selected' : '';
 }
 
-if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
-    header('Location: login.php');
-    exit;
-}
+requireAdminLogin();
 
 $carTypes = ['Compact', 'Sedan', 'SUV', 'MPV', 'Luxury'];
 $transmissions = ['Automatic', 'Manual'];
@@ -48,6 +48,14 @@ $status = 'available';
 $uploadedImage = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    try {
+        requireValidCsrfToken();
+    } catch (InvalidArgumentException $e) {
+        $error = $e->getMessage();
+    }
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $error === '') {
     $formAction = trim($_POST['form_action'] ?? 'save_car');
     $postedCarId = filter_input(INPUT_POST, 'car_id', FILTER_VALIDATE_INT) ?: 0;
 
@@ -305,6 +313,8 @@ try {
                 <?php endif; ?>
 
                 <form class="form-grid" method="post" action="manage_cars.php" enctype="multipart/form-data">
+                    <?php echo csrfInput(); ?>
+
                     <input type="hidden" name="form_action" value="<?php echo $isEditMode ? 'update_car' : 'add_car'; ?>">
                     <input type="hidden" name="car_id" value="<?php echo h($editCarId); ?>">
 
@@ -433,6 +443,7 @@ try {
                                             <div class="car-row-actions">
                                                 <a class="table-action-link" href="manage_cars.php?edit=<?php echo h($car['id']); ?>">Edit</a>
                                                 <form method="post" action="manage_cars.php" onsubmit="return confirm('Archive this car?');">
+                                                    <?php echo csrfInput(); ?>
                                                     <input type="hidden" name="form_action" value="archive_car">
                                                     <input type="hidden" name="car_id" value="<?php echo h($car['id']); ?>">
                                                     <button class="table-action-button danger" type="submit">Archive</button>

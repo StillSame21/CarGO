@@ -1,9 +1,25 @@
 <?php
-session_start();
-$redirect = isset($_GET['type']) && $_GET['type'] === 'admin' ? 'admin/login.php' : 'customer/login.php';
+require_once __DIR__ . '/includes/security.php';
 
-session_unset();
-session_destroy();
+startSecureSession();
+
+$redirect = ($_POST['type'] ?? '') === 'admin' ? 'admin/login.php' : 'customer/login.php';
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    header('Location: ' . $redirect);
+    exit;
+}
+
+try {
+    requireValidCsrfToken();
+} catch (InvalidArgumentException $e) {
+    http_response_code(403);
+    header('Location: ' . $redirect);
+    exit;
+}
+
+destroySecureSession();
 
 header('Location: ' . $redirect);
 exit;

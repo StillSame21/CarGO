@@ -1,5 +1,5 @@
 <?php
-session_start();
+require_once __DIR__ . '/includes/auth.php';
 require_once '../db_connect.php';
 require_once __DIR__ . '/../util/booking.php';
 require_once __DIR__ . '/../util/car_display.php';
@@ -59,10 +59,8 @@ function loadCustomerBooking(mysqli $conn, int $bookingId, int $customerId): ?ar
     return $booking ?: null;
 }
 
-if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
-    header('Location: login.php');
-    exit;
-}
+startSecureSession();
+requireCustomerLogin();
 
 $bookingId = filter_input(INPUT_POST, 'booking_id', FILTER_VALIDATE_INT) ?: filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
 $customerId = (int) ($_SESSION['customer_id'] ?? 0);
@@ -82,6 +80,10 @@ if (!$bookingId || $customerId <= 0) {
 
         if (!$booking) {
             $error = 'Booking not found.';
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            requireValidCsrfToken();
         }
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'pay' && $booking) {
@@ -138,6 +140,8 @@ if (!$bookingId || $customerId <= 0) {
         if (!$booking) {
             $error = 'Booking not found.';
         }
+    } catch (InvalidArgumentException $e) {
+        $error = $e->getMessage();
     } catch (mysqli_sql_exception $e) {
         $error = 'Could not load or update this booking. Please confirm the database tables match the expected structure.';
     }
@@ -352,6 +356,7 @@ if (!$bookingId || $customerId <= 0) {
 
                                     <?php if (canCancelBooking($bookingStatus) && !$isPaid): ?>
                                         <form method="post" action="booking.php?id=<?php echo h($booking['id']); ?>">
+                                            <?php echo csrfInput(); ?>
                                             <input type="hidden" name="action" value="cancel">
                                             <input type="hidden" name="booking_id" value="<?php echo h($booking['id']); ?>">
                                             <button type="submit" class="danger-button">Cancel Booking</button>
@@ -423,6 +428,7 @@ if (!$bookingId || $customerId <= 0) {
 
                                 <?php if (!$isPaid && $canPay): ?>
                                     <form method="post" action="booking.php?id=<?php echo h($booking['id']); ?>&payment=1" class="payment-method-form">
+                                        <?php echo csrfInput(); ?>
                                         <input type="hidden" name="action" value="pay">
                                         <input type="hidden" name="booking_id" value="<?php echo h($booking['id']); ?>">
 

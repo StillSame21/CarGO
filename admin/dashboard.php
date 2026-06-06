@@ -1,6 +1,9 @@
 <?php
-session_start();
+require_once __DIR__ . '/../includes/security.php';
 require_once '../db_connect.php';
+require_once __DIR__ . '/includes/auth.php';
+
+startSecureSession();
 
 function h($value): string
 {
@@ -213,10 +216,7 @@ function loadRecentDashboardCars(mysqli $conn): array
     return $result->fetch_all(MYSQLI_ASSOC);
 }
 
-if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
-    header('Location: login.php');
-    exit;
-}
+requireAdminLogin();
 
 $error = '';
 $carStats = [

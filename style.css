@@ -265,6 +265,26 @@ button:disabled:hover {
     white-space: nowrap;
 }
 
+.header-logout-form {
+    display: flex;
+}
+
+.header-logout-form button {
+    margin: 0;
+    padding: 10px 12px;
+    border: 0;
+    border-radius: 6px;
+    color: #46576a;
+    background: transparent;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.header-logout-form button:hover {
+    color: #17212b;
+    background: #fff4d2;
+}
+
 .dashboard-content {
     flex: 1;
     padding: var(--dashboard-page-padding);

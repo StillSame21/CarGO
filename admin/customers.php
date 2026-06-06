@@ -1,7 +1,10 @@
 <?php
-session_start();
+require_once __DIR__ . '/../includes/security.php';
 require_once '../db_connect.php';
 require_once __DIR__ . '/includes/filter_bar.php';
+require_once __DIR__ . '/includes/auth.php';
+
+startSecureSession();
 
 function h($value): string
 {
@@ -131,10 +134,7 @@ function loadCustomerBookingSummary(mysqli $conn, int $customerId): array
     return $summary;
 }
 
-if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
-    header('Location: login.php');
-    exit;
-}
+requireAdminLogin();
 
 $statuses = ['active', 'inactive', 'blocked'];
 $error = '';
@@ -173,6 +173,8 @@ try {
     $conn = getDbConnection();
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        requireValidCsrfToken();
+
         $action = trim($_POST['action'] ?? '');
         $postedCustomerId = filter_input(INPUT_POST, 'customer_id', FILTER_VALIDATE_INT) ?: 0;
 
@@ -431,6 +433,7 @@ try {
                             <?php endif; ?>
 
                             <form method="post" action="<?php echo h(customerPageUrl($listState, ['edit' => $editCustomerId])); ?>">
+                                <?php echo csrfInput(); ?>
                                 <input type="hidden" name="action" value="update_customer">
                                 <input type="hidden" name="customer_id" value="<?php echo h($editCustomerId); ?>">
 
@@ -534,6 +537,7 @@ try {
                                                         <a class="table-action-link" href="<?php echo h(customerPageUrl($listState, ['edit' => $row['id']])); ?>">Edit</a>
                                                         <?php if ($row['status'] === 'blocked'): ?>
                                                             <form method="post" action="<?php echo h(customerPageUrl($listState)); ?>">
+                                                                <?php echo csrfInput(); ?>
                                                                 <input type="hidden" name="action" value="toggle_status">
                                                                 <input type="hidden" name="customer_id" value="<?php echo h($row['id']); ?>">
                                                                 <input type="hidden" name="target_status" value="active">
@@ -541,6 +545,7 @@ try {
                                                             </form>
                                                         <?php else: ?>
                                                             <form method="post" action="<?php echo h(customerPageUrl($listState)); ?>" onsubmit="return confirm('Block this customer?');">
+                                                                <?php echo csrfInput(); ?>
                                                                 <input type="hidden" name="action" value="toggle_status">
                                                                 <input type="hidden" name="customer_id" value="<?php echo h($row['id']); ?>">
                                                                 <input type="hidden" name="target_status" value="blocked">
