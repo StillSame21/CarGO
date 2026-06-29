@@ -249,225 +249,173 @@ try {
 } catch (mysqli_sql_exception $e) {
     $error = 'Could not load dashboard data. Please check the database connection and schema.';
 }
-
-$totalRevenue = $bookingRevenue + $lateFeeRevenue;
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CarGo Admin Dashboard</title>
-    <link rel="stylesheet" href="../css/style.css">
-    <link rel="stylesheet" href="../css/admin.css">
-</head>
-<body>
-    <main class="dashboard-page">
-        <header class="dashboard-header">
-            <?php include 'header.php'; ?>
-        </header>
-
-        <section class="dashboard-content">
-            <div class="dashboard-shell">
-                <header class="page-heading">
-                    <div>
-                        <p class="eyebrow">Admin Dashboard</p>
-                        <h1>Admin Dashboard</h1>
-                        <p class="dashboard-heading-subtitle">Overview of cars, bookings, customers, and rental activity.</p>
-                    </div>
-                </header>
-
-                <?php if ($error !== ''): ?>
-                    <p class="message error"><?php echo h($error); ?></p>
-                <?php endif; ?>
-
-                <section class="dashboard-overview-grid">
-                    <section class="dashboard-overview-panel">
-                        <div class="admin-section-heading">
-                            <p class="eyebrow">Cars</p>
-                            <h2>Car Status Overview</h2>
-                        </div>
-                        <div class="dashboard-status-list">
-                            <?php foreach (['available', 'unavailable', 'maintenance'] as $status): ?>
-                                <div>
-                                    <span class="status-pill <?php echo h(dashboardStatusClass($status)); ?>"><?php echo h(ucfirst($status)); ?></span>
-                                    <strong><?php echo h($carStats[$status]); ?></strong>
-                                </div>
-                            <?php endforeach; ?>
-                            <div>
-                                <span class="status-pill status-inactive">Archived</span>
-                                <strong><?php echo h($carStats['archived']); ?></strong>
-                            </div>
-                        </div>
-                    </section>
-
-                    <section class="dashboard-overview-panel">
-                        <div class="admin-section-heading">
-                            <p class="eyebrow">Bookings</p>
-                            <h2>Booking Status Overview</h2>
-                        </div>
-                        <div class="dashboard-status-list">
-                            <?php foreach ($bookingStats as $status => $count): ?>
-                                <?php if ($status === 'total') {
-                                    continue;
-                                } ?>
-                                <div>
-                                    <span class="status-pill <?php echo h(dashboardStatusClass($status)); ?>"><?php echo h(ucfirst($status)); ?></span>
-                                    <strong><?php echo h($count); ?></strong>
-                                </div>
-                            <?php endforeach; ?>
-                        </div>
-                    </section>
-
-                </section>
-
-                <section class="dashboard-overview-panel dashboard-revenue-panel">
-                    <div class="admin-section-heading">
-                        <p class="eyebrow">Revenue</p>
-                        <h2>Revenue Overview</h2>
-                    </div>
-                    <div class="dashboard-revenue-list">
-                        <div>
-                            <span>Booking revenue</span>
-                            <strong>RM <?php echo h(number_format($bookingRevenue, 2)); ?></strong>
-                        </div>
-                        <div>
-                            <span>Late fee revenue</span>
-                            <strong>RM <?php echo h(number_format($lateFeeRevenue, 2)); ?></strong>
-                        </div>
-                        <div class="dashboard-revenue-total">
-                            <span>Total revenue</span>
-                            <strong>RM <?php echo h(number_format($totalRevenue, 2)); ?></strong>
-                        </div>
-                    </div>
-                </section>
-
-                <section class="dashboard-table-grid">
-                    <section class="cars-list-panel">
-                        <header class="panel-heading">
-                            <p class="eyebrow">Bookings</p>
-                            <h2>Recent Bookings</h2>
-                        </header>
-
-                        <?php if (count($recentBookings) === 0): ?>
-                            <p class="empty-table-message">No bookings found.</p>
-                        <?php else: ?>
-                            <div class="table-wrap">
-                                <table>
-                                    <thead>
-                                        <tr>
-                                            <th>Booking</th>
-                                            <th>Customer</th>
-                                            <th>Car</th>
-                                            <th>Dates</th>
-                                            <th>Days</th>
-                                            <th>Amount</th>
-                                            <th>Status</th>
-                                            <th>Created</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php foreach ($recentBookings as $booking): ?>
-                                            <tr>
-                                                <td><strong>#<?php echo h($booking['id']); ?></strong></td>
-                                                <td><?php echo h($booking['customer_name'] ?: 'Customer removed'); ?></td>
-                                                <td>
-                                                    <strong><?php echo h(trim(($booking['brand'] ?? '') . ' ' . ($booking['model'] ?? '')) ?: 'Car removed'); ?></strong>
-                                                    <span><?php echo h($booking['plate_number'] ?: 'No plate'); ?></span>
-                                                </td>
-                                                <td><?php echo h(formatDashboardDate($booking['pickup_date']) . ' - ' . formatDashboardDate($booking['return_date'])); ?></td>
-                                                <td><?php echo h($booking['total_days']); ?></td>
-                                                <td>RM <?php echo h(number_format((float) $booking['total_amount'], 2)); ?></td>
-                                                <td><span class="status-pill <?php echo h(dashboardStatusClass($booking['booking_status'])); ?>"><?php echo h(ucfirst($booking['booking_status'])); ?></span></td>
-                                                <td><?php echo h(formatDashboardDate($booking['created_at'])); ?></td>
-                                            </tr>
-                                        <?php endforeach; ?>
-                                    </tbody>
-                                </table>
-                            </div>
-                        <?php endif; ?>
-                    </section>
-
-                    <section class="cars-list-panel">
-                        <header class="panel-heading">
-                            <p class="eyebrow">Customers</p>
-                            <h2>Recent Customers</h2>
-                        </header>
-
-                        <?php if (count($recentCustomers) === 0): ?>
-                            <p class="empty-table-message">No customers found.</p>
-                        <?php else: ?>
-                            <div class="table-wrap">
-                                <table>
-                                    <thead>
-                                        <tr>
-                                            <th>ID</th>
-                                            <th>Name</th>
-                                            <th>Email</th>
-                                            <th>Phone</th>
-                                            <th>Status</th>
-                                            <th>Created</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php foreach ($recentCustomers as $customer): ?>
-                                            <tr>
-                                                <td>#<?php echo h($customer['id']); ?></td>
-                                                <td><strong><?php echo h($customer['name']); ?></strong></td>
-                                                <td><?php echo h($customer['email']); ?></td>
-                                                <td><?php echo h($customer['phone'] ?: 'Not provided'); ?></td>
-                                                <td><span class="status-pill <?php echo h(dashboardStatusClass($customer['status'])); ?>"><?php echo h(ucfirst($customer['status'])); ?></span></td>
-                                                <td><?php echo h(formatDashboardDate($customer['created_at'])); ?></td>
-                                            </tr>
-                                        <?php endforeach; ?>
-                                    </tbody>
-                                </table>
-                            </div>
-                        <?php endif; ?>
-                    </section>
-
-                    <section class="cars-list-panel">
-                        <header class="panel-heading">
-                            <p class="eyebrow">Inventory</p>
-                            <h2>Recent Cars</h2>
-                        </header>
-
-                        <?php if (count($recentCars) === 0): ?>
-                            <p class="empty-table-message">No active cars found.</p>
-                        <?php else: ?>
-                            <div class="table-wrap">
-                                <table>
-                                    <thead>
-                                        <tr>
-                                            <th>ID</th>
-                                            <th>Vehicle</th>
-                                            <th>Plate</th>
-                                            <th>Type</th>
-                                            <th>Rate</th>
-                                            <th>Status</th>
-                                            <th>Created</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php foreach ($recentCars as $car): ?>
-                                            <tr>
-                                                <td>#<?php echo h($car['id']); ?></td>
-                                                <td><strong><?php echo h($car['brand'] . ' ' . $car['model']); ?></strong></td>
-                                                <td><?php echo h($car['plate_number']); ?></td>
-                                                <td><?php echo h($car['car_type']); ?></td>
-                                                <td>RM <?php echo h(number_format((float) $car['daily_rate'], 2)); ?></td>
-                                                <td><span class="status-pill <?php echo h(dashboardStatusClass($car['status'])); ?>"><?php echo h(ucfirst($car['status'])); ?></span></td>
-                                                <td><?php echo h(formatDashboardDate($car['created_at'])); ?></td>
-                                            </tr>
-                                        <?php endforeach; ?>
-                                    </tbody>
-                                </table>
-                            </div>
-                        <?php endif; ?>
-                    </section>
-                </section>
+<?php
+$pageTitle = 'CarGo Admin Dashboard';
+include '../includes/layout_top.php';
+include 'header.php';
+?>
+<main class="dc-main">
+    <section class="dc-card-hero">
+        <div>
+            <div class="dc-mono-subtitle">Admin Dashboard</div>
+            <h1 class="dc-h1">Overview</h1>
+            <p class="dc-p">Overview of cars, bookings, customers, and rental activity.</p>
+        </div>
+        <div style="position:relative; aspect-ratio:16/10; border-radius:calc(var(--r,20px) - 4px); overflow:hidden; background:linear-gradient(140deg, #20273b 0%, #11151f 60%, #0a0d14 100%); border:1px solid #1c2233; display:flex; align-items:center; justify-content:center;">
+            <div style="position:absolute; inset:0; background-image:repeating-linear-gradient(135deg, rgba(255,255,255,0.04) 0px, rgba(255,255,255,0.04) 1px, transparent 1px, transparent 11px); pointer-events:none; z-index:1;"></div>
+            <div style="z-index:2; text-align:center;">
+                <span class="dc-stat-number" style="color:#fff; font-size:48px; display:block;">RM <?php echo h(number_format($totalRevenue, 2)); ?></span>
+                <span class="dc-stat-label" style="color:rgba(255,255,255,0.7);">Total Revenue</span>
             </div>
-        </section>
-    </main>
-</body>
-</html>
+        </div>
+    </section>
+
+    <?php if ($error !== ''): ?>
+        <p class="message error" style="color: #c23a52; background: #fbeaed; padding: 12px; border-radius: 8px; font-weight: 600;"><?php echo h($error); ?></p>
+    <?php endif; ?>
+
+    <section class="dc-grid-4">
+        <div class="dc-card">
+            <div class="dc-stat-header">
+                <span class="dc-mono-subtitle small">Active Cars</span>
+                <span class="dc-stat-dot blue"></span>
+            </div>
+            <span class="dc-stat-number"><?php echo h($carStats['active']); ?></span>
+            <span class="dc-stat-label">Out of <?php echo h($carStats['total']); ?> total cars</span>
+        </div>
+        
+        <div class="dc-card">
+            <div class="dc-stat-header">
+                <span class="dc-mono-subtitle small">Ongoing Bookings</span>
+                <span class="dc-stat-dot green"></span>
+            </div>
+            <span class="dc-stat-number"><?php echo h($bookingStats['ongoing'] ?? 0); ?></span>
+            <span class="dc-stat-label">Currently active</span>
+        </div>
+
+        <div class="dc-card">
+            <div class="dc-stat-header">
+                <span class="dc-mono-subtitle small">Pending Approvals</span>
+                <span class="dc-stat-dot yellow"></span>
+            </div>
+            <span class="dc-stat-number"><?php echo h($bookingStats['pending'] ?? 0); ?></span>
+            <span class="dc-stat-label">Needs attention</span>
+        </div>
+
+        <div class="dc-card">
+            <div class="dc-stat-header">
+                <span class="dc-mono-subtitle small">Maintenance</span>
+                <span class="dc-stat-dot gray"></span>
+            </div>
+            <span class="dc-stat-number"><?php echo h($carStats['maintenance']); ?></span>
+            <span class="dc-stat-label">Cars in repair</span>
+        </div>
+    </section>
+
+    <div class="dc-card padded" style="margin-bottom: 18px;">
+        <div class="dc-h2-title">
+            <div>
+                <div class="dc-mono-subtitle small" style="margin-bottom:8px">Bookings</div>
+                <h2 class="dc-h2">Recent Bookings</h2>
+            </div>
+            <a href="bookings.php" style="font-size:13px; font-weight:700; color:var(--accent); text-decoration:none;">View all</a>
+        </div>
+        <?php if (count($recentBookings) === 0): ?>
+            <p style="font-size:14px; color:#9097a8;">No bookings found.</p>
+        <?php else: ?>
+            <div class="dc-table-wrap">
+                <table class="dc-table">
+                    <thead>
+                        <tr>
+                            <th>Booking ID</th>
+                            <th>Customer</th>
+                            <th>Car</th>
+                            <th>Dates</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($recentBookings as $booking): ?>
+                            <tr>
+                                <td><strong>#<?php echo h($booking['id']); ?></strong></td>
+                                <td><?php echo h($booking['customer_name'] ?: 'Customer removed'); ?></td>
+                                <td>
+                                    <div style="font-weight:600;"><?php echo h(trim(($booking['brand'] ?? '') . ' ' . ($booking['model'] ?? '')) ?: 'Car removed'); ?></div>
+                                    <div style="font-size:12px; color:#9097a8;"><?php echo h($booking['plate_number'] ?: 'No plate'); ?></div>
+                                </td>
+                                <td><?php echo h(formatDashboardDate($booking['pickup_date']) . ' - ' . formatDashboardDate($booking['return_date'])); ?></td>
+                                <td>RM <?php echo h(number_format((float) $booking['total_amount'], 2)); ?></td>
+                                <td><span class="dc-status <?php echo h(strtolower($booking['booking_status'])); ?>"><?php echo h(ucfirst($booking['booking_status'])); ?></span></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        <?php endif; ?>
+    </div>
+
+    <section class="dc-grid-2-sidebar">
+        <div class="dc-card padded">
+            <div class="dc-h2-title">
+                <div>
+                    <div class="dc-mono-subtitle small" style="margin-bottom:8px">Customers</div>
+                    <h2 class="dc-h2">Recent Customers</h2>
+                </div>
+                <a href="customers.php" style="font-size:13px; font-weight:700; color:var(--accent); text-decoration:none;">View all</a>
+            </div>
+            <div class="dc-list-container">
+                <?php if (count($recentCustomers) === 0): ?>
+                    <p style="font-size:14px; color:#9097a8;">No customers found.</p>
+                <?php else: ?>
+                    <?php foreach ($recentCustomers as $customer): ?>
+                        <div class="dc-list-item">
+                            <div style="display:flex; flex-direction:column; gap:5px;">
+                                <span style="font-size:14.5px; font-weight:700;"><?php echo h($customer['name']); ?></span>
+                                <span style="font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:#9097a8;"><?php echo h($customer['email']); ?></span>
+                            </div>
+                            <span class="dc-status <?php echo h(strtolower($customer['status'])); ?>"><?php echo h(ucfirst($customer['status'])); ?></span>
+                        </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </div>
+        </div>
+        
+        <div class="dc-card padded">
+            <div class="dc-h2-title">
+                <div>
+                    <div class="dc-mono-subtitle small" style="margin-bottom:8px">Inventory</div>
+                    <h2 class="dc-h2">Recent Cars</h2>
+                </div>
+                <a href="manage_cars.php" style="font-size:13px; font-weight:700; color:var(--accent); text-decoration:none;">View all</a>
+            </div>
+            <div class="dc-table-wrap">
+                <table class="dc-table">
+                    <thead>
+                        <tr>
+                            <th>Vehicle</th>
+                            <th>Plate</th>
+                            <th>Rate</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($recentCars as $car): ?>
+                            <tr>
+                                <td>
+                                    <div style="font-weight:600;"><?php echo h($car['brand'] . ' ' . $car['model']); ?></div>
+                                    <div style="font-size:12px; color:#9097a8;"><?php echo h($car['car_type']); ?></div>
+                                </td>
+                                <td><?php echo h($car['plate_number']); ?></td>
+                                <td>RM <?php echo h(number_format((float) $car['daily_rate'], 2)); ?></td>
+                                <td><span class="dc-status <?php echo h(strtolower($car['status'])); ?>"><?php echo h(ucfirst($car['status'])); ?></span></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+</main>
+<?php include '../includes/layout_bottom.php'; ?>

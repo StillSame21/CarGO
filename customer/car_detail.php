@@ -143,160 +143,85 @@ if (!$carId) {
     }
 }
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Car Details | CarGo</title>
-    <link rel="stylesheet" href="../css/style.css">
-    <link rel="stylesheet" href="../css/customer.css">
-</head>
-<body>
-    <main class="dashboard-page">
-        <header class="dashboard-header">
-            <?php include 'header.php'; ?>
-        </header>
+<?php
+$pageTitle = 'Car Details | CarGo';
+include '../includes/layout_top.php';
+include 'header.php';
+?>
+<main class="dc-main">
+    <div style="margin-bottom: 24px;">
+        <a href="browse_cars.php" style="color:var(--accent); font-weight:600; text-decoration:none; font-size:14px; display:inline-flex; align-items:center; gap:6px;">
+            <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M10.5 13.5 L4.5 8 L10.5 2.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+            Back to available cars
+        </a>
+    </div>
 
-        <section class="dashboard-content">
-            <div class="dashboard-shell">
-                <a class="back-link" href="browse_cars.php">Back to available cars</a>
-
-                <?php if ($error !== ''): ?>
-                    <p class="message error"><?php echo h($error); ?></p>
-                <?php else: ?>
-                    <section class="vehicle-profile">
-                        <header class="vehicle-profile-header">
-                            <div>
-                                <div class="vehicle-badges" aria-label="Vehicle labels">
-                                    <span><?php echo h($car['car_type']); ?></span>
-                                    <span><?php echo h(ucfirst($car['status'])); ?></span>
-                                </div>
-                                <h1><?php echo h($car['brand'] . ' ' . $car['model']); ?></h1>
-                                <p>Comfortable, ready-to-rent vehicle prepared for your selected dates.</p>
-                            </div>
-
-                            <div class="vehicle-rate">
-                                <span>Daily Rate</span>
-                                <strong>RM <?php echo h(number_format((float) $car['daily_rate'], 2)); ?></strong>
-                                <small>per day</small>
-                            </div>
-                        </header>
-
-                        <div class="vehicle-profile-main">
-                            <div class="vehicle-media">
-                                <img
-                                    src="<?php echo h(carImageUrl($car['image'], 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=1100&q=80')); ?>"
-                                    alt="<?php echo h($car['brand'] . ' ' . $car['model']); ?>"
-                                >
-                            </div>
-
-                            <section class="vehicle-spec-panel" aria-label="Vehicle details">
-                                <div class="section-heading">
-                                    <p class="eyebrow">Vehicle Details</p>
-                                    <h2>Key specifications</h2>
-                                </div>
-
-                                <dl class="vehicle-spec-grid">
-                                    <div>
-                                        <dt>Plate Number</dt>
-                                        <dd><?php echo h($car['plate_number']); ?></dd>
-                                    </div>
-                                    <div>
-                                        <dt>Transmission</dt>
-                                        <dd><?php echo h($car['transmission']); ?></dd>
-                                    </div>
-                                    <div>
-                                        <dt>Fuel Type</dt>
-                                        <dd><?php echo h($car['fuel_type']); ?></dd>
-                                    </div>
-                                    <div>
-                                        <dt>Seats</dt>
-                                        <dd><?php echo h($car['seats']); ?> seats</dd>
-                                    </div>
-                                    <div>
-                                        <dt>Status</dt>
-                                        <dd><?php echo h(ucfirst($car['status'])); ?></dd>
-                                    </div>
-                                </dl>
-                            </section>
+    <?php if ($error !== ''): ?>
+        <p class="message error" style="color: #c23a52; background: #fbeaed; padding: 12px; border-radius: 8px; font-weight: 600;"><?php echo h($error); ?></p>
+    <?php else: ?>
+        <section class="dc-grid-2-sidebar">
+            <!-- Left Column: Details & Images -->
+            <div style="display:flex; flex-direction:column; gap:24px;">
+                <div class="dc-card" style="overflow:hidden;">
+                    <img
+                        src="<?php echo h(carImageUrl($car['image'], 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=1100&q=80')); ?>"
+                        alt="<?php echo h($car['brand'] . ' ' . $car['model']); ?>"
+                        style="width:100%; aspect-ratio:16/9; object-fit:cover; display:block;"
+                    >
+                </div>
+                
+                <div class="dc-card padded">
+                    <div class="dc-h2-title">
+                        <div>
+                            <div class="dc-mono-subtitle small" style="margin-bottom:8px">Vehicle Details</div>
+                            <h2 class="dc-h2">Key specifications</h2>
                         </div>
+                    </div>
+                    
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap:20px; margin-top:20px;">
+                        <div>
+                            <div style="color:#9097a8; font-size:13px; margin-bottom:6px;">Plate Number</div>
+                            <div style="font-weight:600; font-size:15px;"><?php echo h($car['plate_number']); ?></div>
+                        </div>
+                        <div>
+                            <div style="color:#9097a8; font-size:13px; margin-bottom:6px;">Transmission</div>
+                            <div style="font-weight:600; font-size:15px;"><?php echo h($car['transmission']); ?></div>
+                        </div>
+                        <div>
+                            <div style="color:#9097a8; font-size:13px; margin-bottom:6px;">Fuel Type</div>
+                            <div style="font-weight:600; font-size:15px;"><?php echo h($car['fuel_type']); ?></div>
+                        </div>
+                        <div>
+                            <div style="color:#9097a8; font-size:13px; margin-bottom:6px;">Seats</div>
+                            <div style="font-weight:600; font-size:15px;"><?php echo h($car['seats']); ?> seats</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-                        <section class="booking-panel" aria-label="Check car availability">
-                            <div class="booking-panel-heading">
-                                <div>
-                                    <p class="eyebrow">Availability</p>
-                                    <h2>Choose your rental dates</h2>
-                                </div>
-                                <p class="availability-note <?php echo h($availabilityTone); ?>"><?php echo h($availabilityMessage); ?></p>
-                            </div>
-
-                            <div class="booking-workflow">
-                                <form method="get" action="car_detail.php" id="availability-form" class="availability-date-form">
-                                    <input type="hidden" name="id" value="<?php echo h($car['id']); ?>">
-                                    <input type="hidden" name="car_id" value="<?php echo h($car['id']); ?>">
-
-                                    <label for="pickup_date">
-                                        Pickup Date
-                                        <input
-                                            type="date"
-                                            id="pickup_date"
-                                            name="pickup_date"
-                                            value="<?php echo h($pickupDate); ?>"
-                                            min="<?php echo h($today); ?>"
-                                        >
-                                    </label>
-
-                                    <label for="return_date">
-                                        Return Date
-                                        <input
-                                            type="date"
-                                            id="return_date"
-                                            name="return_date"
-                                            value="<?php echo h($returnDate); ?>"
-                                            min="<?php echo h($pickupDate !== '' ? $pickupDate : $today); ?>"
-                                        >
-                                    </label>
-
-                                    <button type="submit" class="secondary-button">Check Availability</button>
-                                </form>
-
-                                <form method="post" action="car_detail.php" class="availability-date-form">
-                                    <?php echo csrfInput(); ?>
-                                    <input type="hidden" name="action" value="book">
-                                    <input type="hidden" name="car_id" value="<?php echo h($car['id']); ?>">
-                                    <input type="hidden" name="pickup_date" value="<?php echo h($pickupDate); ?>">
-                                    <input type="hidden" name="return_date" value="<?php echo h($returnDate); ?>">
-                                    <button type="submit"<?php echo $availabilityPassed ? '' : ' disabled'; ?>>Book</button>
-                                </form>
-                            </div>
-                        </section>
-                    </section>
-                <?php endif; ?>
+            <!-- Right Column: Info & Booking -->
+            <div style="display:flex; flex-direction:column; gap:24px;">
+                <div class="dc-card padded">
+                    <div style="display:flex; gap:8px; margin-bottom:16px;">
+                        <span class="dc-car-tag" style="position:static;"><?php echo h($car['car_type']); ?></span>
+                        <span class="dc-status available" style="padding:4px 8px; font-size:11px;"><?php echo h(ucfirst($car['status'])); ?></span>
+                    </div>
+                    
+                    <h1 class="dc-h1" style="font-size:28px; margin-bottom:8px;"><?php echo h($car['brand'] . ' ' . $car['model']); ?></h1>
+                    <p class="dc-p" style="font-size:14px; margin-bottom:24px;">Comfortable, ready-to-rent vehicle prepared for your next journey.</p>
+                    
+                    <div style="padding:16px; background:#f9fafc; border-radius:12px; display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+                        <span style="color:#5b6273; font-size:14px; font-weight:600;">Daily Rate</span>
+                        <div style="text-align:right;">
+                            <strong style="font-size:20px; font-weight:800; color:#131722;">RM <?php echo h(number_format((float) $car['daily_rate'], 2)); ?></strong>
+                            <span style="color:#9097a8; font-size:13px;">/ day</span>
+                        </div>
+                    </div>
+                    
+                    <a href="booking.php?car_id=<?php echo h($car['id']); ?>" class="dc-btn-primary" style="width:100%; justify-content:center; padding:14px;">Book Now</a>
+                </div>
             </div>
         </section>
-    </main>
-    <script>
-    const pickupInput = document.getElementById('pickup_date');
-    const returnInput = document.getElementById('return_date');
-    const bookButton = document.querySelector('form[method="post"][action="car_detail.php"] button[type="submit"]');
-
-    if (pickupInput && returnInput && bookButton) {
-        const originalPickup = pickupInput.value;
-        const originalReturn = returnInput.value;
-
-        const monitorDates = () => {
-            if (pickupInput.value !== originalPickup || returnInput.value !== originalReturn) {
-                bookButton.disabled = true;
-                bookButton.innerText = 'Dates Changed (Re-check)';
-            } else {
-                bookButton.disabled = false;
-                bookButton.innerText = 'Book';
-            }
-        };
-        pickupInput.addEventListener('change', monitorDates);
-        returnInput.addEventListener('change', monitorDates);
-    }
-    </script>
-</body>
-</html>
+    <?php endif; ?>
+</main>
+<?php include '../includes/layout_bottom.php'; ?>

@@ -1,4 +1,5 @@
 <?php
+
 // database/migrate.php
 require_once __DIR__ . '/../db_connect.php';
 
@@ -19,7 +20,9 @@ try {
         'cargo_rental.sql',
         'ensure_car_archived_at.sql',
         'ensure_cancelled_booking_status.sql',
-        'ensure_completed_booking_status.sql'
+        'ensure_completed_booking_status.sql',
+        'addons.sql',
+        'maintenance.sql'
     ];
 
     foreach ($migrations as $migration) {

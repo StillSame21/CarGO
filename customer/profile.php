@@ -157,100 +157,84 @@ try {
     $error = 'Could not update your profile. Please check the database connection.';
 }
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profile Settings | CarGo</title>
-    <link rel="stylesheet" href="../css/style.css">
-    <link rel="stylesheet" href="../css/customer.css">
-</head>
-<body>
-    <main class="dashboard-page">
-        <header class="dashboard-header">
-            <?php include 'header.php'; ?>
-        </header>
+<?php
+$pageTitle = 'Profile Settings | CarGo';
+include '../includes/layout_top.php';
+include 'header.php';
+?>
+<main class="dc-main">
+    <header class="dc-h2-title" style="margin-bottom: 24px; display:flex; justify-content:space-between; align-items:center;">
+        <div>
+            <div class="dc-mono-subtitle small" style="margin-bottom:8px">Account</div>
+            <h1 class="dc-h1" style="font-size:32px;">Profile settings</h1>
+        </div>
+        <a class="dc-btn-secondary" href="dashboard.php" style="background:#fff;">Back to Dashboard</a>
+    </header>
 
-        <section class="dashboard-content">
-            <div class="dashboard-shell">
-                <header class="page-heading profile-heading">
-                    <div>
-                        <p class="eyebrow">Account</p>
-                        <h1>Profile settings</h1>
-                    </div>
-                    <a class="secondary-action" href="dashboard.php">Back to Dashboard</a>
-                </header>
+    <div class="dc-card padded" style="max-width: 600px; margin: 0 auto;">
+        <h2 class="dc-h2" style="font-size:20px; margin-bottom:8px;">Personal information</h2>
+        <p class="dc-p" style="margin-bottom:24px; font-size:14px;">Update your account details and password.</p>
 
-                <section class="profile-settings-layout">
-                    <section class="login-card register-card profile-settings-card">
-                        <h2>Personal information</h2>
-                        <p class="subtitle">Update your account details and password.</p>
+        <?php if ($error !== ''): ?>
+            <p class="message error" style="color: #c23a52; background: #fbeaed; padding: 12px; border-radius: 8px; font-weight: 600; margin-bottom:24px;"><?php echo h($error); ?></p>
+        <?php endif; ?>
 
-                        <?php if ($error !== ''): ?>
-                            <div class="message error"><?php echo h($error); ?></div>
-                        <?php endif; ?>
+        <?php if ($success !== ''): ?>
+            <p class="message success" style="color: #0b7a5a; background: #e6f6f1; padding: 12px; border-radius: 8px; font-weight: 600; margin-bottom:24px;"><?php echo h($success); ?></p>
+        <?php endif; ?>
 
-                        <?php if ($success !== ''): ?>
-                            <div class="message success"><?php echo h($success); ?></div>
-                        <?php endif; ?>
+        <form method="post" action="profile.php">
+            <?php echo csrfInput(); ?>
 
-                        <form method="post" action="profile.php" class="profile-settings-form">
-                            <?php echo csrfInput(); ?>
+            <div style="display:flex; flex-direction:column; gap:16px;">
+                <label style="display:block;">
+                    <span style="display:block; margin-bottom:6px; font-size:13px; font-weight:600;">Full Name</span>
+                    <input type="text" id="name" name="name" value="<?php echo h($name); ?>" maxlength="100" autocomplete="name" required class="dc-input" style="width:100%;">
+                </label>
 
-                            <div class="profile-form-grid">
-                                <label for="name">
-                                    Full Name
-                                    <input type="text" id="name" name="name" value="<?php echo h($name); ?>" maxlength="100" autocomplete="name" required>
-                                </label>
+                <label style="display:block;">
+                    <span style="display:block; margin-bottom:6px; font-size:13px; font-weight:600;">Email</span>
+                    <input type="email" id="email" name="email" value="<?php echo h($email); ?>" maxlength="150" autocomplete="email" required class="dc-input" style="width:100%;">
+                </label>
 
-                                <label for="email">
-                                    Email
-                                    <input type="email" id="email" name="email" value="<?php echo h($email); ?>" maxlength="150" autocomplete="email" required>
-                                </label>
+                <label style="display:block;">
+                    <span style="display:block; margin-bottom:6px; font-size:13px; font-weight:600;">Phone</span>
+                    <input type="tel" id="phone" name="phone" value="<?php echo h($phone); ?>" maxlength="30" autocomplete="tel" class="dc-input" style="width:100%;">
+                </label>
 
-                                <label for="phone">
-                                    Phone
-                                    <input type="tel" id="phone" name="phone" value="<?php echo h($phone); ?>" maxlength="30" autocomplete="tel">
-                                </label>
-
-                                <label for="address" class="profile-full-width">
-                                    Address
-                                    <textarea id="address" name="address" rows="3" maxlength="255"><?php echo h($address); ?></textarea>
-                                </label>
-                            </div>
-
-                            <div class="profile-password-section">
-                                <h3>Password</h3>
-                                <p>Leave these fields blank if you do not want to change your password.</p>
-
-                                <div class="profile-form-grid">
-                                    <label for="current_password">
-                                        Current Password
-                                        <input type="password" id="current_password" name="current_password" autocomplete="current-password">
-                                    </label>
-
-                                    <label for="new_password">
-                                        New Password
-                                        <input type="password" id="new_password" name="new_password" autocomplete="new-password">
-                                    </label>
-
-                                    <label for="confirm_password">
-                                        Confirm New Password
-                                        <input type="password" id="confirm_password" name="confirm_password" autocomplete="new-password">
-                                    </label>
-                                </div>
-                            </div>
-
-                            <div class="profile-form-actions">
-                                <button type="submit">Save Changes</button>
-                                <a class="cancel-edit-link" href="dashboard.php">Cancel</a>
-                            </div>
-                        </form>
-                    </section>
-                </section>
+                <label style="display:block;">
+                    <span style="display:block; margin-bottom:6px; font-size:13px; font-weight:600;">Address</span>
+                    <textarea id="address" name="address" rows="3" maxlength="255" class="dc-input" style="width:100%; min-height:80px; resize:vertical;"><?php echo h($address); ?></textarea>
+                </label>
             </div>
-        </section>
-    </main>
-</body>
-</html>
+
+            <div style="margin-top:32px; padding-top:24px; border-top:1px solid #e4e8f1;">
+                <h3 class="dc-h2" style="font-size:18px; margin-bottom:8px;">Password</h3>
+                <p class="dc-p" style="margin-bottom:20px; font-size:13px;">Leave these fields blank if you do not want to change your password.</p>
+
+                <div style="display:flex; flex-direction:column; gap:16px;">
+                    <label style="display:block;">
+                        <span style="display:block; margin-bottom:6px; font-size:13px; font-weight:600;">Current Password</span>
+                        <input type="password" id="current_password" name="current_password" autocomplete="current-password" class="dc-input" style="width:100%;">
+                    </label>
+
+                    <label style="display:block;">
+                        <span style="display:block; margin-bottom:6px; font-size:13px; font-weight:600;">New Password</span>
+                        <input type="password" id="new_password" name="new_password" autocomplete="new-password" class="dc-input" style="width:100%;">
+                    </label>
+
+                    <label style="display:block;">
+                        <span style="display:block; margin-bottom:6px; font-size:13px; font-weight:600;">Confirm New Password</span>
+                        <input type="password" id="confirm_password" name="confirm_password" autocomplete="new-password" class="dc-input" style="width:100%;">
+                    </label>
+                </div>
+            </div>
+
+            <div style="margin-top:32px; display:flex; gap:12px; align-items:center;">
+                <button type="submit" class="dc-btn-primary" style="padding:12px 24px;">Save Changes</button>
+                <a href="dashboard.php" style="color:#5b6273; font-weight:600; font-size:14px; text-decoration:none;">Cancel</a>
+            </div>
+        </form>
+    </div>
+</main>
+<?php include '../includes/layout_bottom.php'; ?>

@@ -73,34 +73,22 @@ function requireSuperAdmin(): void
     }
 
     http_response_code(403);
+    $pageTitle = 'Access Denied | CarGo Admin';
+    include __DIR__ . '/../../includes/layout_top.php';
+    include __DIR__ . '/../header.php';
     ?>
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Access Denied | CarGo Admin</title>
-        <link rel="stylesheet" href="../css/style.css">
-        <link rel="stylesheet" href="../css/admin.css">
-    </head>
-    <body>
-        <main class="dashboard-page">
-            <header class="dashboard-header">
-                <?php include __DIR__ . '/../header.php'; ?>
-            </header>
-
-            <section class="dashboard-content">
-                <div class="dashboard-shell">
-                    <section class="empty-admin-panel">
-                        <p class="eyebrow">Access Denied</p>
-                        <h1>Super admin access required.</h1>
-                        <p>You do not have permission to manage admin accounts.</p>
-                    </section>
-                </div>
-            </section>
-        </main>
-    </body>
-    </html>
+    <main class="dc-main">
+        <div class="dc-card" style="max-width: 600px; margin: 40px auto; text-align: center; padding: 40px 24px;">
+            <div style="width: 64px; height: 64px; background: #fbeaed; color: #c23a52; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px;">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+            </div>
+            <p class="dc-mono-subtitle small" style="margin-bottom:8px">Access Denied</p>
+            <h1 class="dc-h1" style="font-size:24px; margin-bottom: 16px;">Super admin access required.</h1>
+            <p style="color: #5b6273; margin-bottom: 32px;">You do not have permission to manage admin accounts.</p>
+            <a href="dashboard.php" class="dc-btn-primary" style="display: inline-flex; justify-content: center;">Return to Dashboard</a>
+        </div>
+    </main>
+    <?php include __DIR__ . '/../../includes/layout_bottom.php'; ?>
     <?php
     exit;
 }

@@ -1,75 +1,61 @@
 <?php
 $customerDisplayName = $_SESSION['customer_name'] ?? $_SESSION['user_email'] ?? 'Customer';
+// Extract first two letters for avatar
+$avatarLetters = strtoupper(substr(preg_replace('/[^a-zA-Z]/', '', $customerDisplayName) . 'AA', 0, 2));
 $currentPage = basename($_SERVER['PHP_SELF']);
 $isProfilePage = $currentPage === 'profile.php';
 ?>
-<div class="dashboard-header-inner">
-    <a class="dashboard-logo" href="dashboard.php">CarGo</a>
+<header class="dc-header">
+    <div class="dc-header-inner">
+        <a href="dashboard.php" class="dc-logo">
+            <span>C</span>arGo
+        </a>
 
-    <nav class="dashboard-nav" aria-label="Customer navigation">
-        <a href="browse_cars.php" class="<?php echo in_array($currentPage, ['browse_cars.php', 'car_detail.php'], true) ? 'active' : ''; ?>">Browse Cars</a>
-        <a href="my_bookings.php" class="<?php echo in_array($currentPage, ['my_bookings.php', 'booking.php'], true) ? 'active' : ''; ?>">My Bookings</a>
-        <a href="#">Support</a>
-    </nav>
+        <nav class="dc-nav" aria-label="Customer navigation">
+            <a href="dashboard.php" class="<?php echo $currentPage === 'dashboard.php' ? 'active' : ''; ?>">Dashboard</a>
+            <a href="browse_cars.php" class="<?php echo in_array($currentPage, ['browse_cars.php', 'car_detail.php'], true) ? 'active' : ''; ?>">Browse Cars</a>
+            <a href="my_bookings.php" class="<?php echo in_array($currentPage, ['my_bookings.php', 'booking.php'], true) ? 'active' : ''; ?>">My Bookings</a>
+            <a href="#">Support</a>
+        </nav>
 
-    <div class="dashboard-account customer-account-menu" data-customer-menu>
-        <button
-            type="button"
-            class="customer-account-button<?php echo $isProfilePage ? ' active' : ''; ?>"
-            aria-haspopup="true"
-            aria-expanded="false"
-            data-customer-menu-button
-        >
-            <span><?php echo htmlspecialchars($customerDisplayName, ENT_QUOTES, 'UTF-8'); ?></span>
-            <span class="customer-account-caret" aria-hidden="true">&#9662;</span>
-        </button>
-
-        <div class="customer-account-dropdown" data-customer-menu-dropdown>
-            <a href="profile.php" class="<?php echo $isProfilePage ? 'active' : ''; ?>">Profile Settings</a>
-            <form method="post" action="../logout.php">
-                <?php echo csrfInput(); ?>
-                <button type="submit">Logout</button>
-            </form>
+        <div class="dc-header-actions">
+            <!-- Search bar placeholder -->
+            <div class="dc-search">
+                <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="5" fill="none" stroke="#9097a8" stroke-width="1.6"></circle><line x1="10.8" y1="10.8" x2="14.5" y2="14.5" stroke="#9097a8" stroke-width="1.6" stroke-linecap="round"></line></svg>
+                Search cars, bookings
+            </div>
+            
+            <!-- User Menu -->
+            <div style="position: relative;" class="dashboard-account">
+                <button type="button" class="dc-user-btn" onclick="document.getElementById('customerDropdown').classList.toggle('show')">
+                    <span class="dc-avatar"><?php echo htmlspecialchars($avatarLetters); ?></span>
+                    <span class="dc-user-info">
+                        <span class="dc-user-name"><?php echo htmlspecialchars($customerDisplayName, ENT_QUOTES, 'UTF-8'); ?></span>
+                        <span class="dc-user-role">Member</span>
+                    </span>
+                    <svg width="11" height="11" viewBox="0 0 12 12" aria-hidden="true" style="margin-left:2px;"><path d="M2.5 4.5 L6 8 L9.5 4.5" fill="none" stroke="#9097a8" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                </button>
+                <div id="customerDropdown" style="display:none; position:absolute; top:100%; right:0; background:#fff; border:1px solid #e4e8f1; border-radius:12px; padding:8px; min-width:150px; box-shadow:0 12px 24px rgba(0,0,0,0.1); margin-top:8px;">
+                    <a href="profile.php" style="display:block; padding:8px 12px; text-decoration:none; color:#131722; font-size:14px; font-weight:600; border-radius:8px; margin-bottom:4px;" onmouseover="this.style.background='#f1f3f9'" onmouseout="this.style.background='none'">Profile Settings</a>
+                    <form method="post" action="../logout.php" style="margin:0;">
+                        <?php echo csrfInput(); ?>
+                        <button type="submit" style="width:100%; text-align:left; padding:8px 12px; background:none; border:none; cursor:pointer; font-size:14px; font-weight:600; color:#c23a52; border-radius:8px;" onmouseover="this.style.background='#fbeaed'" onmouseout="this.style.background='none'">Logout</button>
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
-</div>
-
+</header>
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    var menu = document.querySelector('[data-customer-menu]');
-
-    if (!menu) {
-        return;
+// Simple click outside to close dropdown
+document.addEventListener('click', function(e) {
+    var btn = e.target.closest('.dc-user-btn');
+    var dropdown = document.getElementById('customerDropdown');
+    if (!btn && dropdown) {
+        dropdown.classList.remove('show');
+        dropdown.style.display = 'none';
+    } else if (btn && dropdown) {
+        dropdown.style.display = dropdown.classList.contains('show') ? 'block' : 'none';
     }
-
-    var button = menu.querySelector('[data-customer-menu-button]');
-    var dropdown = menu.querySelector('[data-customer-menu-dropdown]');
-
-    function closeMenu() {
-        menu.classList.remove('is-open');
-        button.setAttribute('aria-expanded', 'false');
-    }
-
-    button.addEventListener('click', function () {
-        var isOpen = menu.classList.toggle('is-open');
-        button.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-    });
-
-    document.addEventListener('click', function (event) {
-        if (!menu.contains(event.target)) {
-            closeMenu();
-        }
-    });
-
-    document.addEventListener('keydown', function (event) {
-        if (event.key === 'Escape') {
-            closeMenu();
-            button.focus();
-        }
-    });
-
-    dropdown.addEventListener('click', function () {
-        closeMenu();
-    });
 });
 </script>

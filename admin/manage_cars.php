@@ -284,180 +284,190 @@ try {
     }
 }
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manage CarGo Cars</title>
-    <link rel="stylesheet" href="../css/style.css">
-    <link rel="stylesheet" href="../css/admin.css">
-</head>
-<body>
-    <main class="dashboard-page">
-        <header class="dashboard-header">
-            <?php include 'header.php'; ?>
-        </header>
+<?php
+$pageTitle = 'Manage CarGo Cars';
+include '../includes/layout_top.php';
+include 'header.php';
+?>
+<main class="dc-main">
+    <header class="dc-h2-title" style="margin-bottom: 24px;">
+        <div>
+            <div class="dc-mono-subtitle small" style="margin-bottom:8px">Inventory</div>
+            <h1 class="dc-h1" style="font-size:32px;">Manage Cars</h1>
+            <p class="dc-p" style="margin-top:8px;">Add and update vehicles that customers can rent.</p>
+        </div>
+    </header>
 
-        <section class="dashboard-content dashboard-shell manage-cars-layout">
-            <section class="login-card car-form-card">
-                <h2><?php echo $isEditMode ? 'Update Car' : 'Manage Cars'; ?></h2>
-                <p class="subtitle"><?php echo $isEditMode ? 'Update this vehicle without creating a duplicate.' : 'Add vehicles that customers can rent.'; ?></p>
+    <?php if ($error !== ''): ?>
+        <p class="message error" style="color: #c23a52; background: #fbeaed; padding: 12px; border-radius: 8px; font-weight: 600; margin-bottom:24px;"><?php echo h($error); ?></p>
+    <?php endif; ?>
 
-                <?php if ($error !== ''): ?>
-                    <p class="message error"><?php echo h($error); ?></p>
-                <?php endif; ?>
+    <?php if ($success !== ''): ?>
+        <p class="message success" style="color: #0b7a5a; background: #e6f6f1; padding: 12px; border-radius: 8px; font-weight: 600; margin-bottom:24px;"><?php echo h($success); ?></p>
+    <?php endif; ?>
 
-                <?php if ($success !== ''): ?>
-                    <p class="message success"><?php echo h($success); ?></p>
-                <?php endif; ?>
+    <div style="display:grid; grid-template-columns: minmax(320px, 450px) 1fr; gap:24px; align-items:start;">
+        <div class="dc-card padded" style="position:sticky; top:24px;">
+            <h2 class="dc-h2" style="font-size:20px; margin-bottom:8px;"><?php echo $isEditMode ? 'Update Car' : 'Add New Car'; ?></h2>
+            <p class="dc-p" style="margin-bottom:24px; font-size:14px;"><?php echo $isEditMode ? 'Update this vehicle without creating a duplicate.' : 'Enter details for a new vehicle.'; ?></p>
 
-                <form class="form-grid" method="post" action="manage_cars.php" enctype="multipart/form-data">
-                    <?php echo csrfInput(); ?>
+            <form method="post" action="manage_cars.php" enctype="multipart/form-data">
+                <?php echo csrfInput(); ?>
+                <input type="hidden" name="form_action" value="<?php echo $isEditMode ? 'update_car' : 'add_car'; ?>">
+                <input type="hidden" name="car_id" value="<?php echo h($editCarId); ?>">
 
-                    <input type="hidden" name="form_action" value="<?php echo $isEditMode ? 'update_car' : 'add_car'; ?>">
-                    <input type="hidden" name="car_id" value="<?php echo h($editCarId); ?>">
-
-                    <label for="brand">
-                        Brand
-                        <input type="text" id="brand" name="brand" value="<?php echo h($brand); ?>" maxlength="100" required>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+                    <label style="display:block;">
+                        <span style="display:block; margin-bottom:6px; font-size:13px; font-weight:600;">Brand</span>
+                        <input type="text" name="brand" value="<?php echo h($brand); ?>" maxlength="100" required class="dc-input" style="width:100%;">
                     </label>
-
-                    <label for="model">
-                        Model
-                        <input type="text" id="model" name="model" value="<?php echo h($model); ?>" maxlength="100" required>
+                    <label style="display:block;">
+                        <span style="display:block; margin-bottom:6px; font-size:13px; font-weight:600;">Model</span>
+                        <input type="text" name="model" value="<?php echo h($model); ?>" maxlength="100" required class="dc-input" style="width:100%;">
                     </label>
+                </div>
 
-                    <label for="plate_number">
-                        Plate Number
-                        <input type="text" id="plate_number" name="plate_number" value="<?php echo h($plateNumber); ?>" maxlength="30" required>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+                    <label style="display:block;">
+                        <span style="display:block; margin-bottom:6px; font-size:13px; font-weight:600;">Plate Number</span>
+                        <input type="text" name="plate_number" value="<?php echo h($plateNumber); ?>" maxlength="30" required class="dc-input" style="width:100%;">
                     </label>
-
-                    <label for="car_type">
-                        Car Type
-                        <select id="car_type" name="car_type" required>
+                    <label style="display:block;">
+                        <span style="display:block; margin-bottom:6px; font-size:13px; font-weight:600;">Car Type</span>
+                        <select name="car_type" required class="dc-input" style="width:100%;">
                             <?php foreach ($carTypes as $type): ?>
-                                <option value="<?php echo h($type); ?>"<?php echo selectedIf($carType, $type); ?>>
-                                    <?php echo h($type); ?>
-                                </option>
+                                <option value="<?php echo h($type); ?>"<?php echo selectedIf($carType, $type); ?>><?php echo h($type); ?></option>
                             <?php endforeach; ?>
                         </select>
                     </label>
+                </div>
 
-                    <label for="transmission">
-                        Transmission
-                        <select id="transmission" name="transmission" required>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+                    <label style="display:block;">
+                        <span style="display:block; margin-bottom:6px; font-size:13px; font-weight:600;">Transmission</span>
+                        <select name="transmission" required class="dc-input" style="width:100%;">
                             <?php foreach ($transmissions as $option): ?>
-                                <option value="<?php echo h($option); ?>"<?php echo selectedIf($transmission, $option); ?>>
-                                    <?php echo h($option); ?>
-                                </option>
+                                <option value="<?php echo h($option); ?>"<?php echo selectedIf($transmission, $option); ?>><?php echo h($option); ?></option>
                             <?php endforeach; ?>
                         </select>
                     </label>
-
-                    <label for="fuel_type">
-                        Fuel Type
-                        <select id="fuel_type" name="fuel_type" required>
+                    <label style="display:block;">
+                        <span style="display:block; margin-bottom:6px; font-size:13px; font-weight:600;">Fuel Type</span>
+                        <select name="fuel_type" required class="dc-input" style="width:100%;">
                             <?php foreach ($fuelTypes as $option): ?>
-                                <option value="<?php echo h($option); ?>"<?php echo selectedIf($fuelType, $option); ?>>
-                                    <?php echo h($option); ?>
-                                </option>
+                                <option value="<?php echo h($option); ?>"<?php echo selectedIf($fuelType, $option); ?>><?php echo h($option); ?></option>
                             <?php endforeach; ?>
                         </select>
                     </label>
+                </div>
 
-                    <label for="seats">
-                        Seats
-                        <input type="number" id="seats" name="seats" value="<?php echo h($seats); ?>" min="1" required>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+                    <label style="display:block;">
+                        <span style="display:block; margin-bottom:6px; font-size:13px; font-weight:600;">Seats</span>
+                        <input type="number" name="seats" value="<?php echo h($seats); ?>" min="1" required class="dc-input" style="width:100%;">
                     </label>
-
-                    <label for="daily_rate">
-                        Daily Rate
-                        <input type="number" id="daily_rate" name="daily_rate" value="<?php echo h($dailyRate); ?>" min="0.01" step="0.01" required>
+                    <label style="display:block;">
+                        <span style="display:block; margin-bottom:6px; font-size:13px; font-weight:600;">Daily Rate (RM)</span>
+                        <input type="number" name="daily_rate" value="<?php echo h($dailyRate); ?>" min="0.01" step="0.01" required class="dc-input" style="width:100%;">
                     </label>
+                </div>
 
-                    <label for="status">
-                        Status
-                        <select id="status" name="status" required>
+                <div style="display:flex; flex-direction:column; gap:16px; margin-bottom:24px;">
+                    <label style="display:block;">
+                        <span style="display:block; margin-bottom:6px; font-size:13px; font-weight:600;">Status</span>
+                        <select name="status" required class="dc-input" style="width:100%;">
                             <?php foreach ($statuses as $option): ?>
-                                <option value="<?php echo h($option); ?>"<?php echo selectedIf($status, $option); ?>>
-                                    <?php echo h(ucfirst($option)); ?>
-                                </option>
+                                <option value="<?php echo h($option); ?>"<?php echo selectedIf($status, $option); ?>><?php echo h(ucfirst($option)); ?></option>
                             <?php endforeach; ?>
                         </select>
                     </label>
 
-                    <label class="form-grid-full" for="image">
-                        Car Image
+                    <label style="display:block;">
+                        <span style="display:block; margin-bottom:6px; font-size:13px; font-weight:600;">Car Image</span>
                         <input type="hidden" name="MAX_FILE_SIZE" value="<?php echo CAR_IMAGE_MAX_BYTES; ?>">
-                        <input type="file" id="image" name="image" accept="image/*">
+                        <input type="file" name="image" accept="image/*" class="dc-input" style="width:100%; padding:10px;">
                         <?php if ($isEditMode && $image !== ''): ?>
-                            <span class="field-note">Leave blank to keep the current image.</span>
+                            <span style="display:block; font-size:12px; color:#5b6273; margin-top:4px;">Leave blank to keep the current image.</span>
                         <?php endif; ?>
                     </label>
+                </div>
 
-                    <div class="form-actions">
-                        <button type="submit"><?php echo $isEditMode ? 'Update Car' : 'Add Car'; ?></button>
-                        <?php if ($isEditMode): ?>
-                            <a class="cancel-edit-link" href="manage_cars.php">Cancel Edit</a>
-                        <?php endif; ?>
-                    </div>
-                </form>
-            </section>
+                <div style="display:flex; flex-direction:column; gap:12px;">
+                    <button type="submit" class="dc-btn-primary" style="width:100%; justify-content:center;"><?php echo $isEditMode ? 'Update Car' : 'Add Car'; ?></button>
+                    <?php if ($isEditMode): ?>
+                        <a href="manage_cars.php" style="color:#5b6273; font-weight:600; font-size:14px; text-decoration:none; text-align:center;">Cancel Edit</a>
+                    <?php endif; ?>
+                </div>
+            </form>
+        </div>
 
-            <section class="cars-list-panel">
-                <header class="panel-heading">
-                    <p class="eyebrow">Inventory</p>
-                    <h2>Recent Cars</h2>
-                </header>
-
-                <?php if (count($cars) === 0): ?>
-                    <p class="empty-table-message">No cars added yet.</p>
-                <?php else: ?>
-                    <div class="table-wrap">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Vehicle</th>
-                                    <th>Plate</th>
-                                    <th>Type</th>
-                                    <th>Rate</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
+        <div class="dc-card">
+            <div style="padding:24px; border-bottom:1px solid #e4e8f1;">
+                <div class="dc-mono-subtitle small" style="margin-bottom:8px">Fleet</div>
+                <h2 class="dc-h2" style="font-size:20px;">Recent Cars</h2>
+            </div>
+            
+            <?php if (count($cars) === 0): ?>
+                <div style="padding: 40px 24px; text-align: center; color: #5b6273;">
+                    <p>No cars added yet.</p>
+                </div>
+            <?php else: ?>
+                <div style="overflow-x: auto;">
+                    <table class="dc-table" style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="border-bottom: 1px solid #e4e8f1; background: #f9fafc;">
+                                <th style="padding: 16px 24px; text-align: left; font-size: 13px; color: #5b6273; font-weight: 600;">Vehicle</th>
+                                <th style="padding: 16px 24px; text-align: left; font-size: 13px; color: #5b6273; font-weight: 600;">Plate</th>
+                                <th style="padding: 16px 24px; text-align: left; font-size: 13px; color: #5b6273; font-weight: 600;">Type</th>
+                                <th style="padding: 16px 24px; text-align: left; font-size: 13px; color: #5b6273; font-weight: 600;">Rate</th>
+                                <th style="padding: 16px 24px; text-align: left; font-size: 13px; color: #5b6273; font-weight: 600;">Status</th>
+                                <th style="padding: 16px 24px; text-align: right; font-size: 13px; color: #5b6273; font-weight: 600;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($cars as $car): ?>
+                                <tr style="border-bottom: 1px solid #e4e8f1;">
+                                    <td style="padding: 16px 24px;">
+                                        <strong style="color: #131722; display:block; margin-bottom:4px;"><?php echo h($car['brand'] . ' ' . $car['model']); ?></strong>
+                                        <div style="color: #5b6273; font-size:13px;"><?php echo h($car['transmission'] . ' / ' . $car['fuel_type'] . ' / ' . $car['seats'] . ' seats'); ?></div>
+                                    </td>
+                                    <td style="padding: 16px 24px; color:#131722; font-size:14px; font-weight:600;">
+                                        <?php echo h($car['plate_number']); ?>
+                                    </td>
+                                    <td style="padding: 16px 24px; color:#5b6273; font-size:14px;">
+                                        <?php echo h($car['car_type']); ?>
+                                    </td>
+                                    <td style="padding: 16px 24px; color:#131722; font-size:14px; font-weight:600;">
+                                        RM <?php echo h(number_format((float) $car['daily_rate'], 2)); ?>
+                                    </td>
+                                    <td style="padding: 16px 24px;">
+                                        <?php 
+                                            $cStatus = $car['status'];
+                                            $cColor = $cStatus === 'available' ? '#0b7a5a' : ($cStatus === 'unavailable' ? '#c23a52' : '#b25e09');
+                                            $cBg = $cStatus === 'available' ? '#e6f6f1' : ($cStatus === 'unavailable' ? '#fbeaed' : '#fff3e0');
+                                        ?>
+                                        <span class="dc-badge" style="background:<?php echo $cBg; ?>; color:<?php echo $cColor; ?>;">
+                                            <?php echo h(ucfirst($cStatus)); ?>
+                                        </span>
+                                    </td>
+                                    <td style="padding: 16px 24px; text-align: right;">
+                                        <div style="display:inline-flex; gap:12px;">
+                                            <a href="manage_cars.php?edit=<?php echo h($car['id']); ?>" style="color:#3b5fda; font-size:13px; font-weight:600; text-decoration:none;">Edit</a>
+                                            <form method="post" action="manage_cars.php" onsubmit="return confirm('Archive this car?');" style="display:inline;">
+                                                <?php echo csrfInput(); ?>
+                                                <input type="hidden" name="form_action" value="archive_car">
+                                                <input type="hidden" name="car_id" value="<?php echo h($car['id']); ?>">
+                                                <button type="submit" style="background:none; border:none; color:#c23a52; font-size:13px; font-weight:600; cursor:pointer; padding:0; font-family:inherit;">Archive</button>
+                                            </form>
+                                        </div>
+                                    </td>
                                 </tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach ($cars as $car): ?>
-                                    <tr>
-                                        <td>
-                                            <strong><?php echo h($car['brand'] . ' ' . $car['model']); ?></strong>
-                                            <span><?php echo h($car['transmission'] . ' / ' . $car['fuel_type'] . ' / ' . $car['seats'] . ' seats'); ?></span>
-                                        </td>
-                                        <td><?php echo h($car['plate_number']); ?></td>
-                                        <td><?php echo h($car['car_type']); ?></td>
-                                        <td>RM <?php echo h(number_format((float) $car['daily_rate'], 2)); ?></td>
-                                        <td>
-                                            <span class="status-pill"><?php echo h(ucfirst($car['status'])); ?></span>
-                                        </td>
-                                        <td>
-                                            <div class="car-row-actions">
-                                                <a class="table-action-link" href="manage_cars.php?edit=<?php echo h($car['id']); ?>">Edit</a>
-                                                <form method="post" action="manage_cars.php" onsubmit="return confirm('Archive this car?');">
-                                                    <?php echo csrfInput(); ?>
-                                                    <input type="hidden" name="form_action" value="archive_car">
-                                                    <input type="hidden" name="car_id" value="<?php echo h($car['id']); ?>">
-                                                    <button class="table-action-button danger" type="submit">Archive</button>
-                                                </form>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
-                    </div>
-                <?php endif; ?>
-            </section>
-        </section>
-    </main>
-</body>
-</html>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            <?php endif; ?>
+        </div>
+    </div>
+</main>
+<?php include '../includes/layout_bottom.php'; ?>

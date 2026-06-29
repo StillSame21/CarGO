@@ -1,4 +1,5 @@
 <?php
+
 putenv('COMPOSER_HOME=/tmp/composer');
 echo "Composer:\n";
 echo shell_exec('composer install --prefer-dist --no-progress 2>&1');

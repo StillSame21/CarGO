@@ -64,6 +64,60 @@ requireCustomerLogin();
 
 $bookingId = filter_input(INPUT_POST, 'booking_id', FILTER_VALIDATE_INT) ?: filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
 $customerId = (int) ($_SESSION['customer_id'] ?? 0);
+
+$carId = filter_input(INPUT_POST, 'car_id', FILTER_VALIDATE_INT) ?: filter_input(INPUT_GET, 'car_id', FILTER_VALIDATE_INT);
+$checkoutCar = null;
+
+if ($carId && !$bookingId) {
+    try {
+        $conn = getDbConnection();
+        $stmt = $conn->prepare("SELECT * FROM cars WHERE id = ? AND status = 'available'");
+        $stmt->bind_param('i', $carId);
+        $stmt->execute();
+        $checkoutCar = $stmt->get_result()->fetch_assoc();
+        
+        if (!$checkoutCar) {
+            $error = 'This car is not available for booking.';
+        }
+        
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'checkout' && $checkoutCar) {
+            requireValidCsrfToken();
+            $pickupDate = $_POST['pickup_date'] ?? '';
+            $returnDate = $_POST['return_date'] ?? '';
+            $paymentMethod = $_POST['payment_method'] ?? '';
+            
+            $totalDays = bookingTotalDays($pickupDate, $returnDate);
+            $totalAmount = bookingTotalAmount($totalDays, (float) $checkoutCar['daily_rate']);
+            
+            // Add-ons logic could be added here to increase totalAmount
+            $addons = $_POST['addons'] ?? [];
+            if (in_array('gps', $addons)) $totalAmount += (50 * $totalDays);
+            if (in_array('child_seat', $addons)) $totalAmount += (30 * $totalDays);
+            if (in_array('insurance', $addons)) $totalAmount += (100 * $totalDays);
+            
+            $pickupLocation = BOOKING_DEFAULT_PICKUP_LOCATION;
+            
+            $stmt = $conn->prepare(
+                'INSERT INTO bookings
+                    (customer_id, car_id, pickup_date, return_date, pickup_location, total_days, total_amount, booking_status)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+            );
+            $status = 'approved'; // auto approve for this demo
+            $stmt->bind_param('iisssids', $customerId, $carId, $pickupDate, $returnDate, $pickupLocation, $totalDays, $totalAmount, $status);
+            $stmt->execute();
+            $newBookingId = $stmt->insert_id;
+            
+            // Auto pay
+            markBookingPaymentPaid($conn, $newBookingId, $totalAmount, $paymentMethod);
+            
+            header('Location: booking.php?id=' . $newBookingId);
+            exit;
+        }
+    } catch (Exception $e) {
+        $error = $e->getMessage();
+    }
+}
+
 $booking = null;
 $payment = null;
 $lateFeeSummary = ['total_late_days' => 0, 'total_late_fee' => 0.0, 'fee_count' => 0];
@@ -147,313 +201,406 @@ if (!$bookingId || $customerId <= 0) {
     }
 }
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Booking Details | CarGo</title>
-    <link rel="stylesheet" href="../css/style.css">
-    <link rel="stylesheet" href="../css/customer.css">
-</head>
-<body class="<?php echo $showPaymentModal ? 'modal-open' : ''; ?>">
-    <main class="dashboard-page">
-        <header class="dashboard-header">
-            <?php include 'header.php'; ?>
-        </header>
+<?php
+$pageTitle = 'Booking Details | CarGo';
+include '../includes/layout_top.php';
+include 'header.php';
+?>
+<main class="dc-main">
+    <div style="margin-bottom: 24px;">
+        <a href="browse_cars.php" style="color:var(--accent); font-weight:600; text-decoration:none; font-size:14px; display:inline-flex; align-items:center; gap:6px;">
+            <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M10.5 13.5 L4.5 8 L10.5 2.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+            Back to available cars
+        </a>
+    </div>
 
-        <section class="dashboard-content">
-            <div class="dashboard-shell">
-                <a class="back-link" href="browse_cars.php">Back to available cars</a>
+    <?php if ($checkoutCar): ?>
+        <div class="dc-card padded" style="max-width: 800px; margin: 0 auto;">
+            <div class="dc-h2-title">
+                <div>
+                    <div class="dc-mono-subtitle small" style="margin-bottom:8px">Checkout</div>
+                    <h1 class="dc-h1">Complete your booking</h1>
+                </div>
+            </div>
+            
+            <div style="display:flex; gap:10px; margin-bottom:30px;">
+                <div class="checkout-step" id="step1-indicator" style="flex:1; padding:12px; background:#f1f3f9; text-align:center; font-weight:600; border-radius:8px; color:#5b6273;">1. Select Dates</div>
+                <div class="checkout-step" id="step2-indicator" style="flex:1; padding:12px; background:#f9fafc; text-align:center; font-weight:600; border-radius:8px; color:#9097a8;">2. Add-ons</div>
+                <div class="checkout-step" id="step3-indicator" style="flex:1; padding:12px; background:#f9fafc; text-align:center; font-weight:600; border-radius:8px; color:#9097a8;">3. Payment</div>
+            </div>
 
-                <?php if ($error !== '' && !$booking): ?>
-                    <p class="message error"><?php echo h($error); ?></p>
-                <?php elseif ($booking): ?>
-                    <?php $bookingStatus = (string) $booking['booking_status']; ?>
-                    <?php $paymentStatus = $payment['payment_status'] ?? null; ?>
-                    <?php $displayStatus = bookingDisplayStatus($bookingStatus, $paymentStatus, $lateFeeSummary['total_late_fee']); ?>
-                    <?php $isPaid = $paymentStatus === PAYMENT_STATUS_PAID; ?>
-                    <?php $canPay = canPayBooking($bookingStatus); ?>
-                    <?php $paymentBreakdown = buildPaymentBreakdown((float) $booking['total_amount'], $lateFeeSummary['total_late_fee']); ?>
-                    <?php $amountDue = calculatePaymentAmountDue($paymentBreakdown['payable_total'], $paymentStatus, isset($payment['amount']) ? (float) $payment['amount'] : null); ?>
-                    <?php $amountDue = $canPay ? $amountDue : 0.0; ?>
-
-                    <section class="booking-detail-layout">
-                        <header class="booking-summary-panel">
-                            <div class="booking-summary-copy">
-                                <p class="eyebrow">Booking #<?php echo h($booking['id']); ?></p>
-                                <h1><?php echo h($booking['brand'] . ' ' . $booking['model']); ?></h1>
-                                <p><?php echo h(formatBookingDate($booking['pickup_date']) . ' to ' . formatBookingDate($booking['return_date'])); ?></p>
-
-                                <div class="booking-summary-meta" aria-label="Booking summary">
-                                    <span>
-                                        <strong><?php echo h($booking['total_days']); ?></strong>
-                                        Rental days
-                                    </span>
-                                    <span>
-                                        <strong>RM <?php echo h(number_format($paymentBreakdown['payable_total'], 2)); ?></strong>
-                                        Estimated total
-                                    </span>
-                                    <span>
-                                        <strong><?php echo h($booking['pickup_location']); ?></strong>
-                                        Pickup location
-                                    </span>
-                                </div>
-                            </div>
-
-                            <div class="booking-summary-side">
-                                <span class="booking-status-pill <?php echo h($displayStatus['class']); ?>"><?php echo h($displayStatus['label']); ?></span>
-                                <img
-                                    src="<?php echo h(carImageUrl($booking['image'], 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=700&q=80')); ?>"
-                                    alt="<?php echo h($booking['brand'] . ' ' . $booking['model']); ?>"
-                                >
-                            </div>
-                        </header>
-
-                        <?php if ($error !== ''): ?>
-                            <p class="message error"><?php echo h($error); ?></p>
-                        <?php endif; ?>
-
-                        <?php if ($success !== ''): ?>
-                            <p class="message success"><?php echo h($success); ?></p>
-                        <?php endif; ?>
-
-                        <div class="booking-main-flow">
-                            <div class="booking-flow-column">
-                                <section class="booking-info-panel trip-panel">
-                                    <div class="section-heading">
-                                        <p class="eyebrow">Trip</p>
-                                        <h2>Rental timeline</h2>
-                                    </div>
-
-                                    <div class="timeline-list">
-                                        <div class="timeline-item">
-                                            <span class="timeline-dot"></span>
-                                            <div>
-                                                <p>Pickup</p>
-                                                <strong><?php echo h(formatBookingDate($booking['pickup_date'])); ?></strong>
-                                                <small><?php echo h($booking['pickup_location']); ?></small>
-                                            </div>
-                                        </div>
-
-                                        <div class="timeline-item">
-                                            <span class="timeline-dot"></span>
-                                            <div>
-                                                <p>Return</p>
-                                                <strong><?php echo h(formatBookingDate($booking['return_date'])); ?></strong>
-                                                <small><?php echo h($booking['pickup_location']); ?></small>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </section>
-
-                                <div class="paired-info-grid">
-                                    <section class="booking-info-panel">
-                                        <div class="section-heading">
-                                            <p class="eyebrow">Customer</p>
-                                            <h2>Customer information</h2>
-                                        </div>
-
-                                        <dl class="detail-list">
-                                            <div>
-                                                <dt>Name</dt>
-                                                <dd><?php echo h($booking['customer_name']); ?></dd>
-                                            </div>
-                                            <div>
-                                                <dt>Email</dt>
-                                                <dd><?php echo h($booking['customer_email']); ?></dd>
-                                            </div>
-                                            <div>
-                                                <dt>Phone</dt>
-                                                <dd><?php echo h($booking['customer_phone'] ?: 'Not provided'); ?></dd>
-                                            </div>
-                                            <div>
-                                                <dt>Address</dt>
-                                                <dd><?php echo h($booking['customer_address'] ?: 'Not provided'); ?></dd>
-                                            </div>
-                                        </dl>
-                                    </section>
-
-                                    <section class="booking-info-panel">
-                                        <div class="section-heading">
-                                            <p class="eyebrow">Vehicle</p>
-                                            <h2>Car information</h2>
-                                        </div>
-
-                                        <dl class="detail-list">
-                                            <div>
-                                                <dt>Vehicle</dt>
-                                                <dd><?php echo h($booking['brand'] . ' ' . $booking['model']); ?></dd>
-                                            </div>
-                                            <div>
-                                                <dt>Plate</dt>
-                                                <dd><?php echo h($booking['plate_number']); ?></dd>
-                                            </div>
-                                            <div>
-                                                <dt>Type</dt>
-                                                <dd><?php echo h($booking['car_type']); ?></dd>
-                                            </div>
-                                            <div>
-                                                <dt>Specs</dt>
-                                                <dd><?php echo h($booking['transmission'] . ' / ' . $booking['fuel_type'] . ' / ' . $booking['seats'] . ' seats'); ?></dd>
-                                            </div>
-                                        </dl>
-                                    </section>
-                                </div>
-                            </div>
-
-                            <aside class="booking-info-panel payment-panel payment-sidebar">
-                                <div class="section-heading">
-                                    <p class="eyebrow">Payment</p>
-                                    <h2>Payment details</h2>
-                                </div>
-
-                                <dl class="payment-summary">
-                                    <div>
-                                        <dt>Daily Rate</dt>
-                                        <dd>RM <?php echo h(number_format((float) $booking['daily_rate'], 2)); ?></dd>
-                                    </div>
-                                    <div>
-                                        <dt>Total Days</dt>
-                                        <dd><?php echo h($booking['total_days']); ?></dd>
-                                    </div>
-                                    <div>
-                                        <dt>Payment Status</dt>
-                                        <dd><?php echo h($isPaid ? 'Paid' : 'Unpaid'); ?></dd>
-                                    </div>
-                                    <?php if ($isPaid): ?>
-                                        <div>
-                                            <dt>Method</dt>
-                                            <dd><?php echo h($payment['payment_method']); ?></dd>
-                                        </div>
-                                        <div>
-                                            <dt>Payment Date</dt>
-                                            <dd><?php echo h(formatBookingDate($payment['payment_date'])); ?></dd>
-                                        </div>
-                                    <?php endif; ?>
-                                    <?php if ($lateFeeSummary['total_late_fee'] > 0): ?>
-                                        <div>
-                                            <dt>Late Days</dt>
-                                            <dd><?php echo h($lateFeeSummary['total_late_days']); ?></dd>
-                                        </div>
-                                    <?php endif; ?>
-                                    <div class="total-amount-row payment-total-card">
-                                        <dt>Total Amount</dt>
-                                        <dd>RM <?php echo h(number_format($paymentBreakdown['payable_total'], 2)); ?></dd>
-                                        <?php if ($amountDue > 0): ?>
-                                            <p>
-                                                <span>Amount due</span>
-                                                <strong>RM <?php echo h(number_format($amountDue, 2)); ?></strong>
-                                            </p>
-                                        <?php endif; ?>
-                                    </div>
-                                </dl>
-
-                                <div class="booking-page-actions">
-                                    <a class="pay-placeholder-button" href="booking.php?id=<?php echo h($booking['id']); ?>&payment=1">
-                                        <?php echo $isPaid || !$canPay ? 'View Payment' : 'Pay Now'; ?>
-                                    </a>
-
-                                    <?php if (canCancelBooking($bookingStatus) && !$isPaid): ?>
-                                        <form method="post" action="booking.php?id=<?php echo h($booking['id']); ?>" onsubmit="return confirm('Are you sure you want to cancel this booking? This action cannot be undone.');">
-                                            <?php echo csrfInput(); ?>
-                                            <input type="hidden" name="action" value="cancel">
-                                            <input type="hidden" name="booking_id" value="<?php echo h($booking['id']); ?>">
-                                            <button type="submit" class="danger-button">Cancel Booking</button>
-                                        </form>
-                                    <?php else: ?>
-                                        <button type="button" class="secondary-button" disabled>Cancel Booking</button>
-                                    <?php endif; ?>
-                                </div>
-                            </aside>
+            <form method="post" action="booking.php" id="checkout-form">
+                <?php echo csrfInput(); ?>
+                <input type="hidden" name="action" value="checkout">
+                <input type="hidden" name="car_id" value="<?php echo h($checkoutCar['id']); ?>">
+                
+                <!-- Step 1 -->
+                <div class="checkout-section" id="step1">
+                    <h2 class="dc-h2" style="font-size:20px; margin-bottom:20px;">Select your rental dates</h2>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+                        <label style="display:block;">
+                            <span style="display:block; margin-bottom:6px; font-size:13px; font-weight:600;">Pickup Date</span>
+                            <input type="date" name="pickup_date" id="chk_pickup" class="dc-input" required min="<?php echo date('Y-m-d'); ?>" style="width:100%;">
+                        </label>
+                        <label style="display:block;">
+                            <span style="display:block; margin-bottom:6px; font-size:13px; font-weight:600;">Return Date</span>
+                            <input type="date" name="return_date" id="chk_return" class="dc-input" required min="<?php echo date('Y-m-d'); ?>" style="width:100%;">
+                        </label>
+                    </div>
+                    <button type="button" class="dc-btn-primary next-btn" data-next="step2" style="margin-top:24px;">Next: Add-ons</button>
+                </div>
+                
+                <!-- Step 2 -->
+                <div class="checkout-section" id="step2" style="display:none;">
+                    <h2 class="dc-h2" style="font-size:20px; margin-bottom:20px;">Enhance your trip</h2>
+                    <div style="display:flex; flex-direction:column; gap:12px;">
+                        <label style="display:flex; align-items:center; gap:12px; padding:16px; border:1px solid #e4e8f1; border-radius:8px; cursor:pointer;">
+                            <input type="checkbox" name="addons[]" value="gps" style="width:18px; height:18px;">
+                            <span style="font-weight:600;">GPS Navigation <span style="color:#5b6273; font-weight:400;">(+RM 50/day)</span></span>
+                        </label>
+                        <label style="display:flex; align-items:center; gap:12px; padding:16px; border:1px solid #e4e8f1; border-radius:8px; cursor:pointer;">
+                            <input type="checkbox" name="addons[]" value="child_seat" style="width:18px; height:18px;">
+                            <span style="font-weight:600;">Child Seat <span style="color:#5b6273; font-weight:400;">(+RM 30/day)</span></span>
+                        </label>
+                        <label style="display:flex; align-items:center; gap:12px; padding:16px; border:1px solid #e4e8f1; border-radius:8px; cursor:pointer;">
+                            <input type="checkbox" name="addons[]" value="insurance" style="width:18px; height:18px;">
+                            <span style="font-weight:600;">Premium Insurance <span style="color:#5b6273; font-weight:400;">(+RM 100/day)</span></span>
+                        </label>
+                    </div>
+                    <div style="display:flex; gap:12px; margin-top:24px;">
+                        <button type="button" class="dc-btn-secondary prev-btn" data-prev="step1">Back</button>
+                        <button type="button" class="dc-btn-primary next-btn" data-next="step3">Next: Payment</button>
+                    </div>
+                </div>
+                
+                <!-- Step 3 -->
+                <div class="checkout-section" id="step3" style="display:none;">
+                    <h2 class="dc-h2" style="font-size:20px; margin-bottom:20px;">Payment Details</h2>
+                    <div style="margin-bottom:24px; padding:20px; background:#f9fafc; border-radius:12px; border:1px solid #e4e8f1;">
+                        <p style="margin-bottom:8px;">Car: <strong><?php echo h($checkoutCar['brand'] . ' ' . $checkoutCar['model']); ?></strong></p>
+                        <p style="margin-bottom:16px;">Rate: RM <?php echo number_format($checkoutCar['daily_rate'], 2); ?> / day</p>
+                        <div style="padding-top:16px; border-top:1px solid #e4e8f1; display:flex; justify-content:space-between; align-items:center;">
+                            <span style="font-weight:600; font-size:16px;">Total</span>
+                            <strong style="font-size:24px; color:#131722;" id="checkout-total">RM 0.00</strong>
                         </div>
-                    </section>
+                    </div>
+                    
+                    <label style="display:block; margin-bottom:24px;">
+                        <span style="display:block; margin-bottom:6px; font-size:13px; font-weight:600;">Payment Method</span>
+                        <select name="payment_method" class="dc-select" required style="width:100%;">
+                            <option value="Credit Card">Credit Card</option>
+                            <option value="Debit Card">Debit Card</option>
+                            <option value="Online Banking">Online Banking</option>
+                            <option value="E-Wallet">E-Wallet</option>
+                        </select>
+                    </label>
+                    
+                    <div style="display:flex; gap:12px;">
+                        <button type="button" class="dc-btn-secondary prev-btn" data-prev="step2">Back</button>
+                        <button type="submit" class="dc-btn-primary">Confirm & Pay</button>
+                    </div>
+                </div>
+            </form>
+        </div>
 
-                    <?php if ($showPaymentModal): ?>
-                        <div class="modal-backdrop" role="presentation">
-                            <section class="payment-modal" role="dialog" aria-modal="true" aria-labelledby="payment-modal-title">
-                                <header class="payment-modal-header">
-                                    <div>
-                                        <p class="eyebrow">Payment</p>
-                                        <h2 id="payment-modal-title">Booking payment details</h2>
-                                    </div>
-                                    <a href="booking.php?id=<?php echo h($booking['id']); ?>" aria-label="Close payment details">Close</a>
-                                </header>
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const dailyRate = <?php echo (float)$checkoutCar['daily_rate']; ?>;
+                const pickup = document.getElementById('chk_pickup');
+                const returnDate = document.getElementById('chk_return');
+                const totalEl = document.getElementById('checkout-total');
+                const addons = document.querySelectorAll('input[name="addons[]"]');
+                
+                function calcTotal() {
+                    if(!pickup.value || !returnDate.value) return;
+                    const d1 = new Date(pickup.value);
+                    const d2 = new Date(returnDate.value);
+                    let days = Math.ceil((d2 - d1) / (1000 * 60 * 60 * 24));
+                    if(days < 1) days = 1;
+                    
+                    let total = days * dailyRate;
+                    addons.forEach(a => {
+                        if(a.checked) {
+                            if(a.value === 'gps') total += 50 * days;
+                            if(a.value === 'child_seat') total += 30 * days;
+                            if(a.value === 'insurance') total += 100 * days;
+                        }
+                    });
+                    totalEl.innerText = 'RM ' + total.toFixed(2);
+                }
+                
+                pickup.addEventListener('change', calcTotal);
+                returnDate.addEventListener('change', calcTotal);
+                addons.forEach(a => a.addEventListener('change', calcTotal));
+                
+                function updateSteps(activeStepId) {
+                    document.querySelectorAll('.checkout-step').forEach(s => {
+                        s.style.background = '#f9fafc';
+                        s.style.color = '#9097a8';
+                    });
+                    const active = document.getElementById(activeStepId + '-indicator');
+                    if (active) {
+                        active.style.background = '#f1f3f9';
+                        active.style.color = '#5b6273';
+                    }
+                }
+                
+                document.querySelectorAll('.next-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        if(e.target.dataset.next === 'step2' && (!pickup.value || !returnDate.value)) {
+                            alert('Please select dates');
+                            return;
+                        }
+                        document.querySelectorAll('.checkout-section').forEach(s => s.style.display = 'none');
+                        document.getElementById(e.target.dataset.next).style.display = 'block';
+                        updateSteps(e.target.dataset.next);
+                        calcTotal();
+                    });
+                });
+                document.querySelectorAll('.prev-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        document.querySelectorAll('.checkout-section').forEach(s => s.style.display = 'none');
+                        document.getElementById(e.target.dataset.prev).style.display = 'block';
+                        updateSteps(e.target.dataset.prev);
+                    });
+                });
+            });
+        </script>
 
-                                <dl class="payment-itinerary">
-                                    <div>
-                                        <dt>Rental subtotal</dt>
-                                        <dd>RM <?php echo h(number_format($paymentBreakdown['rental_subtotal'], 2)); ?></dd>
-                                    </div>
-                                    <div>
-                                        <dt>Tax <?php echo h((int) round($paymentBreakdown['display_tax_rate'] * 100)); ?>% <span>display only</span></dt>
-                                        <dd>RM <?php echo h(number_format($paymentBreakdown['display_tax_amount'], 2)); ?></dd>
-                                    </div>
-                                    <div>
-                                        <dt>Late fees</dt>
-                                        <dd>RM <?php echo h(number_format($paymentBreakdown['late_fee_total'], 2)); ?></dd>
-                                    </div>
-                                    <div class="total-amount-row">
-                                        <dt>Total amount</dt>
-                                        <dd>RM <?php echo h(number_format($paymentBreakdown['payable_total'], 2)); ?></dd>
-                                    </div>
-                                </dl>
+    <?php elseif ($error !== '' && !$booking): ?>
+        <p class="message error" style="color: #c23a52; background: #fbeaed; padding: 12px; border-radius: 8px; font-weight: 600;"><?php echo h($error); ?></p>
+    <?php elseif ($booking): ?>
+        <?php $bookingStatus = (string) $booking['booking_status']; ?>
+        <?php $paymentStatus = $payment['payment_status'] ?? null; ?>
+        <?php $displayStatus = bookingDisplayStatus($bookingStatus, $paymentStatus, $lateFeeSummary['total_late_fee']); ?>
+        <?php $isPaid = $paymentStatus === PAYMENT_STATUS_PAID; ?>
+        <?php $canPay = canPayBooking($bookingStatus); ?>
+        <?php $paymentBreakdown = buildPaymentBreakdown((float) $booking['total_amount'], $lateFeeSummary['total_late_fee']); ?>
+        <?php $amountDue = calculatePaymentAmountDue($paymentBreakdown['payable_total'], $paymentStatus, isset($payment['amount']) ? (float) $payment['amount'] : null); ?>
+        <?php $amountDue = $canPay ? $amountDue : 0.0; ?>
 
-                                <dl class="payment-modal-summary">
-                                    <div>
-                                        <dt>Payment Status</dt>
-                                        <dd><?php echo h($isPaid ? 'Paid' : 'Unpaid'); ?></dd>
-                                    </div>
-                                    <div>
-                                        <dt>Tax Note</dt>
-                                        <dd>Tax is shown for reference and is not charged in this version.</dd>
-                                    </div>
-                                    <?php if ($isPaid): ?>
-                                        <div>
-                                            <dt>Method</dt>
-                                            <dd><?php echo h($payment['payment_method']); ?></dd>
-                                        </div>
-                                        <div>
-                                            <dt>Payment Date</dt>
-                                            <dd><?php echo h(formatBookingDate($payment['payment_date'])); ?></dd>
-                                        </div>
-                                    <?php endif; ?>
-                                    <?php if ($lateFeeSummary['total_late_fee'] > 0): ?>
-                                        <div>
-                                            <dt>Late Days</dt>
-                                            <dd><?php echo h($lateFeeSummary['total_late_days']); ?></dd>
-                                        </div>
-                                    <?php endif; ?>
-                                </dl>
+        <?php if ($error !== ''): ?>
+            <p class="message error" style="color: #c23a52; background: #fbeaed; padding: 12px; border-radius: 8px; font-weight: 600; margin-bottom:24px;"><?php echo h($error); ?></p>
+        <?php endif; ?>
+        <?php if ($success !== ''): ?>
+            <p class="message success" style="color: #0b7a5a; background: #e6f6f1; padding: 12px; border-radius: 8px; font-weight: 600; margin-bottom:24px;"><?php echo h($success); ?></p>
+        <?php endif; ?>
 
-                                <?php if (!$isPaid && $canPay): ?>
-                                    <form method="post" action="booking.php?id=<?php echo h($booking['id']); ?>&payment=1" class="payment-method-form">
-                                        <?php echo csrfInput(); ?>
-                                        <input type="hidden" name="action" value="pay">
-                                        <input type="hidden" name="booking_id" value="<?php echo h($booking['id']); ?>">
-
-                                        <label for="payment_method">
-                                            Payment Method
-                                            <select id="payment_method" name="payment_method" required>
-                                                <?php foreach (PAYMENT_METHODS as $method): ?>
-                                                    <option value="<?php echo h($method); ?>"><?php echo h($method); ?></option>
-                                                <?php endforeach; ?>
-                                            </select>
-                                        </label>
-
-                                        <button type="submit">Confirm Payment</button>
-                                    </form>
-                                <?php elseif (!$canPay): ?>
-                                    <p class="payment-unavailable-note">Payment is not available for this booking.</p>
-                                <?php else: ?>
-                                    <p class="payment-complete-note">This booking has already been paid.</p>
-                                <?php endif; ?>
-                            </section>
+        <section class="dc-grid-2-sidebar">
+            <div style="display:flex; flex-direction:column; gap:24px;">
+                <!-- Car Header -->
+                <div class="dc-card" style="display:flex; flex-direction:column; md:flex-direction:row; overflow:hidden;">
+                    <div style="flex:1; padding:24px;">
+                        <div class="dc-mono-subtitle small" style="margin-bottom:8px">Booking #<?php echo h($booking['id']); ?></div>
+                        <h1 class="dc-h1" style="font-size:28px; margin-bottom:8px;"><?php echo h($booking['brand'] . ' ' . $booking['model']); ?></h1>
+                        <p class="dc-p" style="margin-bottom:24px;"><?php echo h(formatBookingDate($booking['pickup_date']) . ' to ' . formatBookingDate($booking['return_date'])); ?></p>
+                        
+                        <div style="display:flex; gap:24px;">
+                            <div>
+                                <span style="display:block; font-size:20px; font-weight:800; color:#131722;"><?php echo h($booking['total_days']); ?></span>
+                                <span style="font-size:12px; color:#5b6273;">Rental days</span>
+                            </div>
+                            <div>
+                                <span style="display:block; font-size:20px; font-weight:800; color:#131722;">RM <?php echo h(number_format($paymentBreakdown['payable_total'], 2)); ?></span>
+                                <span style="font-size:12px; color:#5b6273;">Estimated total</span>
+                            </div>
                         </div>
-                    <?php endif; ?>
-                <?php endif; ?>
+                    </div>
+                    <div style="width:300px; position:relative;">
+                        <img src="<?php echo h(carImageUrl($booking['image'], 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=700&q=80')); ?>" alt="Car image" style="width:100%; height:100%; object-fit:cover;">
+                        <div style="position:absolute; top:16px; right:16px;">
+                            <span class="dc-status <?php echo h($displayStatus['class']); ?>"><?php echo h($displayStatus['label']); ?></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Info Grid -->
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px;">
+                    <div class="dc-card padded">
+                        <div class="dc-h2-title">
+                            <div>
+                                <div class="dc-mono-subtitle small" style="margin-bottom:8px">Trip</div>
+                                <h2 class="dc-h2">Rental timeline</h2>
+                            </div>
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:20px; position:relative; padding-left:16px; border-left:2px solid #e4e8f1; margin-top:16px; margin-left:8px;">
+                            <div style="position:relative;">
+                                <div style="position:absolute; left:-23px; top:4px; width:12px; height:12px; border-radius:50%; background:var(--accent); border:2px solid #fff;"></div>
+                                <div style="font-size:13px; color:#5b6273; margin-bottom:4px;">Pickup</div>
+                                <div style="font-weight:600; font-size:15px;"><?php echo h(formatBookingDate($booking['pickup_date'])); ?></div>
+                                <div style="font-size:13px; color:#9097a8; margin-top:2px;"><?php echo h($booking['pickup_location']); ?></div>
+                            </div>
+                            <div style="position:relative;">
+                                <div style="position:absolute; left:-23px; top:4px; width:12px; height:12px; border-radius:50%; background:#131722; border:2px solid #fff;"></div>
+                                <div style="font-size:13px; color:#5b6273; margin-bottom:4px;">Return</div>
+                                <div style="font-weight:600; font-size:15px;"><?php echo h(formatBookingDate($booking['return_date'])); ?></div>
+                                <div style="font-size:13px; color:#9097a8; margin-top:2px;"><?php echo h($booking['pickup_location']); ?></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="dc-card padded">
+                        <div class="dc-h2-title">
+                            <div>
+                                <div class="dc-mono-subtitle small" style="margin-bottom:8px">Customer</div>
+                                <h2 class="dc-h2">Information</h2>
+                            </div>
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:16px; margin-top:16px;">
+                            <div>
+                                <div style="color:#9097a8; font-size:13px; margin-bottom:4px;">Name</div>
+                                <div style="font-weight:600;"><?php echo h($booking['customer_name']); ?></div>
+                            </div>
+                            <div>
+                                <div style="color:#9097a8; font-size:13px; margin-bottom:4px;">Email</div>
+                                <div style="font-weight:600;"><?php echo h($booking['customer_email']); ?></div>
+                            </div>
+                            <div>
+                                <div style="color:#9097a8; font-size:13px; margin-bottom:4px;">Phone</div>
+                                <div style="font-weight:600;"><?php echo h($booking['customer_phone'] ?: 'Not provided'); ?></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Sidebar -->
+            <div style="display:flex; flex-direction:column; gap:24px;">
+                <div class="dc-card padded">
+                    <div class="dc-h2-title">
+                        <div>
+                            <div class="dc-mono-subtitle small" style="margin-bottom:8px">Payment</div>
+                            <h2 class="dc-h2">Details</h2>
+                        </div>
+                    </div>
+                    
+                    <div style="display:flex; flex-direction:column; gap:12px; margin-top:16px; margin-bottom:24px;">
+                        <div style="display:flex; justify-content:space-between;">
+                            <span style="color:#5b6273;">Daily Rate</span>
+                            <span style="font-weight:600;">RM <?php echo h(number_format((float) $booking['daily_rate'], 2)); ?></span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between;">
+                            <span style="color:#5b6273;">Total Days</span>
+                            <span style="font-weight:600;"><?php echo h($booking['total_days']); ?></span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between;">
+                            <span style="color:#5b6273;">Payment Status</span>
+                            <span style="font-weight:600;"><?php echo h($isPaid ? 'Paid' : 'Unpaid'); ?></span>
+                        </div>
+                        <?php if ($isPaid): ?>
+                            <div style="display:flex; justify-content:space-between;">
+                                <span style="color:#5b6273;">Method</span>
+                                <span style="font-weight:600;"><?php echo h($payment['payment_method']); ?></span>
+                            </div>
+                            <div style="display:flex; justify-content:space-between;">
+                                <span style="color:#5b6273;">Payment Date</span>
+                                <span style="font-weight:600;"><?php echo h(formatBookingDate($payment['payment_date'])); ?></span>
+                            </div>
+                        <?php endif; ?>
+                        <?php if ($lateFeeSummary['total_late_fee'] > 0): ?>
+                            <div style="display:flex; justify-content:space-between;">
+                                <span style="color:#5b6273;">Late Days</span>
+                                <span style="font-weight:600;"><?php echo h($lateFeeSummary['total_late_days']); ?></span>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                    
+                    <div style="padding:16px; background:#f9fafc; border-radius:12px; margin-bottom:24px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span style="font-weight:600;">Total Amount</span>
+                            <strong style="font-size:20px; color:#131722;">RM <?php echo h(number_format($paymentBreakdown['payable_total'], 2)); ?></strong>
+                        </div>
+                        <?php if ($amountDue > 0): ?>
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px; padding-top:8px; border-top:1px solid #e4e8f1;">
+                                <span style="font-weight:600; color:#c23a52;">Amount Due</span>
+                                <strong style="font-size:18px; color:#c23a52;">RM <?php echo h(number_format($amountDue, 2)); ?></strong>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                    
+                    <div style="display:flex; flex-direction:column; gap:12px;">
+                        <a href="booking.php?id=<?php echo h($booking['id']); ?>&payment=1" class="dc-btn-primary" style="justify-content:center; padding:12px;">
+                            <?php echo $isPaid || !$canPay ? 'View Payment' : 'Pay Now'; ?>
+                        </a>
+
+                        <?php if (canCancelBooking($bookingStatus) && !$isPaid): ?>
+                            <form method="post" action="booking.php?id=<?php echo h($booking['id']); ?>" onsubmit="return confirm('Are you sure you want to cancel this booking? This action cannot be undone.');">
+                                <?php echo csrfInput(); ?>
+                                <input type="hidden" name="action" value="cancel">
+                                <input type="hidden" name="booking_id" value="<?php echo h($booking['id']); ?>">
+                                <button type="submit" class="dc-btn-secondary" style="width:100%; justify-content:center; color:#c23a52; border-color:#fbeaed; background:#fff;">Cancel Booking</button>
+                            </form>
+                        <?php else: ?>
+                            <button type="button" class="dc-btn-secondary" style="width:100%; justify-content:center; opacity:0.5; cursor:not-allowed;" disabled>Cancel Booking</button>
+                        <?php endif; ?>
+                    </div>
+                </div>
             </div>
         </section>
-    </main>
-</body>
-</html>
+        
+        <?php if ($showPaymentModal): ?>
+            <div style="position:fixed; inset:0; background:rgba(10,13,20,0.6); backdrop-filter:blur(4px); z-index:100; display:flex; align-items:center; justify-content:center; padding:20px;">
+                <div class="dc-card padded" style="width:100%; max-width:480px; position:relative; box-shadow:0 24px 48px rgba(0,0,0,0.2);">
+                    <a href="booking.php?id=<?php echo h($booking['id']); ?>" style="position:absolute; top:20px; right:20px; color:#9097a8; text-decoration:none;">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </a>
+                    
+                    <div class="dc-h2-title" style="margin-bottom:24px;">
+                        <div>
+                            <div class="dc-mono-subtitle small" style="margin-bottom:8px">Payment</div>
+                            <h2 class="dc-h2">Booking payment details</h2>
+                        </div>
+                    </div>
+                    
+                    <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:24px;">
+                        <div style="display:flex; justify-content:space-between;">
+                            <span style="color:#5b6273;">Rental subtotal</span>
+                            <span style="font-weight:600;">RM <?php echo h(number_format($paymentBreakdown['rental_subtotal'], 2)); ?></span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between;">
+                            <span style="color:#5b6273;">Tax <?php echo h((int) round($paymentBreakdown['display_tax_rate'] * 100)); ?>%</span>
+                            <span style="font-weight:600;">RM <?php echo h(number_format($paymentBreakdown['display_tax_amount'], 2)); ?></span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between;">
+                            <span style="color:#5b6273;">Late fees</span>
+                            <span style="font-weight:600;">RM <?php echo h(number_format($paymentBreakdown['late_fee_total'], 2)); ?></span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; padding-top:12px; border-top:1px solid #e4e8f1; margin-top:4px;">
+                            <span style="font-weight:700;">Total amount</span>
+                            <strong style="font-size:18px;">RM <?php echo h(number_format($paymentBreakdown['payable_total'], 2)); ?></strong>
+                        </div>
+                    </div>
+                    
+                    <?php if (!$isPaid && $canPay): ?>
+                        <form method="post" action="booking.php?id=<?php echo h($booking['id']); ?>&payment=1" style="background:#f9fafc; padding:20px; border-radius:12px; border:1px solid #e4e8f1;">
+                            <?php echo csrfInput(); ?>
+                            <input type="hidden" name="action" value="pay">
+                            <input type="hidden" name="booking_id" value="<?php echo h($booking['id']); ?>">
+
+                            <label style="display:block; margin-bottom:16px;">
+                                <span style="display:block; margin-bottom:6px; font-size:13px; font-weight:600;">Payment Method</span>
+                                <select name="payment_method" class="dc-select" required style="width:100%; background:#fff;">
+                                    <?php foreach (PAYMENT_METHODS as $method): ?>
+                                        <option value="<?php echo h($method); ?>"><?php echo h($method); ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </label>
+
+                            <button type="submit" class="dc-btn-primary" style="width:100%; justify-content:center; padding:12px;">Confirm Payment</button>
+                        </form>
+                    <?php elseif (!$canPay): ?>
+                        <div style="padding:16px; background:#f9fafc; border-radius:8px; text-align:center; color:#5b6273; font-size:14px;">
+                            Payment is not available for this booking.
+                        </div>
+                    <?php else: ?>
+                        <div style="padding:16px; background:#e6f6f1; border-radius:8px; text-align:center; color:#0b7a5a; font-size:14px; font-weight:600;">
+                            This booking has already been paid.
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+        <?php endif; ?>
+
+    <?php endif; ?>
+</main>
+<?php include '../includes/layout_bottom.php'; ?>

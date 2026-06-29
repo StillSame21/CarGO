@@ -57,103 +57,86 @@ try {
     $error = 'Could not load your bookings. Please check the database connection.';
 }
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Bookings | CarGo</title>
-    <link rel="stylesheet" href="../css/style.css">
-    <link rel="stylesheet" href="../css/customer.css">
-</head>
-<body>
-    <main class="dashboard-page">
-        <header class="dashboard-header">
-            <?php include 'header.php'; ?>
-        </header>
+<?php
+$pageTitle = 'My Bookings | CarGo';
+include '../includes/layout_top.php';
+include 'header.php';
+?>
+<main class="dc-main">
+    <header class="dc-h2-title" style="margin-bottom: 0;">
+        <div>
+            <div class="dc-mono-subtitle small" style="margin-bottom:8px">Bookings</div>
+            <h1 class="dc-h1" style="font-size:32px;">My bookings</h1>
+        </div>
+    </header>
 
-        <section class="dashboard-content">
-            <div class="dashboard-shell">
-                <header class="page-heading">
-                    <div>
-                        <p class="eyebrow">Bookings</p>
-                        <h1>My bookings</h1>
-                    </div>
-                </header>
-
-                <?php if ($error !== ''): ?>
-                    <p class="message error"><?php echo h($error); ?></p>
-                <?php elseif (count($bookings) === 0): ?>
-                    <section class="empty-state-panel">
-                        <h2>No bookings yet.</h2>
-                        <p>Check availability on a car to create your first booking.</p>
-                    </section>
-                <?php else: ?>
-                    <section class="booking-toolbar browse-toolbar">
-                        <div class="search-box">
-                            <input type="text" id="booking-search" class="search-input" placeholder="Search car or booking ID...">
-                        </div>
-                        <div class="filter-controls">
-                            <select id="filter-status" class="filter-select">
-                                <option value="">All Statuses</option>
-                                <option value="pending">Pending</option>
-                                <option value="approved">Approved</option>
-                                <option value="ongoing">Ongoing</option>
-                                <option value="completed">Completed</option>
-                                <option value="cancelled">Cancelled</option>
-                                <option value="rejected">Rejected</option>
-                                <option value="late fees">Late Fees</option>
-                                <option value="paid">Paid</option>
-                            </select>
-                            <select id="sort-by" class="sort-select">
-                                <option value="newest">Newest First</option>
-                                <option value="oldest">Oldest First</option>
-                            </select>
-                        </div>
-                        <div class="toolbar-footer">
-                            <span id="results-count" class="results-count">Showing <?php echo count($bookings); ?> bookings</span>
-                        </div>
-                    </section>
-
-                    <section class="booking-list" id="booking-list" aria-label="My bookings">
-                        <?php foreach ($bookings as $booking): ?>
-                            <?php $displayStatus = bookingDisplayStatus((string) $booking['booking_status'], $booking['payment_status'] ?? null, (float) $booking['total_late_fee']); ?>
-                            <?php $paymentBreakdown = buildPaymentBreakdown((float) $booking['total_amount'], (float) $booking['total_late_fee']); ?>
-                            <article class="booking-list-card"
-                                data-id="<?php echo h($booking['id']); ?>"
-                                data-car="<?php echo h(strtolower($booking['brand'] . ' ' . $booking['model'])); ?>"
-                                data-status="<?php echo h(strtolower($displayStatus['label'])); ?>"
-                                data-date="<?php echo strtotime($booking['pickup_date'] ?? 'now'); ?>"
-                            >
-                                <div>
-                                    <p class="car-type">Booking #<?php echo h($booking['id']); ?></p>
-                                    <h2><?php echo h($booking['brand'] . ' ' . $booking['model']); ?></h2>
-                                    <p><?php echo h(formatBookingDate($booking['pickup_date']) . ' to ' . formatBookingDate($booking['return_date'])); ?></p>
-                                </div>
-
-                                <dl>
-                                    <div>
-                                        <dt>Plate</dt>
-                                        <dd><?php echo h($booking['plate_number']); ?></dd>
-                                    </div>
-                                    <div>
-                                        <dt>Total</dt>
-                                        <dd>RM <?php echo h(number_format($paymentBreakdown['payable_total'], 2)); ?></dd>
-                                    </div>
-                                    <div>
-                                        <dt>Status</dt>
-                                        <dd><span class="booking-status-pill <?php echo h($displayStatus['class']); ?>"><?php echo h($displayStatus['label']); ?></span></dd>
-                                    </div>
-                                </dl>
-
-                                <a class="primary-action" href="booking.php?id=<?php echo h($booking['id']); ?>">View Details</a>
-                            </article>
-                        <?php endforeach; ?>
-                    </section>
-                <?php endif; ?>
+    <?php if ($error !== ''): ?>
+        <p class="message error" style="color: #c23a52; background: #fbeaed; padding: 12px; border-radius: 8px; font-weight: 600;"><?php echo h($error); ?></p>
+    <?php elseif (count($bookings) === 0): ?>
+        <div class="dc-card padded" style="text-align:center; padding: 60px 20px;">
+            <h2 class="dc-h2">No bookings yet.</h2>
+            <p class="dc-p" style="margin-top:12px;">Check availability on a car to create your first booking.</p>
+        </div>
+    <?php else: ?>
+        <div class="dc-card" style="padding: 16px;">
+            <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+                <input type="text" id="booking-search" class="dc-input" placeholder="Search car or booking ID..." style="flex:1; min-width:200px;">
+                <select id="filter-status" class="dc-select" style="width:auto;">
+                    <option value="">All Statuses</option>
+                    <option value="pending">Pending</option>
+                    <option value="approved">Approved</option>
+                    <option value="ongoing">Ongoing</option>
+                    <option value="completed">Completed</option>
+                    <option value="cancelled">Cancelled</option>
+                    <option value="rejected">Rejected</option>
+                    <option value="late fees">Late Fees</option>
+                    <option value="paid">Paid</option>
+                </select>
+                <select id="sort-by" class="dc-select" style="width:auto;">
+                    <option value="newest">Newest First</option>
+                    <option value="oldest">Oldest First</option>
+                </select>
             </div>
+            <div style="margin-top:12px; font-size:13px; font-weight:600; color:#5b6273;">
+                <span id="results-count">Showing <?php echo count($bookings); ?> bookings</span>
+            </div>
+        </div>
+
+        <section class="dc-grid-3" id="booking-list">
+            <?php foreach ($bookings as $booking): ?>
+                <?php $displayStatus = bookingDisplayStatus((string) $booking['booking_status'], $booking['payment_status'] ?? null, (float) $booking['total_late_fee']); ?>
+                <?php $paymentBreakdown = buildPaymentBreakdown((float) $booking['total_amount'], (float) $booking['total_late_fee']); ?>
+                <article class="dc-card padded booking-list-card"
+                    data-id="<?php echo h($booking['id']); ?>"
+                    data-car="<?php echo h(strtolower($booking['brand'] . ' ' . $booking['model'])); ?>"
+                    data-status="<?php echo h(strtolower($displayStatus['label'])); ?>"
+                    data-date="<?php echo strtotime($booking['pickup_date'] ?? 'now'); ?>"
+                >
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                        <div>
+                            <span class="dc-mono-subtitle small">Booking #<?php echo h($booking['id']); ?></span>
+                            <h2 class="dc-h2" style="font-size:18px; margin-top:4px;"><?php echo h($booking['brand'] . ' ' . $booking['model']); ?></h2>
+                            <p class="dc-p" style="font-size:13px; margin-top:4px;"><?php echo h(formatBookingDate($booking['pickup_date']) . ' to ' . formatBookingDate($booking['return_date'])); ?></p>
+                        </div>
+                        <span class="dc-status <?php echo h($displayStatus['class']); ?>"><?php echo h($displayStatus['label']); ?></span>
+                    </div>
+
+                    <div style="margin-top:16px; padding-top:16px; border-top:1px solid var(--border-color); display:flex; justify-content:space-between; font-size:13px;">
+                        <div>
+                            <div style="color:#9097a8; margin-bottom:4px;">Plate</div>
+                            <div style="font-weight:600;"><?php echo h($booking['plate_number']); ?></div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div style="color:#9097a8; margin-bottom:4px;">Total</div>
+                            <div style="font-weight:600;">RM <?php echo h(number_format($paymentBreakdown['payable_total'], 2)); ?></div>
+                        </div>
+                    </div>
+
+                    <a class="dc-btn-primary" href="booking.php?id=<?php echo h($booking['id']); ?>" style="display:block; text-align:center; margin-top:16px; padding:10px;">View Details</a>
+                </article>
+            <?php endforeach; ?>
         </section>
-    </main>
-    <script src="../js/booking-filter.js"></script>
-</body>
-</html>
+    <?php endif; ?>
+</main>
+<script src="../js/booking-filter.js"></script>
+<?php include '../includes/layout_bottom.php'; ?>

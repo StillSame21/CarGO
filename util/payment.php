@@ -53,6 +53,15 @@ function markBookingPaymentPaid(mysqli $conn, int $bookingId, float $amount, str
         throw new InvalidArgumentException('Please choose a valid payment method.');
     }
 
+    if ($paymentMethod === 'Online Payment') {
+        require_once __DIR__ . '/../includes/stripe_stub.php';
+        $stripe = new StripeClientStub();
+        $charge = $stripe->createCharge($amount, 'usd', 'tok_visa', "Payment for booking $bookingId");
+        if ($charge['status'] !== 'succeeded') {
+            throw new RuntimeException('Online payment failed.');
+        }
+    }
+
     $paidStatus = PAYMENT_STATUS_PAID;
 
     $stmt = $conn->prepare(

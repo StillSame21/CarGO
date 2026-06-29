@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box}
+    html,body{margin:0}
+    body{background:#eef1f7}
+    ::selection{background:rgba(47,107,255,0.18)}
+  </style>
+</helmet>
+<div style="--accent: {{accent}}; --r: {{radius}}; --cardpad: {{cardpad}}; font-family:'Plus Jakarta Sans',system-ui,-apple-system,sans-serif; color:#131722; background:#eef1f7; min-height:100vh; -webkit-font-smoothing:antialiased;">
+
+  <header style="position:sticky; top:0; z-index:30; background:rgba(255,255,255,0.82); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); border-bottom:1px solid #e4e8f1;">
+    <div style="max-width:1240px; margin:0 auto; padding:0 28px; height:70px; display:flex; align-items:center; gap:34px;">
+      <div style="display:flex; align-items:center; font-weight:800; font-size:22px; letter-spacing:-0.03em;">
+        <span style="color:var(--accent,#2f6bff);">C</span>arGo
+      </div>
+      <nav style="display:flex; align-items:center; gap:4px;">
+        <a href="#" style="padding:9px 14px; border-radius:11px; font-size:14px; font-weight:700; color:#131722; text-decoration:none; background:color-mix(in srgb, var(--accent,#2f6bff) 9%, #ffffff);">Dashboard</a>
+        <a href="#" style="padding:9px 14px; border-radius:11px; font-size:14px; font-weight:600; color:#5b6273; text-decoration:none;" style-hover="background:#f1f3f9; color:#131722;">Browse Cars</a>
+        <a href="#" style="padding:9px 14px; border-radius:11px; font-size:14px; font-weight:600; color:#5b6273; text-decoration:none;" style-hover="background:#f1f3f9; color:#131722;">My Bookings</a>
+        <a href="#" style="padding:9px 14px; border-radius:11px; font-size:14px; font-weight:600; color:#5b6273; text-decoration:none;" style-hover="background:#f1f3f9; color:#131722;">Support</a>
+      </nav>
+      <div style="margin-left:auto; display:flex; align-items:center; gap:12px;">
+        <div style="display:flex; align-items:center; gap:9px; background:#f1f3f9; border:1px solid #e4e8f1; border-radius:12px; padding:9px 13px; width:210px; color:#9097a8; font-size:13px; font-weight:500;">
+          <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="5" fill="none" stroke="#9097a8" stroke-width="1.6"></circle><line x1="10.8" y1="10.8" x2="14.5" y2="14.5" stroke="#9097a8" stroke-width="1.6" stroke-linecap="round"></line></svg>
+          Search cars, bookings
+        </div>
+        <button style="position:relative; width:40px; height:40px; border-radius:12px; border:1px solid #e4e8f1; background:#ffffff; cursor:pointer; display:flex; align-items:center; justify-content:center;" style-hover="background:#f1f3f9;">
+          <svg width="17" height="17" viewBox="0 0 18 18" aria-hidden="true"><circle cx="9" cy="8" r="5.2" fill="none" stroke="#5b6273" stroke-width="1.6"></circle><line x1="9" y1="13.2" x2="9" y2="15" stroke="#5b6273" stroke-width="1.6" stroke-linecap="round"></line></svg>
+          <span style="position:absolute; top:9px; right:10px; width:7px; height:7px; border-radius:50%; background:#e0492f; border:1.5px solid #ffffff;"></span>
+        </button>
+        <button style="display:flex; align-items:center; gap:10px; padding:5px 12px 5px 5px; border:1px solid #e4e8f1; border-radius:14px; background:#ffffff; cursor:pointer;" style-hover="background:#f1f3f9;">
+          <span style="width:32px; height:32px; border-radius:9px; background:color-mix(in srgb, var(--accent,#2f6bff) 14%, #ffffff); color:var(--accent,#2f6bff); display:flex; align-items:center; justify-content:center; font-size:12.5px; font-weight:800; letter-spacing:0.02em;">AA</span>
+          <span style="display:flex; flex-direction:column; line-height:1.15; text-align:left;">
+            <span style="font-size:13px; font-weight:700; color:#131722;">ali abdul</span>
+            <span style="font-size:11px; font-weight:500; color:#9097a8;">Member</span>
+          </span>
+          <svg width="11" height="11" viewBox="0 0 12 12" aria-hidden="true" style="margin-left:2px;"><path d="M2.5 4.5 L6 8 L9.5 4.5" fill="none" stroke="#9097a8" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main style="max-width:1240px; margin:0 auto; padding:26px 28px 60px; display:flex; flex-direction:column; gap:18px;">
+
+    <section style="background:#ffffff; border:1px solid #e4e8f1; border-radius:var(--r,20px); padding:clamp(28px, 4vw, 44px); display:grid; grid-template-columns:1.05fr 0.95fr; gap:44px; align-items:center; box-shadow:0 1px 2px rgba(19,23,34,0.04), 0 18px 40px -28px rgba(19,23,34,0.18);">
+      <div>
+        <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; font-weight:600; letter-spacing:0.14em; text-transform:uppercase; color:var(--accent,#2f6bff); margin-bottom:18px;">Customer Dashboard</div>
+        <h1 style="margin:0 0 16px; font-size:clamp(34px, 4vw, 46px); line-height:1.04; font-weight:800; letter-spacing:-0.035em;">Good morning, ali.</h1>
+        <p style="margin:0 0 28px; max-width:400px; font-size:16px; line-height:1.6; color:#5b6273; text-wrap:pretty;">Review your trips, continue payments, and find your next rental — all from one calm workspace.</p>
+        <div style="display:flex; gap:12px; flex-wrap:wrap;">
+          <button style="background:var(--accent,#2f6bff); color:#fff; border:none; padding:14px 24px; border-radius:13px; font-family:inherit; font-weight:700; font-size:14.5px; cursor:pointer; box-shadow:0 12px 26px -12px var(--accent,#2f6bff);" style-hover="filter:brightness(1.07);">Browse Cars</button>
+          <button style="background:#ffffff; color:#131722; border:1px solid #d6dae8; padding:14px 24px; border-radius:13px; font-family:inherit; font-weight:700; font-size:14.5px; cursor:pointer;" style-hover="background:#f4f6fb;">My Bookings</button>
+        </div>
+      </div>
+      <div style="position:relative; aspect-ratio:16/10; border-radius:calc(var(--r,20px) - 4px); overflow:hidden; background:linear-gradient(140deg, #20273b 0%, #11151f 60%, #0a0d14 100%); border:1px solid #1c2233; display:flex; align-items:center; justify-content:center;">
+        <div style="position:absolute; inset:0; background-image:repeating-linear-gradient(135deg, rgba(255,255,255,0.04) 0px, rgba(255,255,255,0.04) 1px, transparent 1px, transparent 11px); pointer-events:none;"></div>
+        <div style="position:absolute; top:16px; left:16px; display:flex; align-items:center; gap:7px; padding:7px 12px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); border-radius:999px; backdrop-filter:blur(6px);">
+          <span style="width:7px; height:7px; border-radius:50%; background:var(--accent,#2f6bff);"></span>
+          <span style="font-size:11px; font-weight:600; letter-spacing:0.04em; color:rgba(255,255,255,0.82);">Featured pick</span>
+        </div>
+        <span style="font-family:'IBM Plex Mono',monospace; font-size:12.5px; letter-spacing:0.04em; color:rgba(255,255,255,0.4);">[ hero car photo ]</span>
+      </div>
+    </section>
+
+    <section style="display:grid; grid-template-columns:repeat(4, 1fr); gap:16px;">
+      <div style="background:#ffffff; border:1px solid #e4e8f1; border-radius:var(--r,20px); padding:22px; display:flex; flex-direction:column; gap:14px; box-shadow:0 1px 2px rgba(19,23,34,0.04);">
+        <div style="display:flex; align-items:center; justify-content:space-between;">
+          <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:#9097a8;">Available cars</span>
+          <span style="width:8px; height:8px; border-radius:50%; background:var(--accent,#2f6bff);"></span>
+        </div>
+        <span style="font-size:34px; font-weight:800; letter-spacing:-0.03em; line-height:1; font-variant-numeric:tabular-nums;">17</span>
+        <span style="font-size:13px; color:#5b6273; font-weight:500;">Ready to browse today</span>
+      </div>
+      <div style="background:#ffffff; border:1px solid #e4e8f1; border-radius:var(--r,20px); padding:22px; display:flex; flex-direction:column; gap:14px; box-shadow:0 1px 2px rgba(19,23,34,0.04);">
+        <div style="display:flex; align-items:center; justify-content:space-between;">
+          <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:#9097a8;">Active trips</span>
+          <span style="width:8px; height:8px; border-radius:50%; background:#9aa0b0;"></span>
+        </div>
+        <span style="font-size:34px; font-weight:800; letter-spacing:-0.03em; line-height:1; font-variant-numeric:tabular-nums;">0</span>
+        <span style="font-size:13px; color:#5b6273; font-weight:500;">Approved or ongoing</span>
+      </div>
+      <div style="background:#ffffff; border:1px solid #e4e8f1; border-radius:var(--r,20px); padding:22px; display:flex; flex-direction:column; gap:14px; box-shadow:0 1px 2px rgba(19,23,34,0.04);">
+        <div style="display:flex; align-items:center; justify-content:space-between;">
+          <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:#9097a8;">Pending requests</span>
+          <span style="width:8px; height:8px; border-radius:50%; background:#c98a14;"></span>
+        </div>
+        <span style="font-size:34px; font-weight:800; letter-spacing:-0.03em; line-height:1; font-variant-numeric:tabular-nums;">0</span>
+        <span style="font-size:13px; color:#5b6273; font-weight:500;">Waiting for approval</span>
+      </div>
+      <div style="background:#ffffff; border:1px solid #e4e8f1; border-radius:var(--r,20px); padding:22px; display:flex; flex-direction:column; gap:14px; box-shadow:0 1px 2px rgba(19,23,34,0.04);">
+        <div style="display:flex; align-items:center; justify-content:space-between;">
+          <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:#9097a8;">Payment due</span>
+          <span style="width:8px; height:8px; border-radius:50%; background:#157a4e;"></span>
+        </div>
+        <span style="font-size:34px; font-weight:800; letter-spacing:-0.03em; line-height:1; font-variant-numeric:tabular-nums;">RM 0.00</span>
+        <span style="font-size:13px; color:#157a4e; font-weight:600;">You're all settled</span>
+      </div>
+    </section>
+
+    <section style="display:grid; grid-template-columns:380px 1fr; gap:18px; align-items:start;">
+
+      <div style="background:#ffffff; border:1px solid #e4e8f1; border-radius:var(--r,20px); padding:var(--cardpad,32px); box-shadow:0 1px 2px rgba(19,23,34,0.04);">
+        <div style="display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:22px;">
+          <div>
+            <div style="font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:600; letter-spacing:0.12em; text-transform:uppercase; color:#9097a8; margin-bottom:8px;">Your activity</div>
+            <h2 style="margin:0; font-size:21px; font-weight:800; letter-spacing:-0.02em;">Recent bookings</h2>
+          </div>
+          <a href="#" style="font-size:13px; font-weight:700; color:var(--accent,#2f6bff); text-decoration:none; white-space:nowrap; padding-top:2px;">View all</a>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:15px 16px; border-radius:14px; border:1px solid #eef0f6; background:#fbfcfe;" style-hover="border-color:#dfe3ee; background:#f6f8fc;">
+            <div style="display:flex; flex-direction:column; gap:5px;">
+              <span style="font-size:14.5px; font-weight:700;">Perodua Bezza</span>
+              <span style="font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:#9097a8;">Jun 29, 2026</span>
+            </div>
+            <span style="padding:6px 11px; border-radius:999px; font-size:10.5px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; background:#fbeaed; color:#c23a52;">Cancelled</span>
+          </div>
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:15px 16px; border-radius:14px; border:1px solid #eef0f6; background:#fbfcfe;" style-hover="border-color:#dfe3ee; background:#f6f8fc;">
+            <div style="display:flex; flex-direction:column; gap:5px;">
+              <span style="font-size:14.5px; font-weight:700;">Proton Saga</span>
+              <span style="font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:#9097a8;">Jun 16, 2026</span>
+            </div>
+            <span style="padding:6px 11px; border-radius:999px; font-size:10.5px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; background:#e7f4ec; color:#157a4e;">Completed</span>
+          </div>
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:15px 16px; border-radius:14px; border:1px solid #eef0f6; background:#fbfcfe;" style-hover="border-color:#dfe3ee; background:#f6f8fc;">
+            <div style="display:flex; flex-direction:column; gap:5px;">
+              <span style="font-size:14.5px; font-weight:700;">Perodua Bezza</span>
+              <span style="font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:#9097a8;">Jun 05, 2026</span>
+            </div>
+            <span style="padding:6px 11px; border-radius:999px; font-size:10.5px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; background:#fbeaed; color:#c23a52;">Cancelled</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="background:#ffffff; border:1px solid #e4e8f1; border-radius:var(--r,20px); padding:var(--cardpad,32px); box-shadow:0 1px 2px rgba(19,23,34,0.04);">
+        <div style="display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:22px;">
+          <div>
+            <div style="font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:600; letter-spacing:0.12em; text-transform:uppercase; color:#9097a8; margin-bottom:8px;">Recommended cars</div>
+            <h2 style="margin:0; font-size:21px; font-weight:800; letter-spacing:-0.02em;">Available for your next booking</h2>
+          </div>
+          <a href="#" style="font-size:13px; font-weight:700; color:var(--accent,#2f6bff); text-decoration:none; white-space:nowrap; padding-top:2px;">View all</a>
+        </div>
+        <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:16px;">
+
+          <div style="border:1px solid #eef0f6; border-radius:16px; overflow:hidden; background:#fbfcfe; display:flex; flex-direction:column;" style-hover="border-color:#dfe3ee; box-shadow:0 14px 30px -20px rgba(19,23,34,0.3);">
+            <div style="position:relative; aspect-ratio:16/11; background-color:#f0f2f8; background-image:repeating-linear-gradient(135deg, #e7eaf2 0px, #e7eaf2 1px, transparent 1px, transparent 10px); display:flex; align-items:center; justify-content:center;">
+              <span style="position:absolute; top:11px; left:11px; padding:5px 10px; border-radius:999px; background:#ffffff; border:1px solid #e4e8f1; font-size:10px; font-weight:700; letter-spacing:0.08em; color:#5b6273;">SUV</span>
+              <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:#9aa0b0;">[ car photo ]</span>
+            </div>
+            <div style="padding:15px; display:flex; flex-direction:column; gap:11px; flex:1;">
+              <span style="font-size:15px; font-weight:700; letter-spacing:-0.01em;">Kia Sportage</span>
+              <span style="font-size:11.5px; color:#9097a8; font-weight:500;">Automatic · Petrol · 5 seats</span>
+              <div style="margin-top:auto; display:flex; align-items:flex-end; justify-content:space-between;">
+                <span style="display:flex; align-items:baseline; gap:3px;"><span style="font-size:18px; font-weight:800; letter-spacing:-0.02em;">RM 230</span><span style="font-size:11px; color:#9097a8; font-weight:600;">/ day</span></span>
+                <button style="width:34px; height:34px; border-radius:10px; border:1px solid #d6dae8; background:#ffffff; color:var(--accent,#2f6bff); font-size:16px; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center;" style-hover="background:var(--accent,#2f6bff); color:#fff; border-color:var(--accent,#2f6bff);">→</button>
+              </div>
+            </div>
+          </div>
+
+          <div style="border:1px solid #eef0f6; border-radius:16px; overflow:hidden; background:#fbfcfe; display:flex; flex-direction:column;" style-hover="border-color:#dfe3ee; box-shadow:0 14px 30px -20px rgba(19,23,34,0.3);">
+            <div style="position:relative; aspect-ratio:16/11; background-color:#f0f2f8; background-image:repeating-linear-gradient(135deg, #e7eaf2 0px, #e7eaf2 1px, transparent 1px, transparent 10px); display:flex; align-items:center; justify-content:center;">
+              <span style="position:absolute; top:11px; left:11px; padding:5px 10px; border-radius:999px; background:#ffffff; border:1px solid #e4e8f1; font-size:10px; font-weight:700; letter-spacing:0.08em; color:#5b6273;">SUV</span>
+              <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:#9aa0b0;">[ car photo ]</span>
+            </div>
+            <div style="padding:15px; display:flex; flex-direction:column; gap:11px; flex:1;">
+              <span style="font-size:15px; font-weight:700; letter-spacing:-0.01em;">Mazda CX-5</span>
+              <span style="font-size:11.5px; color:#9097a8; font-weight:500;">Automatic · Petrol · 5 seats</span>
+              <div style="margin-top:auto; display:flex; align-items:flex-end; justify-content:space-between;">
+                <span style="display:flex; align-items:baseline; gap:3px;"><span style="font-size:18px; font-weight:800; letter-spacing:-0.02em;">RM 250</span><span style="font-size:11px; color:#9097a8; font-weight:600;">/ day</span></span>
+                <button style="width:34px; height:34px; border-radius:10px; border:1px solid #d6dae8; background:#ffffff; color:var(--accent,#2f6bff); font-size:16px; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center;" style-hover="background:var(--accent,#2f6bff); color:#fff; border-color:var(--accent,#2f6bff);">→</button>
+              </div>
+            </div>
+          </div>
+
+          <div style="border:1px solid #eef0f6; border-radius:16px; overflow:hidden; background:#fbfcfe; display:flex; flex-direction:column;" style-hover="border-color:#dfe3ee; box-shadow:0 14px 30px -20px rgba(19,23,34,0.3);">
+            <div style="position:relative; aspect-ratio:16/11; background-color:#f0f2f8; background-image:repeating-linear-gradient(135deg, #e7eaf2 0px, #e7eaf2 1px, transparent 1px, transparent 10px); display:flex; align-items:center; justify-content:center;">
+              <span style="position:absolute; top:11px; left:11px; padding:5px 10px; border-radius:999px; background:#ffffff; border:1px solid #e4e8f1; font-size:10px; font-weight:700; letter-spacing:0.08em; color:#5b6273;">SUV</span>
+              <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:#9aa0b0;">[ car photo ]</span>
+            </div>
+            <div style="padding:15px; display:flex; flex-direction:column; gap:11px; flex:1;">
+              <span style="font-size:15px; font-weight:700; letter-spacing:-0.01em;">Hyundai Tucson</span>
+              <span style="font-size:11.5px; color:#9097a8; font-weight:500;">Automatic · Petrol · 5 seats</span>
+              <div style="margin-top:auto; display:flex; align-items:flex-end; justify-content:space-between;">
+                <span style="display:flex; align-items:baseline; gap:3px;"><span style="font-size:18px; font-weight:800; letter-spacing:-0.02em;">RM 220</span><span style="font-size:11px; color:#9097a8; font-weight:600;">/ day</span></span>
+                <button style="width:34px; height:34px; border-radius:10px; border:1px solid #d6dae8; background:#ffffff; color:var(--accent,#2f6bff); font-size:16px; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center;" style-hover="background:var(--accent,#2f6bff); color:#fff; border-color:var(--accent,#2f6bff);">→</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </section>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{
+  &quot;$preview&quot;: { &quot;width&quot;: 1280, &quot;height&quot;: 1000 },
+  &quot;accentColor&quot;: { &quot;editor&quot;: &quot;color&quot;, &quot;default&quot;: &quot;#2f6bff&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;options&quot;: [&quot;#2f6bff&quot;, &quot;#0e7c66&quot;, &quot;#7c3aed&quot;, &quot;#e0492f&quot;, &quot;#111827&quot;] },
+  &quot;density&quot;: { &quot;editor&quot;: &quot;enum&quot;, &quot;default&quot;: &quot;comfortable&quot;, &quot;options&quot;: [&quot;comfortable&quot;, &quot;compact&quot;], &quot;tsType&quot;: &quot;string&quot; },
+  &quot;corners&quot;: { &quot;editor&quot;: &quot;enum&quot;, &quot;default&quot;: &quot;rounded&quot;, &quot;options&quot;: [&quot;rounded&quot;, &quot;sharp&quot;], &quot;tsType&quot;: &quot;string&quot; }
+}">
+class Component extends DCLogic {
+  renderVals() {
+    const corners = this.props.corners ?? 'rounded';
+    const density = this.props.density ?? 'comfortable';
+    return {
+      accent: this.props.accentColor ?? '#2f6bff',
+      radius: corners === 'sharp' ? '10px' : '20px',
+      cardpad: density === 'compact' ? '22px' : '32px',
+    };
+  }
+}
+</script>
+</body>
+</html>
