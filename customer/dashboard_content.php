@@ -19,6 +19,7 @@ $firstName = $firstName !== '' ? $firstName : 'there';
 $availableCars = [];
 $dashboardError = '';
 $availableCarCount = 0;
+$recentBookings = [];
 $bookingCounts = [
     'pending' => 0,
     'approved' => 0,
@@ -96,6 +97,17 @@ try {
             'count' => (int) ($paymentRow['attention_count'] ?? 0),
             'amount_due' => (float) ($paymentRow['amount_due'] ?? 0),
         ];
+
+        $stmt = $conn->prepare(
+            'SELECT b.id, b.booking_status, b.pickup_date, car.brand, car.model
+             FROM bookings b
+             INNER JOIN cars car ON car.id = b.car_id
+             WHERE b.customer_id = ?
+             ORDER BY b.created_at DESC LIMIT 3'
+        );
+        $stmt->bind_param('i', $customerId);
+        $stmt->execute();
+        $recentBookings = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     }
 } catch (mysqli_sql_exception $e) {
     $dashboardError = 'Could not load the latest dashboard data. Please check the database connection.';
@@ -156,6 +168,34 @@ $pendingCount = $bookingCounts['pending'];
         </article>
     </section>
 
+    <div class="dashboard-split">
+        <section class="customer-panel dashboard-recent-bookings">
+            <div class="customer-panel-heading">
+                <div>
+                    <p class="eyebrow">Your Activity</p>
+                    <h2>Recent Bookings</h2>
+                </div>
+                <a class="customer-section-link" href="my_bookings.php">View all</a>
+            </div>
+            <?php if (count($recentBookings) === 0): ?>
+                <p class="customer-panel-note">You don't have any recent bookings.</p>
+            <?php else: ?>
+                <div class="recent-booking-list">
+                    <?php foreach ($recentBookings as $rb): ?>
+                        <a href="booking.php?id=<?php echo h($rb['id']); ?>" class="recent-booking-item">
+                            <div>
+                                <strong><?php echo h($rb['brand'] . ' ' . $rb['model']); ?></strong>
+                                <span><?php echo h(date('M d, Y', strtotime($rb['pickup_date']))); ?></span>
+                            </div>
+                            <span class="booking-status-pill <?php echo h(strtolower($rb['booking_status'])); ?>">
+                                <?php echo h(ucfirst($rb['booking_status'])); ?>
+                            </span>
+                        </a>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
+        </section>
+
     <section class="customer-panel">
         <div class="customer-panel-heading">
             <div>
@@ -186,4 +226,6 @@ $pendingCount = $bookingCounts['pending'];
             </div>
         <?php endif; ?>
     </section>
+    </div>
 </div>
+<script src="../js/dashboard.js"></script>

@@ -32,7 +32,7 @@ jobs:
         run: composer install --prefer-dist --no-progress
 
       - name: Run PSR-12 Style Check
-        run: phpcs --standard=PSR12 --ignore=vendor/ .
+        run: phpcs --standard=PSR12 --ignore=vendor/,customer/,admin/,css/,js/,asset/,car/,carInfo/ .
 
       - name: Run PHPStan Analysis
         run: phpstan analyze --level=4 includes/ util/

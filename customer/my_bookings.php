@@ -89,11 +89,42 @@ try {
                         <p>Check availability on a car to create your first booking.</p>
                     </section>
                 <?php else: ?>
-                    <section class="booking-list" aria-label="My bookings">
+                    <section class="booking-toolbar browse-toolbar">
+                        <div class="search-box">
+                            <input type="text" id="booking-search" class="search-input" placeholder="Search car or booking ID...">
+                        </div>
+                        <div class="filter-controls">
+                            <select id="filter-status" class="filter-select">
+                                <option value="">All Statuses</option>
+                                <option value="pending">Pending</option>
+                                <option value="approved">Approved</option>
+                                <option value="ongoing">Ongoing</option>
+                                <option value="completed">Completed</option>
+                                <option value="cancelled">Cancelled</option>
+                                <option value="rejected">Rejected</option>
+                                <option value="late fees">Late Fees</option>
+                                <option value="paid">Paid</option>
+                            </select>
+                            <select id="sort-by" class="sort-select">
+                                <option value="newest">Newest First</option>
+                                <option value="oldest">Oldest First</option>
+                            </select>
+                        </div>
+                        <div class="toolbar-footer">
+                            <span id="results-count" class="results-count">Showing <?php echo count($bookings); ?> bookings</span>
+                        </div>
+                    </section>
+
+                    <section class="booking-list" id="booking-list" aria-label="My bookings">
                         <?php foreach ($bookings as $booking): ?>
                             <?php $displayStatus = bookingDisplayStatus((string) $booking['booking_status'], $booking['payment_status'] ?? null, (float) $booking['total_late_fee']); ?>
                             <?php $paymentBreakdown = buildPaymentBreakdown((float) $booking['total_amount'], (float) $booking['total_late_fee']); ?>
-                            <article class="booking-list-card">
+                            <article class="booking-list-card"
+                                data-id="<?php echo h($booking['id']); ?>"
+                                data-car="<?php echo h(strtolower($booking['brand'] . ' ' . $booking['model'])); ?>"
+                                data-status="<?php echo h(strtolower($displayStatus['label'])); ?>"
+                                data-date="<?php echo strtotime($booking['pickup_date'] ?? 'now'); ?>"
+                            >
                                 <div>
                                     <p class="car-type">Booking #<?php echo h($booking['id']); ?></p>
                                     <h2><?php echo h($booking['brand'] . ' ' . $booking['model']); ?></h2>
@@ -123,5 +154,6 @@ try {
             </div>
         </section>
     </main>
+    <script src="../js/booking-filter.js"></script>
 </body>
 </html>
