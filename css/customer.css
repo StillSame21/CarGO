@@ -1598,3 +1598,7 @@
         gap: 5px;
     }
 }
+
+body.modal-open {
+    overflow: hidden;
+}

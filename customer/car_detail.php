@@ -276,5 +276,27 @@ if (!$carId) {
             </div>
         </section>
     </main>
+    <script>
+    const pickupInput = document.getElementById('pickup_date');
+    const returnInput = document.getElementById('return_date');
+    const bookButton = document.querySelector('form[method="post"][action="car_detail.php"] button[type="submit"]');
+
+    if (pickupInput && returnInput && bookButton) {
+        const originalPickup = pickupInput.value;
+        const originalReturn = returnInput.value;
+
+        const monitorDates = () => {
+            if (pickupInput.value !== originalPickup || returnInput.value !== originalReturn) {
+                bookButton.disabled = true;
+                bookButton.innerText = 'Dates Changed (Re-check)';
+            } else {
+                bookButton.disabled = false;
+                bookButton.innerText = 'Book';
+            }
+        };
+        pickupInput.addEventListener('change', monitorDates);
+        returnInput.addEventListener('change', monitorDates);
+    }
+    </script>
 </body>
 </html>

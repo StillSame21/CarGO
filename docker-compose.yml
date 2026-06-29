@@ -1,0 +1,40 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:80"
+    volumes:
+      - .:/var/www/html:Z
+      - car_uploads:/var/www/html/car:Z
+    environment:
+      DB_HOST: db
+      DB_USER: cargo_user
+      DB_PASS: cargo_secure_password
+      DB_NAME: cargo_rental
+      DB_PORT: 3306
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: mariadb:10.11
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root_secure_password
+      MYSQL_DATABASE: cargo_rental
+      MYSQL_USER: cargo_user
+      MYSQL_PASSWORD: cargo_secure_password
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 5s
+      retries: 5
+      interval: 10s
+
+volumes:
+  db_data:
+  car_uploads:

@@ -156,7 +156,7 @@ if (!$bookingId || $customerId <= 0) {
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="../css/customer.css">
 </head>
-<body>
+<body class="<?php echo $showPaymentModal ? 'modal-open' : ''; ?>">
     <main class="dashboard-page">
         <header class="dashboard-header">
             <?php include 'header.php'; ?>
@@ -355,7 +355,7 @@ if (!$bookingId || $customerId <= 0) {
                                     </a>
 
                                     <?php if (canCancelBooking($bookingStatus) && !$isPaid): ?>
-                                        <form method="post" action="booking.php?id=<?php echo h($booking['id']); ?>">
+                                        <form method="post" action="booking.php?id=<?php echo h($booking['id']); ?>" onsubmit="return confirm('Are you sure you want to cancel this booking? This action cannot be undone.');">
                                             <?php echo csrfInput(); ?>
                                             <input type="hidden" name="action" value="cancel">
                                             <input type="hidden" name="booking_id" value="<?php echo h($booking['id']); ?>">

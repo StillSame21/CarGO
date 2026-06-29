@@ -1,0 +1,17 @@
+# Dependencies
+vendor/
+
+# Environment variables
+.env
+.env.local
+
+# Testing cache
+.phpunit.cache
+.phpunit.result.cache
+
+# Docker
+docker-compose.override.yml
+
+# OS Generated
+.DS_Store
+Thumbs.db
