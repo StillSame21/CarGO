@@ -20,9 +20,9 @@ $cssPrefix = (strpos($_SERVER['PHP_SELF'], '/admin/') !== false || strpos($_SERV
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="<?php echo $cssPrefix; ?>css/style.css">
     <link rel="stylesheet" href="<?php echo $cssPrefix; ?>css/template.css">
-    <?php if (strpos($_SERVER['PHP_SELF'], '/admin/') !== false): ?>
+    <?php if (strpos($_SERVER['PHP_SELF'], '/admin/') !== false) : ?>
         <link rel="stylesheet" href="<?php echo $cssPrefix; ?>css/admin.css">
-    <?php elseif (strpos($_SERVER['PHP_SELF'], '/customer/') !== false): ?>
+    <?php elseif (strpos($_SERVER['PHP_SELF'], '/customer/') !== false) : ?>
         <link rel="stylesheet" href="<?php echo $cssPrefix; ?>css/customer.css">
     <?php endif; ?>
 </head>
