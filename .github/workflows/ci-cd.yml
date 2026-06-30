@@ -99,6 +99,10 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Lowercase repository name
+        run: |
+          echo "REPO=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
+
       - name: Build and Push Image
         uses: docker/build-push-action@v4
         with:
@@ -106,8 +110,8 @@ jobs:
           file: ./Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}/cargo-app:latest
-            ghcr.io/${{ github.repository }}/cargo-app:${{ github.sha }}
+            ghcr.io/${{ env.REPO }}/cargo-app:latest
+            ghcr.io/${{ env.REPO }}/cargo-app:${{ github.sha }}
 
   deploy:
     name: Deploy to Production
