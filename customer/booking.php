@@ -537,7 +537,8 @@ include 'header.php';
                 </div>
             </div>
         </section>
-        
+
+
         <?php if ($showPaymentModal): ?>
             <div style="position:fixed; inset:0; background:rgba(10,13,20,0.6); backdrop-filter:blur(4px); z-index:100; display:flex; align-items:center; justify-content:center; padding:20px;">
                 <div class="dc-card padded" style="width:100%; max-width:480px; position:relative; box-shadow:0 24px 48px rgba(0,0,0,0.2);">
