@@ -23,9 +23,9 @@ $cssPrefix = ($isAdmin || $isCustomer) ? '../' : './';
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="<?php echo $cssPrefix; ?>css/style.css?v=3">
     <link rel="stylesheet" href="<?php echo $cssPrefix; ?>css/template.css?v=3">
-    <?php if ($isAdmin): ?>
+    <?php if ($isAdmin) : ?>
         <link rel="stylesheet" href="<?php echo $cssPrefix; ?>css/admin.css?v=3">
-    <?php elseif ($isCustomer): ?>
+    <?php elseif ($isCustomer) : ?>
         <link rel="stylesheet" href="<?php echo $cssPrefix; ?>css/customer.css?v=4">
     <?php endif; ?>
 </head>
