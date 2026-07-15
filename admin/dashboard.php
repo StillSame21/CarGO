@@ -243,6 +243,7 @@ try {
     $revenue = loadDashboardRevenue($conn);
     $bookingRevenue = $revenue['booking'];
     $lateFeeRevenue = $revenue['late_fee'];
+    $totalRevenue = $bookingRevenue + $lateFeeRevenue;
     $recentBookings = loadRecentDashboardBookings($conn);
     $recentCustomers = loadRecentDashboardCustomers($conn);
     $recentCars = loadRecentDashboardCars($conn);
@@ -256,60 +257,55 @@ include '../includes/layout_top.php';
 include 'header.php';
 ?>
 <main class="dc-main">
-    <section class="dc-card-hero">
+    <header style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-end;">
         <div>
-            <div class="dc-mono-subtitle">Admin Dashboard</div>
-            <h1 class="dc-h1">Overview</h1>
-            <p class="dc-p">Overview of cars, bookings, customers, and rental activity.</p>
+            <div class="dc-mono-subtitle small" style="margin-bottom:8px">Admin</div>
+            <h1 class="dc-h1" style="font-size:32px;">Dashboard Overview</h1>
         </div>
-        <div style="position:relative; aspect-ratio:16/10; border-radius:calc(var(--r,20px) - 4px); overflow:hidden; background:linear-gradient(140deg, #20273b 0%, #11151f 60%, #0a0d14 100%); border:1px solid #1c2233; display:flex; align-items:center; justify-content:center;">
-            <div style="position:absolute; inset:0; background-image:repeating-linear-gradient(135deg, rgba(255,255,255,0.04) 0px, rgba(255,255,255,0.04) 1px, transparent 1px, transparent 11px); pointer-events:none; z-index:1;"></div>
-            <div style="z-index:2; text-align:center;">
-                <span class="dc-stat-number" style="color:#fff; font-size:48px; display:block;">RM <?php echo h(number_format($totalRevenue, 2)); ?></span>
-                <span class="dc-stat-label" style="color:rgba(255,255,255,0.7);">Total Revenue</span>
-            </div>
-        </div>
-    </section>
+    </header>
 
     <?php if ($error !== ''): ?>
-        <p class="message error" style="color: #c23a52; background: #fbeaed; padding: 12px; border-radius: 8px; font-weight: 600;"><?php echo h($error); ?></p>
+        <p class="message error" style="color: #c23a52; background: #fbeaed; padding: 12px; border-radius: 8px; font-weight: 600; margin-bottom: 24px;"><?php echo h($error); ?></p>
     <?php endif; ?>
 
     <section class="dc-grid-4">
-        <div class="dc-card">
+        <!-- Total Revenue -->
+        <div class="dc-card" style="padding: 24px; border-top: 4px solid var(--primary-color);">
             <div class="dc-stat-header">
-                <span class="dc-mono-subtitle small">Active Cars</span>
+                <span class="dc-mono-subtitle small">Total Revenue</span>
+            </div>
+            <span class="dc-stat-number" style="font-size: 32px;">RM <?php echo h(number_format($totalRevenue, 2)); ?></span>
+            <span class="dc-stat-label">All time</span>
+        </div>
+
+        <!-- Active Cars -->
+        <div class="dc-card" style="padding: 24px;">
+            <div class="dc-stat-header">
+                <span class="dc-mono-subtitle small">Active Fleet</span>
                 <span class="dc-stat-dot blue"></span>
             </div>
-            <span class="dc-stat-number"><?php echo h($carStats['active']); ?></span>
-            <span class="dc-stat-label">Out of <?php echo h($carStats['total']); ?> total cars</span>
+            <span class="dc-stat-number" style="font-size: 32px;"><?php echo h($carStats['active']); ?></span>
+            <span class="dc-stat-label"><?php echo h($carStats['maintenance']); ?> in maintenance</span>
         </div>
         
-        <div class="dc-card">
+        <!-- Ongoing Bookings -->
+        <div class="dc-card" style="padding: 24px;">
             <div class="dc-stat-header">
                 <span class="dc-mono-subtitle small">Ongoing Bookings</span>
                 <span class="dc-stat-dot green"></span>
             </div>
-            <span class="dc-stat-number"><?php echo h($bookingStats['ongoing'] ?? 0); ?></span>
+            <span class="dc-stat-number" style="font-size: 32px;"><?php echo h($bookingStats['ongoing'] ?? 0); ?></span>
             <span class="dc-stat-label">Currently active</span>
         </div>
 
-        <div class="dc-card">
+        <!-- Pending Approvals -->
+        <div class="dc-card" style="padding: 24px;">
             <div class="dc-stat-header">
                 <span class="dc-mono-subtitle small">Pending Approvals</span>
                 <span class="dc-stat-dot yellow"></span>
             </div>
-            <span class="dc-stat-number"><?php echo h($bookingStats['pending'] ?? 0); ?></span>
+            <span class="dc-stat-number" style="font-size: 32px;"><?php echo h($bookingStats['pending'] ?? 0); ?></span>
             <span class="dc-stat-label">Needs attention</span>
-        </div>
-
-        <div class="dc-card">
-            <div class="dc-stat-header">
-                <span class="dc-mono-subtitle small">Maintenance</span>
-                <span class="dc-stat-dot gray"></span>
-            </div>
-            <span class="dc-stat-number"><?php echo h($carStats['maintenance']); ?></span>
-            <span class="dc-stat-label">Cars in repair</span>
         </div>
     </section>
 
@@ -347,7 +343,7 @@ include 'header.php';
                                 </td>
                                 <td><?php echo h(formatDashboardDate($booking['pickup_date']) . ' - ' . formatDashboardDate($booking['return_date'])); ?></td>
                                 <td>RM <?php echo h(number_format((float) $booking['total_amount'], 2)); ?></td>
-                                <td><span class="dc-status <?php echo h(strtolower($booking['booking_status'])); ?>"><?php echo h(ucfirst($booking['booking_status'])); ?></span></td>
+                                <td><span class="booking-status-pill status-<?php echo h(strtolower($booking['booking_status'])); ?>" style="font-size: 10px; padding: 2px 8px; min-height: 20px;"><?php echo h(ucfirst($booking['booking_status'])); ?></span></td>
                             </tr>
                         <?php endforeach; ?>
                     </tbody>
@@ -375,7 +371,7 @@ include 'header.php';
                                 <span style="font-size:14.5px; font-weight:700;"><?php echo h($customer['name']); ?></span>
                                 <span style="font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:#9097a8;"><?php echo h($customer['email']); ?></span>
                             </div>
-                            <span class="dc-status <?php echo h(strtolower($customer['status'])); ?>"><?php echo h(ucfirst($customer['status'])); ?></span>
+                            <span class="booking-status-pill status-<?php echo h(strtolower($customer['status'])); ?>" style="font-size: 10px; padding: 2px 8px; min-height: 20px;"><?php echo h(ucfirst($customer['status'])); ?></span>
                         </div>
                     <?php endforeach; ?>
                 <?php endif; ?>
@@ -409,7 +405,7 @@ include 'header.php';
                                 </td>
                                 <td><?php echo h($car['plate_number']); ?></td>
                                 <td>RM <?php echo h(number_format((float) $car['daily_rate'], 2)); ?></td>
-                                <td><span class="dc-status <?php echo h(strtolower($car['status'])); ?>"><?php echo h(ucfirst($car['status'])); ?></span></td>
+                                <td><span class="booking-status-pill status-<?php echo h(strtolower($car['status'])); ?>" style="font-size: 10px; padding: 2px 8px; min-height: 20px;"><?php echo h(ucfirst($car['status'])); ?></span></td>
                             </tr>
                         <?php endforeach; ?>
                     </tbody>
