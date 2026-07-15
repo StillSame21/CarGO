@@ -48,43 +48,71 @@ include 'header.php';
             <p class="dc-p" style="margin-top:12px;">Please check again later for newly listed rental cars.</p>
         </div>
     <?php else: ?>
-        <div class="dc-card" style="padding: 16px;">
-            <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
-                <input type="text" id="car-search" class="dc-input" placeholder="Search brand or model..." style="flex:1; min-width:200px;">
-                <select id="filter-type" class="dc-select" style="width:auto;">
-                    <option value="">All Types</option>
-                    <option value="Sedan">Sedan</option>
-                    <option value="SUV">SUV</option>
-                    <option value="Hatchback">Hatchback</option>
-                    <option value="MPV">MPV</option>
-                    <option value="Truck">Truck</option>
-                    <option value="Luxury">Luxury</option>
-                </select>
-                <select id="filter-transmission" class="dc-select" style="width:auto;">
-                    <option value="">All Transmissions</option>
-                    <option value="Automatic">Automatic</option>
-                    <option value="Manual">Manual</option>
-                </select>
-                <select id="filter-fuel" class="dc-select" style="width:auto;">
-                    <option value="">All Fuel Types</option>
-                    <option value="Petrol">Petrol</option>
-                    <option value="Diesel">Diesel</option>
-                    <option value="Hybrid">Hybrid</option>
-                    <option value="Electric">Electric</option>
-                </select>
-                <select id="sort-by" class="dc-select" style="width:auto;">
-                    <option value="default">Sort by...</option>
-                    <option value="price-asc">Price: Low to High</option>
-                    <option value="price-desc">Price: High to Low</option>
-                    <option value="name-asc">Name: A to Z</option>
-                    <option value="name-desc">Name: Z to A</option>
-                </select>
-                <button id="clear-filters" class="dc-btn-secondary" type="button" style="display:none; padding:12px 16px;">Clear</button>
-            </div>
-            <div style="margin-top:12px; font-size:13px; font-weight:600; color:#5b6273;">
-                <span id="results-count">Showing <?php echo count($cars); ?> cars</span>
-            </div>
-        </div>
+        <div style="display: flex; gap: 32px; align-items: flex-start; margin-top: 24px;">
+            
+            <!-- Sidebar Filters -->
+            <aside class="dc-card" style="width: 260px; flex-shrink: 0; padding: 24px; position: sticky; top: 94px; display: flex; flex-direction: column; gap: 16px; box-sizing: border-box; z-index: 10;">
+                <div style="font-size: 16px; font-weight: 700; color: var(--text-color-strong); border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 4px;">
+                    Filter & Sort
+                </div>
+                
+                <div>
+                    <label style="display: block; font-size: 11px; font-weight: 700; margin-bottom: 8px; color: #5b6273; text-transform: uppercase; letter-spacing: 0.05em;">Search</label>
+                    <input type="text" id="car-search" class="dc-input" placeholder="Brand or model..." style="width: 100%;">
+                </div>
+                
+                <div>
+                    <label style="display: block; font-size: 11px; font-weight: 700; margin-bottom: 8px; color: #5b6273; text-transform: uppercase; letter-spacing: 0.05em;">Vehicle Type</label>
+                    <select id="filter-type" class="dc-select" style="width: 100%;">
+                        <option value="">All Types</option>
+                        <option value="Sedan">Sedan</option>
+                        <option value="SUV">SUV</option>
+                        <option value="Hatchback">Hatchback</option>
+                        <option value="MPV">MPV</option>
+                        <option value="Truck">Truck</option>
+                        <option value="Luxury">Luxury</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label style="display: block; font-size: 11px; font-weight: 700; margin-bottom: 8px; color: #5b6273; text-transform: uppercase; letter-spacing: 0.05em;">Transmission</label>
+                    <select id="filter-transmission" class="dc-select" style="width: 100%;">
+                        <option value="">All Transmissions</option>
+                        <option value="Automatic">Automatic</option>
+                        <option value="Manual">Manual</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label style="display: block; font-size: 11px; font-weight: 700; margin-bottom: 8px; color: #5b6273; text-transform: uppercase; letter-spacing: 0.05em;">Fuel Type</label>
+                    <select id="filter-fuel" class="dc-select" style="width: 100%;">
+                        <option value="">All Fuel Types</option>
+                        <option value="Petrol">Petrol</option>
+                        <option value="Diesel">Diesel</option>
+                        <option value="Hybrid">Hybrid</option>
+                        <option value="Electric">Electric</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label style="display: block; font-size: 11px; font-weight: 700; margin-bottom: 8px; color: #5b6273; text-transform: uppercase; letter-spacing: 0.05em;">Sort By</label>
+                    <select id="sort-by" class="dc-select" style="width: 100%;">
+                        <option value="default">Default Sorting</option>
+                        <option value="price-asc">Price: Low to High</option>
+                        <option value="price-desc">Price: High to Low</option>
+                        <option value="name-asc">Name: A to Z</option>
+                        <option value="name-desc">Name: Z to A</option>
+                    </select>
+                </div>
+                
+                <button id="clear-filters" class="dc-btn-secondary" type="button" style="display:none; padding:12px 16px; width: 100%; margin-top: 8px;">Clear All Filters</button>
+            </aside>
+            
+            <!-- Main Content -->
+            <div style="flex: 1; min-width: 0;">
+                <div style="margin-bottom: 20px; font-size: 14px; font-weight: 600; color: #5b6273;">
+                    <span id="results-count">Showing <?php echo count($cars); ?> cars</span>
+                </div>
 
         <form action="compare.php" method="get" id="compare-form">
             <section class="dc-grid-3" id="car-grid">
@@ -126,6 +154,9 @@ include 'header.php';
             <span id="compare-count" style="font-weight: 600; font-size:14px;">0 cars selected</span>
             <button type="submit" form="compare-form" class="dc-btn-primary" id="compare-btn" style="padding: 10px 20px; box-shadow:none;">Compare</button>
         </div>
+        
+        </div> <!-- End of main content -->
+        </div> <!-- End of layout split -->
     <?php endif; ?>
 </main>
 <script src="../js/browse-filter.js"></script>

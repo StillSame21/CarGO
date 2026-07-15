@@ -409,10 +409,10 @@ a {
     letter-spacing: 0.06em;
     text-transform: uppercase;
 }
-.dc-status.cancelled, .dc-status.rejected { background: #fbeaed; color: #c23a52; }
-.dc-status.completed, .dc-status.approved, .dc-status.available { background: #e7f4ec; color: #157a4e; }
-.dc-status.pending { background: #fdf3e1; color: #c98a14; }
-.dc-status.ongoing, .dc-status.maintenance, .dc-status.unavailable { background: #f1f3f9; color: #5b6273; }
+.dc-status.status-cancelled, .dc-status.status-rejected, .dc-status.status-late-fees { background: #fbeaed; color: #c23a52; }
+.dc-status.status-completed, .dc-status.status-approved, .dc-status.status-available, .dc-status.status-paid { background: #e7f4ec; color: #157a4e; }
+.dc-status.status-pending { background: #fdf3e1; color: #c98a14; }
+.dc-status.status-ongoing, .dc-status.status-maintenance, .dc-status.status-unavailable { background: #f1f3f9; color: #5b6273; }
 
 /* Car Card (Marketplace) */
 .dc-car-card {
