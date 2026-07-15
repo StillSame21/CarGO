@@ -116,20 +116,3 @@ jobs:
             ghcr.io/${{ env.REPO }}/cargo-app:latest
             ghcr.io/${{ env.REPO }}/cargo-app:${{ github.sha }}
 
-  deploy:
-    name: Deploy to Production
-    needs: build-and-push
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    steps:
-      - name: Trigger Remote Deploy
-        uses: appleboy/ssh-action@v0.1.10
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            cd /opt/cargo-deployment
-            docker-compose pull
-            docker-compose up -d --remove-orphans
-            docker-compose exec -T app php database/migrate.php
