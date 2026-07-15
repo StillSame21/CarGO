@@ -656,10 +656,11 @@
 }
 
 .booking-status-pill.status-completed {
-    color: #46576a;
-    background: var(--secondary-bg);
+    color: #5b6273;
+    background: #e4e8f1;
 }
 
+.booking-status-pill.status-approved,
 .booking-status-pill.status-paid {
     color: var(--success-color);
     background: var(--success-bg);
@@ -670,8 +671,7 @@
     background: var(--danger-bg);
 }
 
-.booking-status-pill.status-ongoing,
-.booking-status-pill.status-approved {
+.booking-status-pill.status-ongoing {
     color: #175a9f;
     background: #e8f2ff;
 }
@@ -1067,11 +1067,11 @@
 }
 
 .booking-list-card {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(320px, 1fr) auto;
-    gap: 18px;
+    display: flex;
+    flex-direction: row;
+    gap: 24px;
     align-items: center;
-    padding: 22px;
+    padding: 24px;
 }
 
 .booking-list-card:hover {

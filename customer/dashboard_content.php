@@ -99,9 +99,19 @@ try {
         ];
 
         $stmt = $conn->prepare(
-            'SELECT b.id, b.booking_status, b.pickup_date, car.brand, car.model
+            'SELECT 
+                b.id, b.booking_status, b.pickup_date, 
+                car.brand, car.model,
+                p.payment_status,
+                COALESCE(fees.total_late_fee, 0) AS total_late_fee
              FROM bookings b
              INNER JOIN cars car ON car.id = b.car_id
+             LEFT JOIN payments p ON p.booking_id = b.id
+             LEFT JOIN (
+                 SELECT booking_id, SUM(late_fee_amount) AS total_late_fee
+                 FROM late_fees
+                 GROUP BY booking_id
+             ) fees ON fees.booking_id = b.id
              WHERE b.customer_id = ?
              ORDER BY b.created_at DESC LIMIT 3'
         );
@@ -199,8 +209,9 @@ $pendingCount = $bookingCounts['pending'];
                                 <span style="font-size:14.5px; font-weight:700;"><?php echo h($rb['brand'] . ' ' . $rb['model']); ?></span>
                                 <span style="font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:#9097a8;"><?php echo h(date('M d, Y', strtotime($rb['pickup_date']))); ?></span>
                             </div>
-                            <span class="dc-status <?php echo h(strtolower($rb['booking_status'])); ?>">
-                                <?php echo h(ucfirst($rb['booking_status'])); ?>
+                            <?php $displayStatus = bookingDisplayStatus((string) $rb['booking_status'], $rb['payment_status'] ?? null, (float) ($rb['total_late_fee'] ?? 0)); ?>
+                            <span class="booking-status-pill <?php echo h($displayStatus['class']); ?>" style="font-size: 10px; padding: 2px 8px; min-height: 20px;">
+                                <?php echo h($displayStatus['label']); ?>
                             </span>
                         </div>
                     <?php endforeach; ?>

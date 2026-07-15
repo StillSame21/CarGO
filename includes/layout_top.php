@@ -21,12 +21,12 @@ $cssPrefix = ($isAdmin || $isCustomer) ? '../' : './';
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="<?php echo $cssPrefix; ?>css/style.css">
-    <link rel="stylesheet" href="<?php echo $cssPrefix; ?>css/template.css">
-    <?php if ($isAdmin) : ?>
-        <link rel="stylesheet" href="<?php echo $cssPrefix; ?>css/admin.css">
-    <?php elseif ($isCustomer) : ?>
-        <link rel="stylesheet" href="<?php echo $cssPrefix; ?>css/customer.css">
+    <link rel="stylesheet" href="<?php echo $cssPrefix; ?>css/style.css?v=3">
+    <link rel="stylesheet" href="<?php echo $cssPrefix; ?>css/template.css?v=3">
+    <?php if ($isAdmin): ?>
+        <link rel="stylesheet" href="<?php echo $cssPrefix; ?>css/admin.css?v=3">
+    <?php elseif ($isCustomer): ?>
+        <link rel="stylesheet" href="<?php echo $cssPrefix; ?>css/customer.css?v=4">
     <?php endif; ?>
 </head>
 <body>
