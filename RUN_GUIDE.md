@@ -30,7 +30,7 @@ Before you start, make sure you have the following installed on your computer:
 
 5. **Open the App:**
    Open your favorite web browser (Chrome, Firefox, Safari) and go to:
-   **[http://localhost:8080](http://localhost:8080)**
+   **[http://localhost:8888](http://localhost:8888)**
 
    You should now see the CarGO application running!
 

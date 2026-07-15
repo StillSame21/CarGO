@@ -53,33 +53,40 @@ CarGO/
 
 ## Setup
 
+### Option 1: Using Docker (Recommended)
+
+1. Ensure **Docker** and **Docker Compose** are installed.
+2. Run the following command in the project root to start the containers:
+   ```bash
+   docker-compose up -d --build
+   ```
+3. Wait about 10-15 seconds for the MySQL database to initialize.
+4. Run the database migrations:
+   ```bash
+   docker-compose exec app php database/migrate.php
+   ```
+5. Open your browser and navigate to `http://localhost:8888`.
+
+For more details, see [RUN_GUIDE.md](RUN_GUIDE.md).
+
+### Option 2: Using XAMPP / Local Server
+
 1. Place the project in your web server directory, for example:
-
-   /opt/lampp/htdocs/CarGO
-
-
+   `/opt/lampp/htdocs/CarGO`
 2. Create or import the `cargo_rental` MySQL database.
-
 3. Check database credentials in `db_connect.php`:
-
    ```php
    $host = 'localhost';
    $username = 'root';
    $password = '';
    $database = 'cargo_rental';
    ```
-
 4. Run the database helper scripts if needed:
-
-   database/ensure_car_archived_at.sql
-   database/ensure_cancelled_booking_status.sql
-   database/ensure_completed_booking_status.sql
-
+   `database/ensure_car_archived_at.sql`
+   `database/ensure_cancelled_booking_status.sql`
+   `database/ensure_completed_booking_status.sql`
 5. Start Apache and MySQL, then open:
-
-   ```text
-   http://localhost/CarGO/
-   ```
+   `http://localhost/CarGO/`
 
 ## Main Pages
 

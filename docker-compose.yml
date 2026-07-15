@@ -4,10 +4,9 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "8080:80"
+      - "8888:80"
     volumes:
       - .:/var/www/html:Z
-      - car_uploads:/var/www/html/car:Z
     environment:
       DB_HOST: db
       DB_USER: cargo_user
