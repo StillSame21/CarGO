@@ -1,0 +1,90 @@
+┌──────────────────────┬────────────────────────────────┐
+│       Command        │           What it do           │
+├──────────────────────┼────────────────────────────────┤
+│ docker compose up    │ Create + start all services    │
+│                      │ (fg, logs stream)              │
+├──────────────────────┼────────────────────────────────┤
+│ docker compose up -d │ Same, detached (bg)            │
+├──────────────────────┼────────────────────────────────┤
+│ docker compose up    │ Rebuild images first, then     │
+│ --build              │ start                          │
+├──────────────────────┼────────────────────────────────┤
+│ docker compose down  │ Stop + remove containers,      │
+│                      │ networks (keeps volumes)       │
+├──────────────────────┼────────────────────────────────┤
+│ docker compose down  │ Same + delete volumes (data    │
+│ -v                   │ loss, careful)                 │
+├──────────────────────┼────────────────────────────────┤
+│ docker compose down  │ Also remove images             │
+│ --rmi all            │                                │
+├──────────────────────┼────────────────────────────────┤
+│                      │ Start existing                 │
+│ docker compose start │ (already-created) stopped      │
+│                      │ containers                     │
+├──────────────────────┼────────────────────────────────┤
+│ docker compose stop  │ Stop containers, don't remove  │
+├──────────────────────┼────────────────────────────────┤
+│ docker compose       │ Restart services               │
+│ restart              │                                │
+├──────────────────────┼────────────────────────────────┤
+│ docker compose pause │ Freeze/unfreeze processes      │
+│  / unpause           │                                │
+├──────────────────────┼────────────────────────────────┤
+│ docker compose build │ Build/rebuild images only, no  │
+│                      │ start                          │
+├──────────────────────┼────────────────────────────────┤
+│ docker compose build │ Force rebuild, ignore cache    │
+│  --no-cache          │                                │
+├──────────────────────┼────────────────────────────────┤
+│ docker compose ps    │ List containers in this        │
+│                      │ project                        │
+├──────────────────────┼────────────────────────────────┤
+│ docker compose logs  │ Show logs all services         │
+├──────────────────────┼────────────────────────────────┤
+│ docker compose logs  │ Follow logs one service        │
+│ -f <service>         │                                │
+├──────────────────────┼────────────────────────────────┤
+│ docker compose exec  │ Run cmd in running container   │
+│ <service> <cmd>      │ (e.g. shell)                   │
+├──────────────────────┼────────────────────────────────┤
+│ docker compose run   │ Run one-off cmd, new container │
+│ <service> <cmd>      │                                │
+├──────────────────────┼────────────────────────────────┤
+│ docker compose top   │ Show running processes per     │
+│                      │ service                        │
+├──────────────────────┼────────────────────────────────┤
+│ docker compose       │ Validate + print resolved      │
+│ config               │ compose file                   │
+├──────────────────────┼────────────────────────────────┤
+│ docker compose pull  │ Pull images for services (skip │
+│                      │  build)                        │
+├──────────────────────┼────────────────────────────────┤
+│ docker compose push  │ Push built images to registry  │
+├──────────────────────┼────────────────────────────────┤
+│ docker compose rm    │ Remove stopped service         │
+│                      │ containers                     │
+├──────────────────────┼────────────────────────────────┤
+│ docker compose kill  │ Force-stop containers          │
+│                      │ (SIGKILL)                      │
+├──────────────────────┼────────────────────────────────┤
+│ docker compose       │ Stream real-time events from   │
+│ events               │ containers                     │
+├──────────────────────┼────────────────────────────────┤
+│ docker compose port  │ Show public port for a service │
+│ <service> <port>     │  port                          │
+├──────────────────────┼────────────────────────────────┤
+│ docker compose       │ List images used by containers │
+│ images               │                                │
+├──────────────────────┼────────────────────────────────┤
+│ docker compose cp    │ Copy files to/from container   │
+├──────────────────────┼────────────────────────────────┤
+│ docker compose       │ Show compose version           │
+│ version              │                                │
+└──────────────────────┴────────────────────────────────┘
+
+Useful flags: -d (detach), --build (rebuild), -f <file> (custom compose file), --profile <name> (selective services), --scale <service>=N (scale replicas).
+
+For your CarGO stack, common flow:
+docker compose up -d --build   # rebuild + start bg
+docker compose logs -f cargo-laravel-app-1
+docker compose down            # stop + clean
