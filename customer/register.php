@@ -1,4 +1,3 @@
-
 <?php
 require_once __DIR__ . '/../includes/security.php';
 require_once '../db_connect.php';
@@ -84,9 +83,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .form-group { margin-bottom: 20px; }
         .form-group label { display: block; margin-bottom: 8px; font-size: 13px; font-weight: 600; color: #131722; }
         .dc-input { width: 100%; padding: 12px 16px; border: 1px solid #e4e8f1; border-radius: 8px; font-family: inherit; font-size: 14px; background: #fff; color: #131722; transition: all 0.2s ease; }
-        .dc-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 4px rgba(59,95,218,0.1); }
+        .dc-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 15%, transparent); }
         .dc-btn-primary { width: 100%; justify-content: center; padding: 14px 24px; font-size: 15px; border-radius: 8px; background: var(--accent); color: #fff; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s ease; margin-top: 8px; }
-        .dc-btn-primary:hover { background: var(--accent-hover); transform: translateY(-1px); }
+        .dc-btn-primary:hover { background: var(--accent-hover, color-mix(in srgb, var(--accent) 85%, #000)); transform: translateY(-1px); }
         .message.error { color: #c23a52; background: #fbeaed; padding: 12px 16px; border-radius: 8px; font-weight: 600; font-size: 14px; margin-bottom: 24px; }
         .message.success { color: #0b7a5a; background: #e6f6f1; padding: 12px 16px; border-radius: 8px; font-weight: 600; font-size: 14px; margin-bottom: 24px; }
         .auth-links { margin-top: 32px; font-size: 14px; color: #5b6273; text-align: center; }
