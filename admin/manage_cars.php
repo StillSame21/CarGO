@@ -3,7 +3,9 @@ require_once __DIR__ . '/../includes/security.php';
 require_once '../db_connect.php';
 require_once __DIR__ . '/../util/car_image.php';
 require_once __DIR__ . '/../util/car_archive.php';
+require_once __DIR__ . '/../util/car_display.php';
 require_once __DIR__ . '/includes/auth.php';
+require_once __DIR__ . '/includes/filter_bar.php';
 
 startSecureSession();
 
@@ -17,21 +19,61 @@ function selectedIf($currentValue, $optionValue): string
     return $currentValue === $optionValue ? ' selected' : '';
 }
 
+/**
+ * Rebuild the list URL keeping search, filters and page intact.
+ * Same contract as customerPageUrl() in customers.php.
+ */
+function carPageUrl(array $state, array $overrides = []): string
+{
+    $params = array_merge($state, $overrides);
+    $params = array_filter(
+        $params,
+        static fn($value) => $value !== null && $value !== '' && $value !== 'all'
+    );
+
+    return $params ? 'manage_cars.php?' . http_build_query($params) : 'manage_cars.php';
+}
+
 requireAdminLogin();
 
-$carTypes = ['Compact', 'Sedan', 'SUV', 'MPV', 'Luxury'];
 $transmissions = ['Automatic', 'Manual'];
 $fuelTypes = ['Petrol', 'Diesel', 'Hybrid', 'Electric'];
 $statuses = ['available', 'unavailable', 'maintenance'];
+$carTypes = CAR_TYPE_FALLBACK;
+
+$search = trim($_GET['q'] ?? '');
+$statusFilter = trim($_GET['status_filter'] ?? 'all');
+$typeFilter = trim($_GET['type'] ?? 'all');
+$view = ($_GET['view'] ?? 'active') === 'archived' ? 'archived' : 'active';
+$page = max(1, (int) ($_GET['page'] ?? 1));
+$perPage = 10;
+$totalCars = 0;
+$totalPages = 1;
+
+$listState = [
+    'q' => $search,
+    'status_filter' => $statusFilter,
+    'type' => $typeFilter,
+    'view' => $view === 'archived' ? 'archived' : null,
+    'page' => $page > 1 ? $page : null,
+];
+
+// Types come from the cars.car_type enum, so the form and the validation below
+// can never drift from the schema and silently rewrite a car's type.
+try {
+    $carTypes = carTypeValues(getDbConnection());
+} catch (mysqli_sql_exception $e) {
+    $carTypes = CAR_TYPE_FALLBACK;
+}
 
 $error = '';
-$success = trim($_GET['success'] ?? '') === 'updated'
-    ? 'Car updated successfully.'
-    : (trim($_GET['success'] ?? '') === 'added'
-        ? 'Car added successfully.'
-        : (trim($_GET['success'] ?? '') === 'archived'
-            ? 'Car archived successfully.'
-            : ''));
+$successMessages = [
+    'added' => 'Car added successfully.',
+    'updated' => 'Car updated successfully.',
+    'archived' => 'Car archived successfully.',
+    'restored' => 'Car restored to the active fleet.',
+];
+$success = $successMessages[trim($_GET['success'] ?? '')] ?? '';
 $cars = [];
 $editCarId = filter_input(INPUT_GET, 'edit', FILTER_VALIDATE_INT) ?: 0;
 $isEditMode = false;
@@ -77,13 +119,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $error === '') {
                 $stmt->execute();
 
                 if ($stmt->affected_rows > 0) {
-                    header('Location: manage_cars.php?success=archived');
+                    header('Location: ' . carPageUrl($listState, ['success' => 'archived']));
                     exit;
                 }
 
                 $error = 'Could not archive that car. It may already be archived.';
             } catch (mysqli_sql_exception $e) {
                 $error = 'Could not archive car. Please check the database connection and try again.';
+            }
+        }
+    }
+
+    if ($formAction === 'restore_car') {
+        if ($postedCarId <= 0) {
+            $error = 'Please choose a valid car to restore.';
+        } else {
+            try {
+                $conn = getDbConnection();
+                ensureCarArchiveColumn($conn);
+
+                // Status stays as the admin last set it; only the archive flag lifts.
+                $stmt = $conn->prepare(
+                    'UPDATE cars
+                     SET archived_at = NULL
+                     WHERE id = ? AND archived_at IS NOT NULL'
+                );
+                $stmt->bind_param('i', $postedCarId);
+                $stmt->execute();
+
+                if ($stmt->affected_rows > 0) {
+                    header('Location: ' . carPageUrl($listState, ['success' => 'restored']));
+                    exit;
+                }
+
+                $error = 'Could not restore that car. It may already be active.';
+            } catch (mysqli_sql_exception $e) {
+                $error = 'Could not restore car. Please check the database connection and try again.';
             }
         }
     }
@@ -101,8 +172,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $error === '') {
     $image = '';
     $status = $_POST['status'] ?? '';
 
-    if ($formAction === 'archive_car') {
-        // The archive request has already been handled above.
+    if ($formAction === 'archive_car' || $formAction === 'restore_car') {
+        // Both were handled above.
     } elseif ($formAction !== 'add_car' && $formAction !== 'update_car') {
         $error = 'Please choose a valid car action.';
     } elseif ($isEditMode && $editCarId <= 0) {
@@ -270,14 +341,56 @@ try {
         }
     }
 
-    $result = $conn->query(
-        'SELECT id, brand, model, plate_number, car_type, transmission, fuel_type, seats, daily_rate, status
+    $where = [$view === 'archived' ? 'archived_at IS NOT NULL' : 'archived_at IS NULL'];
+    $params = [];
+    $types = '';
+
+    if ($search !== '') {
+        $where[] = '(brand LIKE ? OR model LIKE ? OR plate_number LIKE ?)';
+        $like = '%' . $search . '%';
+        $params[] = $like;
+        $params[] = $like;
+        $params[] = $like;
+        $types .= 'sss';
+    }
+
+    if (in_array($statusFilter, $statuses, true)) {
+        $where[] = 'status = ?';
+        $params[] = $statusFilter;
+        $types .= 's';
+    }
+
+    if (in_array($typeFilter, $carTypes, true)) {
+        $where[] = 'car_type = ?';
+        $params[] = $typeFilter;
+        $types .= 's';
+    }
+
+    $whereSql = 'WHERE ' . implode(' AND ', $where);
+
+    $countStmt = $conn->prepare("SELECT COUNT(*) AS total FROM cars $whereSql");
+    if ($types !== '') {
+        $countStmt->bind_param($types, ...$params);
+    }
+    $countStmt->execute();
+    $totalCars = (int) (($countStmt->get_result()->fetch_assoc())['total'] ?? 0);
+
+    $totalPages = max(1, (int) ceil($totalCars / $perPage));
+    $page = min($page, $totalPages);
+    $listState['page'] = $page > 1 ? $page : null;
+    $offset = ($page - 1) * $perPage;
+
+    $listStmt = $conn->prepare(
+        "SELECT id, brand, model, plate_number, car_type, transmission, fuel_type, seats, daily_rate, image, status, archived_at
          FROM cars
-         WHERE archived_at IS NULL
-         ORDER BY created_at DESC
-         LIMIT 10'
+         $whereSql
+         ORDER BY created_at DESC, id DESC
+         LIMIT ? OFFSET ?"
     );
-    $cars = $result->fetch_all(MYSQLI_ASSOC);
+    $listParams = array_merge($params, [$perPage, $offset]);
+    $listStmt->bind_param($types . 'ii', ...$listParams);
+    $listStmt->execute();
+    $cars = $listStmt->get_result()->fetch_all(MYSQLI_ASSOC);
 } catch (mysqli_sql_exception $e) {
     if ($error === '') {
         $error = 'Could not load cars. Please check the database connection.';
@@ -289,70 +402,220 @@ $pageTitle = 'Manage CarGo Cars';
 include '../includes/layout_top.php';
 include 'header.php';
 ?>
+<?php
+// The panel opens on ?edit= or ?add=, and stays open when a submit failed
+// so the admin never loses what they typed.
+$panelOpen = $isEditMode || isset($_GET['add']) || ($error !== '' && $_SERVER['REQUEST_METHOD'] === 'POST');
+?>
 <main class="dc-main">
-    <header class="dc-h2-title" style="margin-bottom: 24px;">
+    <header class="adm-head">
         <div>
             <div class="dc-mono-subtitle small" style="margin-bottom:8px">Inventory</div>
             <h1 class="dc-h1" style="font-size:32px;">Manage Cars</h1>
-            <p class="dc-p" style="margin-top:8px;">Add and update vehicles that customers can rent.</p>
+            <p class="dc-p" style="margin-top:8px;">
+                <?php echo h($totalCars); ?> <?php echo $view === 'archived' ? 'archived' : 'active'; ?>
+                <?php echo $totalCars === 1 ? 'car' : 'cars'; ?>.
+            </p>
         </div>
+        <a class="dc-btn-primary adm-add-btn" href="<?php echo h(carPageUrl($listState, ['add' => 1, 'edit' => null])); ?>">
+            <span aria-hidden="true">+</span> Add car
+        </a>
     </header>
 
     <?php if ($error !== ''): ?>
-        <p class="message error" style="color: #c23a52; background: #fbeaed; padding: 12px; border-radius: 8px; font-weight: 600; margin-bottom:24px;"><?php echo h($error); ?></p>
+        <p class="message error" style="color: var(--stop); background: var(--stop-soft); padding: 12px; border-radius: 8px; font-weight: 600; margin-bottom:24px;"><?php echo h($error); ?></p>
     <?php endif; ?>
 
     <?php if ($success !== ''): ?>
-        <p class="message success" style="color: #0b7a5a; background: #e6f6f1; padding: 12px; border-radius: 8px; font-weight: 600; margin-bottom:24px;"><?php echo h($success); ?></p>
+        <p class="message success" style="color: var(--go); background: var(--go-soft); padding: 12px; border-radius: 8px; font-weight: 600; margin-bottom:24px;"><?php echo h($success); ?></p>
     <?php endif; ?>
 
-    <div style="display:grid; grid-template-columns: minmax(320px, 450px) 1fr; gap:24px; align-items:start;">
-        <div class="dc-card padded" style="position:sticky; top:24px;">
-            <h2 class="dc-h2" style="font-size:20px; margin-bottom:8px;"><?php echo $isEditMode ? 'Update Car' : 'Add New Car'; ?></h2>
-            <p class="dc-p" style="margin-bottom:24px; font-size:14px;"><?php echo $isEditMode ? 'Update this vehicle without creating a duplicate.' : 'Enter details for a new vehicle.'; ?></p>
+    <div class="dc-card adm-list-card">
+        <div class="adm-filter-wrap">
+            <?php renderAdminFilterBar([
+                'action' => 'manage_cars.php',
+                'search' => [
+                    'name' => 'q',
+                    'label' => 'Search fleet',
+                    'value' => $search,
+                    'placeholder' => 'Brand, model, or plate number',
+                ],
+                'inline_fields' => [
+                    [
+                        'type' => 'select',
+                        'name' => 'view',
+                        'label' => 'View',
+                        'value' => $view,
+                        'options' => ['active' => 'Active', 'archived' => 'Archived'],
+                    ],
+                    [
+                        'type' => 'select',
+                        'name' => 'status_filter',
+                        'label' => 'Status',
+                        'value' => $statusFilter,
+                        'options' => array_merge(['all' => 'All'], array_combine($statuses, array_map('ucfirst', $statuses))),
+                    ],
+                    [
+                        'type' => 'select',
+                        'name' => 'type',
+                        'label' => 'Type',
+                        'value' => $typeFilter,
+                        'options' => array_merge(['all' => 'All'], array_combine($carTypes, $carTypes)),
+                    ],
+                ],
+                'submit_label' => 'Apply',
+                'clear_label' => 'Reset',
+                'clear_href' => 'manage_cars.php',
+            ]); ?>
+        </div>
 
-            <form method="post" action="manage_cars.php" enctype="multipart/form-data">
+        <?php if (count($cars) === 0): ?>
+            <div class="adm-empty">
+                <p class="dc-p" style="margin-bottom:4px; font-weight:650; color:var(--ink);">
+                    <?php echo $view === 'archived' ? 'No archived cars.' : 'No cars match these filters.'; ?>
+                </p>
+                <p class="dc-p" style="font-size:14px;">
+                    <?php if ($search !== '' || $statusFilter !== 'all' || $typeFilter !== 'all'): ?>
+                        <a class="adm-link" href="manage_cars.php">Clear the filters</a> to see the whole fleet.
+                    <?php elseif ($view !== 'archived'): ?>
+                        Use <strong>Add car</strong> to put the first vehicle on the road.
+                    <?php endif; ?>
+                </p>
+            </div>
+        <?php else: ?>
+            <div class="adm-tbl-scroll">
+                <table class="adm-tbl">
+                    <thead>
+                        <tr>
+                            <th>Vehicle</th>
+                            <th>Plate</th>
+                            <th>Type</th>
+                            <th style="text-align:right;">Rate</th>
+                            <th>Status</th>
+                            <th style="text-align:right;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($cars as $car): ?>
+                            <tr>
+                                <td>
+                                    <div class="mc-vehicle">
+                                        <img
+                                            class="mc-thumb"
+                                            src="<?php echo h(carImageUrl($car['image'], 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=200&q=70')); ?>"
+                                            alt=""
+                                        >
+                                        <div style="min-width:0;">
+                                            <strong class="mc-vehicle-name"><?php echo h($car['brand'] . ' ' . $car['model']); ?></strong>
+                                            <div class="mc-vehicle-spec"><?php echo h($car['transmission'] . ' · ' . $car['fuel_type'] . ' · ' . $car['seats'] . ' seats'); ?></div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="mc-plate"><?php echo h($car['plate_number']); ?></td>
+                                <td class="adm-muted"><?php echo h($car['car_type']); ?></td>
+                                <td class="mc-rate">RM <?php echo h(number_format((float) $car['daily_rate'], 2)); ?></td>
+                                <td>
+                                    <span class="dc-badge status-<?php echo h(strtolower($car['status'])); ?>"><?php echo h(ucfirst($car['status'])); ?></span>
+                                </td>
+                                <td>
+                                    <div class="adm-actions">
+                                        <?php if ($view === 'archived'): ?>
+                                            <form method="post" action="<?php echo h(carPageUrl($listState)); ?>" style="display:inline;">
+                                                <?php echo csrfInput(); ?>
+                                                <input type="hidden" name="form_action" value="restore_car">
+                                                <input type="hidden" name="car_id" value="<?php echo h($car['id']); ?>">
+                                                <button type="submit" class="adm-action">Restore</button>
+                                            </form>
+                                        <?php else: ?>
+                                            <a class="adm-action" href="<?php echo h(carPageUrl($listState, ['edit' => $car['id'], 'add' => null])); ?>">Edit</a>
+                                            <form method="post" action="<?php echo h(carPageUrl($listState)); ?>" onsubmit="return confirm('Archive this car? It moves to the Archived view and can be restored.');" style="display:inline;">
+                                                <?php echo csrfInput(); ?>
+                                                <input type="hidden" name="form_action" value="archive_car">
+                                                <input type="hidden" name="car_id" value="<?php echo h($car['id']); ?>">
+                                                <button type="submit" class="adm-action is-danger">Archive</button>
+                                            </form>
+                                        <?php endif; ?>
+                                    </div>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+
+            <?php if ($totalPages > 1): ?>
+                <div class="adm-pager">
+                    <?php if ($page > 1): ?>
+                        <a href="<?php echo h(carPageUrl($listState, ['page' => $page - 1])); ?>" class="dc-btn-secondary" style="background:var(--surface); text-decoration:none;">Previous</a>
+                    <?php else: ?>
+                        <span></span>
+                    <?php endif; ?>
+                    <span style="font-size:14px; font-weight:600; color:var(--ink-2);">Page <?php echo h($page); ?> of <?php echo h($totalPages); ?></span>
+                    <?php if ($page < $totalPages): ?>
+                        <a href="<?php echo h(carPageUrl($listState, ['page' => $page + 1])); ?>" class="dc-btn-secondary" style="background:var(--surface); text-decoration:none;">Next</a>
+                    <?php else: ?>
+                        <span></span>
+                    <?php endif; ?>
+                </div>
+            <?php endif; ?>
+        <?php endif; ?>
+    </div>
+
+    <!-- Add / edit panel -->
+    <div class="adm-panel-backdrop<?php echo $panelOpen ? ' is-open' : ''; ?>" id="carPanel">
+        <a class="adm-panel-dismiss" href="<?php echo h(carPageUrl($listState)); ?>" aria-label="Close the car form"></a>
+        <section class="adm-panel" role="dialog" aria-modal="true" aria-labelledby="carPanelTitle">
+            <header class="adm-panel-head">
+                <div>
+                    <div class="dc-mono-subtitle small" style="margin-bottom:6px"><?php echo $isEditMode ? 'Edit' : 'New vehicle'; ?></div>
+                    <h2 class="dc-h2" style="font-size:20px;" id="carPanelTitle"><?php echo $isEditMode ? 'Update car' : 'Add car'; ?></h2>
+                </div>
+                <a class="adm-panel-close" href="<?php echo h(carPageUrl($listState)); ?>" aria-label="Close">&times;</a>
+            </header>
+
+            <div class="adm-panel-body">
+            <form method="post" action="<?php echo h(carPageUrl($listState, $isEditMode ? ['edit' => $editCarId] : ['add' => 1])); ?>" enctype="multipart/form-data">
                 <?php echo csrfInput(); ?>
                 <input type="hidden" name="form_action" value="<?php echo $isEditMode ? 'update_car' : 'add_car'; ?>">
                 <input type="hidden" name="car_id" value="<?php echo h($editCarId); ?>">
 
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
-                    <label style="display:block;">
-                        <span style="display:block; margin-bottom:6px; font-size:13px; font-weight:600;">Brand</span>
+                <div class="adm-field-row">
+                    <label class="adm-field">
+                        <span class="adm-field-label">Brand</span>
                         <input type="text" name="brand" value="<?php echo h($brand); ?>" maxlength="100" required class="dc-input" style="width:100%;">
                     </label>
-                    <label style="display:block;">
-                        <span style="display:block; margin-bottom:6px; font-size:13px; font-weight:600;">Model</span>
+                    <label class="adm-field">
+                        <span class="adm-field-label">Model</span>
                         <input type="text" name="model" value="<?php echo h($model); ?>" maxlength="100" required class="dc-input" style="width:100%;">
                     </label>
                 </div>
 
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
-                    <label style="display:block;">
-                        <span style="display:block; margin-bottom:6px; font-size:13px; font-weight:600;">Plate Number</span>
+                <div class="adm-field-row">
+                    <label class="adm-field">
+                        <span class="adm-field-label">Plate Number</span>
                         <input type="text" name="plate_number" value="<?php echo h($plateNumber); ?>" maxlength="30" required class="dc-input" style="width:100%;">
                     </label>
-                    <label style="display:block;">
-                        <span style="display:block; margin-bottom:6px; font-size:13px; font-weight:600;">Car Type</span>
+                    <label class="adm-field">
+                        <span class="adm-field-label">Car Type</span>
                         <select name="car_type" required class="dc-input" style="width:100%;">
-                            <?php foreach ($carTypes as $type): ?>
+                            <?php foreach (carTypeOptions($carTypes, $carType) as $type): ?>
                                 <option value="<?php echo h($type); ?>"<?php echo selectedIf($carType, $type); ?>><?php echo h($type); ?></option>
                             <?php endforeach; ?>
                         </select>
                     </label>
                 </div>
 
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
-                    <label style="display:block;">
-                        <span style="display:block; margin-bottom:6px; font-size:13px; font-weight:600;">Transmission</span>
+                <div class="adm-field-row">
+                    <label class="adm-field">
+                        <span class="adm-field-label">Transmission</span>
                         <select name="transmission" required class="dc-input" style="width:100%;">
                             <?php foreach ($transmissions as $option): ?>
                                 <option value="<?php echo h($option); ?>"<?php echo selectedIf($transmission, $option); ?>><?php echo h($option); ?></option>
                             <?php endforeach; ?>
                         </select>
                     </label>
-                    <label style="display:block;">
-                        <span style="display:block; margin-bottom:6px; font-size:13px; font-weight:600;">Fuel Type</span>
+                    <label class="adm-field">
+                        <span class="adm-field-label">Fuel Type</span>
                         <select name="fuel_type" required class="dc-input" style="width:100%;">
                             <?php foreach ($fuelTypes as $option): ?>
                                 <option value="<?php echo h($option); ?>"<?php echo selectedIf($fuelType, $option); ?>><?php echo h($option); ?></option>
@@ -361,20 +624,20 @@ include 'header.php';
                     </label>
                 </div>
 
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
-                    <label style="display:block;">
-                        <span style="display:block; margin-bottom:6px; font-size:13px; font-weight:600;">Seats</span>
+                <div class="adm-field-row">
+                    <label class="adm-field">
+                        <span class="adm-field-label">Seats</span>
                         <input type="number" name="seats" value="<?php echo h($seats); ?>" min="1" required class="dc-input" style="width:100%;">
                     </label>
-                    <label style="display:block;">
-                        <span style="display:block; margin-bottom:6px; font-size:13px; font-weight:600;">Daily Rate (RM)</span>
+                    <label class="adm-field">
+                        <span class="adm-field-label">Daily Rate (RM)</span>
                         <input type="number" name="daily_rate" value="<?php echo h($dailyRate); ?>" min="0.01" step="0.01" required class="dc-input" style="width:100%;">
                     </label>
                 </div>
 
-                <div style="display:flex; flex-direction:column; gap:16px; margin-bottom:24px;">
-                    <label style="display:block;">
-                        <span style="display:block; margin-bottom:6px; font-size:13px; font-weight:600;">Status</span>
+                <div class="adm-field-stack">
+                    <label class="adm-field">
+                        <span class="adm-field-label">Status</span>
                         <select name="status" required class="dc-input" style="width:100%;">
                             <?php foreach ($statuses as $option): ?>
                                 <option value="<?php echo h($option); ?>"<?php echo selectedIf($status, $option); ?>><?php echo h(ucfirst($option)); ?></option>
@@ -382,92 +645,23 @@ include 'header.php';
                         </select>
                     </label>
 
-                    <label style="display:block;">
-                        <span style="display:block; margin-bottom:6px; font-size:13px; font-weight:600;">Car Image</span>
+                    <label class="adm-field">
+                        <span class="adm-field-label">Car Image</span>
                         <input type="hidden" name="MAX_FILE_SIZE" value="<?php echo CAR_IMAGE_MAX_BYTES; ?>">
                         <input type="file" name="image" accept="image/*" class="dc-input" style="width:100%; padding:10px;">
                         <?php if ($isEditMode && $image !== ''): ?>
-                            <span style="display:block; font-size:12px; color:#5b6273; margin-top:4px;">Leave blank to keep the current image.</span>
+                            <span style="display:block; font-size:12px; color:var(--ink-2); margin-top:4px;">Leave blank to keep the current image.</span>
                         <?php endif; ?>
                     </label>
                 </div>
 
-                <div style="display:flex; flex-direction:column; gap:12px;">
-                    <button type="submit" class="dc-btn-primary" style="width:100%; justify-content:center;"><?php echo $isEditMode ? 'Update Car' : 'Add Car'; ?></button>
-                    <?php if ($isEditMode): ?>
-                        <a href="manage_cars.php" style="color:#5b6273; font-weight:600; font-size:14px; text-decoration:none; text-align:center;">Cancel Edit</a>
-                    <?php endif; ?>
+                <div class="adm-panel-actions">
+                    <button type="submit" class="dc-btn-primary" style="width:100%; justify-content:center;"><?php echo $isEditMode ? 'Update car' : 'Add car'; ?></button>
+                    <a class="adm-panel-cancel" href="<?php echo h(carPageUrl($listState)); ?>">Cancel</a>
                 </div>
             </form>
-        </div>
-
-        <div class="dc-card">
-            <div style="padding:24px; border-bottom:1px solid #e4e8f1;">
-                <div class="dc-mono-subtitle small" style="margin-bottom:8px">Fleet</div>
-                <h2 class="dc-h2" style="font-size:20px;">Recent Cars</h2>
             </div>
-            
-            <?php if (count($cars) === 0): ?>
-                <div style="padding: 40px 24px; text-align: center; color: #5b6273;">
-                    <p>No cars added yet.</p>
-                </div>
-            <?php else: ?>
-                <div style="overflow-x: auto;">
-                    <table class="dc-table" style="width: 100%; border-collapse: collapse;">
-                        <thead>
-                            <tr style="border-bottom: 1px solid #e4e8f1; background: #f9fafc;">
-                                <th style="padding: 16px 24px; text-align: left; font-size: 13px; color: #5b6273; font-weight: 600;">Vehicle</th>
-                                <th style="padding: 16px 24px; text-align: left; font-size: 13px; color: #5b6273; font-weight: 600;">Plate</th>
-                                <th style="padding: 16px 24px; text-align: left; font-size: 13px; color: #5b6273; font-weight: 600;">Type</th>
-                                <th style="padding: 16px 24px; text-align: left; font-size: 13px; color: #5b6273; font-weight: 600;">Rate</th>
-                                <th style="padding: 16px 24px; text-align: left; font-size: 13px; color: #5b6273; font-weight: 600;">Status</th>
-                                <th style="padding: 16px 24px; text-align: right; font-size: 13px; color: #5b6273; font-weight: 600;">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($cars as $car): ?>
-                                <tr style="border-bottom: 1px solid #e4e8f1;">
-                                    <td style="padding: 16px 24px;">
-                                        <strong style="color: #131722; display:block; margin-bottom:4px;"><?php echo h($car['brand'] . ' ' . $car['model']); ?></strong>
-                                        <div style="color: #5b6273; font-size:13px;"><?php echo h($car['transmission'] . ' / ' . $car['fuel_type'] . ' / ' . $car['seats'] . ' seats'); ?></div>
-                                    </td>
-                                    <td style="padding: 16px 24px; color:#131722; font-size:14px; font-weight:600;">
-                                        <?php echo h($car['plate_number']); ?>
-                                    </td>
-                                    <td style="padding: 16px 24px; color:#5b6273; font-size:14px;">
-                                        <?php echo h($car['car_type']); ?>
-                                    </td>
-                                    <td style="padding: 16px 24px; color:#131722; font-size:14px; font-weight:600;">
-                                        RM <?php echo h(number_format((float) $car['daily_rate'], 2)); ?>
-                                    </td>
-                                    <td style="padding: 16px 24px;">
-                                        <?php 
-                                            $cStatus = $car['status'];
-                                            $cColor = $cStatus === 'available' ? '#0b7a5a' : ($cStatus === 'unavailable' ? '#c23a52' : '#b25e09');
-                                            $cBg = $cStatus === 'available' ? '#e6f6f1' : ($cStatus === 'unavailable' ? '#fbeaed' : '#fff3e0');
-                                        ?>
-                                        <span class="dc-badge" style="background:<?php echo $cBg; ?>; color:<?php echo $cColor; ?>;">
-                                            <?php echo h(ucfirst($cStatus)); ?>
-                                        </span>
-                                    </td>
-                                    <td style="padding: 16px 24px; text-align: right;">
-                                        <div style="display:inline-flex; gap:12px;">
-                                            <a href="manage_cars.php?edit=<?php echo h($car['id']); ?>" style="color:#3b5fda; font-size:13px; font-weight:600; text-decoration:none;">Edit</a>
-                                            <form method="post" action="manage_cars.php" onsubmit="return confirm('Archive this car?');" style="display:inline;">
-                                                <?php echo csrfInput(); ?>
-                                                <input type="hidden" name="form_action" value="archive_car">
-                                                <input type="hidden" name="car_id" value="<?php echo h($car['id']); ?>">
-                                                <button type="submit" style="background:none; border:none; color:#c23a52; font-size:13px; font-weight:600; cursor:pointer; padding:0; font-family:inherit;">Archive</button>
-                                            </form>
-                                        </div>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                </div>
-            <?php endif; ?>
-        </div>
+        </section>
     </div>
 </main>
 <?php include '../includes/layout_bottom.php'; ?>

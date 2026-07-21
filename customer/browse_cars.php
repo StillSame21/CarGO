@@ -14,10 +14,13 @@ requireCustomerLogin();
 
 $cars = [];
 $error = '';
+$carTypes = CAR_TYPE_FALLBACK;
 
 try {
     $conn = getDbConnection();
     ensureCarArchiveColumn($conn);
+    // Same source as the admin form, so a type can never be creatable but unfilterable.
+    $carTypes = carTypeValues($conn);
     $result = $conn->query(
         'SELECT id, brand, model, plate_number, car_type, transmission, fuel_type, seats, daily_rate, image
          FROM cars
@@ -65,12 +68,9 @@ include 'header.php';
                     <label style="display: block; font-size: 11px; font-weight: 700; margin-bottom: 8px; color: #5b6273; text-transform: uppercase; letter-spacing: 0.05em;">Vehicle Type</label>
                     <select id="filter-type" class="dc-select" style="width: 100%;">
                         <option value="">All Types</option>
-                        <option value="Sedan">Sedan</option>
-                        <option value="SUV">SUV</option>
-                        <option value="Hatchback">Hatchback</option>
-                        <option value="MPV">MPV</option>
-                        <option value="Truck">Truck</option>
-                        <option value="Luxury">Luxury</option>
+                        <?php foreach ($carTypes as $type): ?>
+                            <option value="<?php echo h($type); ?>"><?php echo h($type); ?></option>
+                        <?php endforeach; ?>
                     </select>
                 </div>
                 
