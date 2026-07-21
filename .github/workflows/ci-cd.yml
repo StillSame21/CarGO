@@ -40,6 +40,12 @@ jobs:
   unit-tests:
     name: Run Unit & Integration Tests
     runs-on: ubuntu-latest
+    env:
+      DB_HOST: 127.0.0.1
+      DB_USER: root
+      DB_PASS: root_test_password
+      DB_NAME: cargo_rental_test
+      DB_PORT: 3306
     services:
       mysql:
         image: mysql:8.0
@@ -62,17 +68,21 @@ jobs:
         with:
           php-version: '8.2'
           extensions: mysqli, gd, json, zip
+          # db_connect.php reads $_ENV, which needs E in variables_order.
+          ini-values: variables_order=EGPCS
 
       - name: Install Dependencies
         run: composer install --prefer-dist --no-progress
 
-      - name: Inject Test Configurations
+      - name: Wait for MySQL
         run: |
-          echo "DB_HOST=127.0.0.1" >> .env
-          echo "DB_USER=root" >> .env
-          echo "DB_PASS=root_test_password" >> .env
-          echo "DB_NAME=cargo_rental_test" >> .env
-          echo "DB_PORT=3306" >> .env
+          for i in {1..30}; do
+            if mysqladmin ping -h 127.0.0.1 -P 3306 --silent; then
+              echo "MySQL ready"; exit 0
+            fi
+            sleep 2
+          done
+          echo "MySQL did not become ready"; exit 1
 
       - name: Run Schema Migrations
         run: php database/migrate.php
