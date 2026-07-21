@@ -6,7 +6,7 @@ services:
     ports:
       - "8888:80"
     volumes:
-      - .:/var/www/html:Z
+      - .:/var/www/html:z
     environment:
       DB_HOST: db
       DB_USER: cargo_user
