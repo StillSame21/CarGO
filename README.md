@@ -30,7 +30,7 @@ CarGO is a PHP and MySQL car rental management system for customers and administ
 ## Tech Stack
 
 - PHP
-- MySQL
+- PostgreSQL
 - HTML, CSS
 - XAMPP local server
 
