@@ -2,12 +2,39 @@
 require_once __DIR__ . '/../includes/security.php';
 require_once '../db_connect.php';
 require_once __DIR__ . '/includes/auth.php';
+require_once __DIR__ . '/includes/filter_bar.php';
 
 startSecureSession();
 
 function h($value): string
 {
     return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
+}
+
+/**
+ * Rebuild the list URL keeping search, filters and page intact.
+ * Same contract as carPageUrl() in manage_cars.php.
+ */
+function adminPageUrl(array $state, array $overrides = []): string
+{
+    $params = array_merge($state, $overrides);
+    $params = array_filter(
+        $params,
+        static fn($value) => $value !== null && $value !== '' && $value !== 'all'
+    );
+
+    return $params ? 'add_admin.php?' . http_build_query($params) : 'add_admin.php';
+}
+
+/** "super_admin" reads as "Super Admin" for a person; the value stays raw. */
+function adminRoleLabel(string $role): string
+{
+    return ucwords(str_replace('_', ' ', $role));
+}
+
+function adminRoleClass(string $role): string
+{
+    return 'role-' . preg_replace('/[^a-z0-9_-]/', '-', strtolower($role));
 }
 
 function selectedIf($currentValue, $optionValue): string
@@ -29,15 +56,62 @@ function formatAdminManagementDate(?string $date): string
     return date('d M Y, h:i A', strtotime($date));
 }
 
-function loadAdmins(mysqli $conn): array
+/**
+ * Filtered, paginated admin list plus the matching total.
+ *
+ * @return array{rows: array<int, array>, total: int}
+ */
+function loadAdmins(mysqli $conn, string $search, string $roleFilter, string $statusFilter, int $perPage, int $offset): array
 {
-    $result = $conn->query(
-        'SELECT id, name, email, phone, role, status, created_at, updated_at
-         FROM admins
-         ORDER BY created_at DESC, id DESC'
-    );
+    $where = ['1=1'];
+    $params = [];
+    $types = '';
 
-    return $result->fetch_all(MYSQLI_ASSOC);
+    if ($search !== '') {
+        $where[] = '(name LIKE ? OR email LIKE ? OR phone LIKE ?)';
+        $like = '%' . $search . '%';
+        $params[] = $like;
+        $params[] = $like;
+        $params[] = $like;
+        $types .= 'sss';
+    }
+
+    if ($roleFilter !== '' && $roleFilter !== 'all') {
+        $where[] = 'role = ?';
+        $params[] = $roleFilter;
+        $types .= 's';
+    }
+
+    if ($statusFilter !== '' && $statusFilter !== 'all') {
+        $where[] = 'status = ?';
+        $params[] = $statusFilter;
+        $types .= 's';
+    }
+
+    $whereSql = 'WHERE ' . implode(' AND ', $where);
+
+    $countStmt = $conn->prepare("SELECT COUNT(*) AS total FROM admins $whereSql");
+    if ($types !== '') {
+        $countStmt->bind_param($types, ...$params);
+    }
+    $countStmt->execute();
+    $total = (int) (($countStmt->get_result()->fetch_assoc())['total'] ?? 0);
+
+    $listStmt = $conn->prepare(
+        "SELECT id, name, email, phone, role, status, created_at, updated_at
+         FROM admins
+         $whereSql
+         ORDER BY created_at DESC, id DESC
+         LIMIT ? OFFSET ?"
+    );
+    $listParams = array_merge($params, [$perPage, $offset]);
+    $listStmt->bind_param($types . 'ii', ...$listParams);
+    $listStmt->execute();
+
+    return [
+        'rows' => $listStmt->get_result()->fetch_all(MYSQLI_ASSOC),
+        'total' => $total,
+    ];
 }
 
 function loadAdminAccount(mysqli $conn, int $adminId): ?array
@@ -109,6 +183,21 @@ $resetAdminId = filter_input(INPUT_GET, 'reset', FILTER_VALIDATE_INT) ?: 0;
 $editAdmin = null;
 $resetAdmin = null;
 
+$search = trim($_GET['q'] ?? '');
+$roleFilter = trim($_GET['role_filter'] ?? 'all');
+$statusFilter = trim($_GET['status_filter'] ?? 'all');
+$page = max(1, (int) ($_GET['page'] ?? 1));
+$perPage = 10;
+$totalAdmins = 0;
+$totalPages = 1;
+
+$listState = [
+    'q' => $search,
+    'role_filter' => $roleFilter,
+    'status_filter' => $statusFilter,
+    'page' => $page > 1 ? $page : null,
+];
+
 $formName = '';
 $formEmail = '';
 $formPhone = '';
@@ -169,7 +258,7 @@ try {
             $stmt->bind_param('ssssss', $formName, $formEmail, $hashedPassword, $phoneValue, $formRole, $formStatus);
             $stmt->execute();
 
-            header('Location: add_admin.php?success=created');
+            header('Location: ' . adminPageUrl($listState, ['success' => 'created']));
             exit;
         }
 
@@ -226,7 +315,7 @@ try {
                 $_SESSION['admin_status'] = $formStatus;
             }
 
-            header('Location: add_admin.php?success=updated');
+            header('Location: ' . adminPageUrl($listState, ['success' => 'updated']));
             exit;
         }
 
@@ -256,7 +345,7 @@ try {
             $stmt->execute();
 
             $successType = $targetStatus === 'blocked' ? 'blocked' : 'activated';
-            header('Location: add_admin.php?success=' . $successType);
+            header('Location: ' . adminPageUrl($listState, ['success' => $successType]));
             exit;
         }
 
@@ -286,7 +375,7 @@ try {
             $stmt->bind_param('si', $hashedPassword, $postedAdminId);
             $stmt->execute();
 
-            header('Location: add_admin.php?success=password_reset');
+            header('Location: ' . adminPageUrl($listState, ['success' => 'password_reset']));
             exit;
         }
 
@@ -311,7 +400,14 @@ try {
         }
     }
 
-    $admins = loadAdmins($conn);
+    $countProbe = loadAdmins($conn, $search, $roleFilter, $statusFilter, 1, 0);
+    $totalAdmins = $countProbe['total'];
+    $totalPages = max(1, (int) ceil($totalAdmins / $perPage));
+    $page = min($page, $totalPages);
+    $listState['page'] = $page > 1 ? $page : null;
+
+    $adminList = loadAdmins($conn, $search, $roleFilter, $statusFilter, $perPage, ($page - 1) * $perPage);
+    $admins = $adminList['rows'];
 } catch (InvalidArgumentException $e) {
     $error = $e->getMessage();
 
@@ -330,9 +426,13 @@ try {
     }
 }
 
-if (isset($conn) && count($admins) === 0) {
+// A failed POST throws before the list loads, so fetch it again for the re-render.
+if (isset($conn) && count($admins) === 0 && $error !== '') {
     try {
-        $admins = loadAdmins($conn);
+        $retry = loadAdmins($conn, $search, $roleFilter, $statusFilter, $perPage, 0);
+        $admins = $retry['rows'];
+        $totalAdmins = $retry['total'];
+        $totalPages = max(1, (int) ceil($totalAdmins / $perPage));
     } catch (mysqli_sql_exception $ignored) {
         $admins = [];
     }
@@ -346,56 +446,203 @@ $pageTitle = 'Admin Management | CarGo';
 include '../includes/layout_top.php';
 include 'header.php';
 ?>
+<?php
+$panelMode = $editAdmin ? 'edit' : ($resetAdmin ? 'reset' : (isset($_GET['add']) ? 'add' : ''));
+// Keep the panel open when a submit failed so nothing typed is lost.
+if ($panelMode === '' && $error !== '' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    $panelMode = 'add';
+}
+$panelOpen = $panelMode !== '';
+?>
 <main class="dc-main">
-    <header class="dc-h2-title" style="margin-bottom: 24px;">
+    <header class="adm-head">
         <div>
             <div class="dc-mono-subtitle small" style="margin-bottom:8px">Super Admin</div>
             <h1 class="dc-h1" style="font-size:32px;">Admin Management</h1>
-            <p class="dc-p" style="margin-top:8px;">Create and manage CarGO admin accounts.</p>
+            <p class="dc-p" style="margin-top:8px;">
+                <?php echo h($totalAdmins); ?> admin <?php echo $totalAdmins === 1 ? 'account' : 'accounts'; ?>.
+            </p>
         </div>
+        <a class="dc-btn-primary adm-add-btn" href="<?php echo h(adminPageUrl($listState, ['add' => 1, 'edit' => null, 'reset' => null])); ?>">
+            <span aria-hidden="true">+</span> Add admin
+        </a>
     </header>
 
     <?php if ($error !== ''): ?>
-        <p class="message error" style="color: #c23a52; background: #fbeaed; padding: 12px; border-radius: 8px; font-weight: 600; margin-bottom:24px;"><?php echo h($error); ?></p>
+        <p class="message error" style="color: var(--stop); background: var(--stop-soft); padding: 12px; border-radius: 8px; font-weight: 600; margin-bottom:24px;"><?php echo h($error); ?></p>
     <?php endif; ?>
 
     <?php if ($success !== ''): ?>
-        <p class="message success" style="color: #0b7a5a; background: #e6f6f1; padding: 12px; border-radius: 8px; font-weight: 600; margin-bottom:24px;"><?php echo h($success); ?></p>
+        <p class="message success" style="color: var(--go); background: var(--go-soft); padding: 12px; border-radius: 8px; font-weight: 600; margin-bottom:24px;"><?php echo h($success); ?></p>
     <?php endif; ?>
 
-    <div style="display:grid; grid-template-columns: minmax(320px, 400px) 1fr; gap:24px; align-items:start;">
-        <div class="dc-card padded" style="position:sticky; top:24px;">
+    <div class="dc-card adm-list-card">
+        <div class="adm-filter-wrap">
+            <?php renderAdminFilterBar([
+                'action' => 'add_admin.php',
+                'search' => [
+                    'name' => 'q',
+                    'label' => 'Search admins',
+                    'value' => $search,
+                    'placeholder' => 'Name, email, or phone',
+                ],
+                'inline_fields' => [
+                    [
+                        'type' => 'select',
+                        'name' => 'role_filter',
+                        'label' => 'Role',
+                        'value' => $roleFilter,
+                        'options' => array_merge(['all' => 'All'], array_combine($roles, array_map('adminRoleLabel', $roles))),
+                    ],
+                    [
+                        'type' => 'select',
+                        'name' => 'status_filter',
+                        'label' => 'Status',
+                        'value' => $statusFilter,
+                        'options' => array_merge(['all' => 'All'], array_combine($statuses, array_map('ucfirst', $statuses))),
+                    ],
+                ],
+                'submit_label' => 'Apply',
+                'clear_label' => 'Reset',
+                'clear_href' => 'add_admin.php',
+            ]); ?>
+        </div>
+
+        <?php if (count($admins) === 0): ?>
+            <div class="adm-empty">
+                <p class="dc-p" style="margin-bottom:4px; font-weight:650; color:var(--ink);">No admin accounts match these filters.</p>
+                <p class="dc-p" style="font-size:14px;">
+                    <a class="adm-link" href="add_admin.php">Clear the filters</a> to see every account.
+                </p>
+            </div>
+        <?php else: ?>
+            <div class="adm-tbl-scroll">
+                <table class="adm-tbl">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name &amp; contact</th>
+                            <th>Role</th>
+                            <th>Status</th>
+                            <th style="text-align:right;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($admins as $admin): ?>
+                            <?php $isSelf = (int) $admin['id'] === $currentAdminId; ?>
+                            <tr>
+                                <td class="adm-id">#<?php echo h($admin['id']); ?></td>
+                                <td>
+                                    <strong style="display:block; color:var(--ink);">
+                                        <?php echo h($admin['name']); ?>
+                                        <?php if ($isSelf): ?><span class="adm-you">You</span><?php endif; ?>
+                                    </strong>
+                                    <div class="adm-muted" style="font-size:12.5px;"><?php echo h($admin['email']); ?></div>
+                                    <?php if ($admin['phone']): ?>
+                                        <div class="adm-muted" style="font-size:12.5px; margin-top:2px;">&#128222; <?php echo h($admin['phone']); ?></div>
+                                    <?php endif; ?>
+                                </td>
+                                <td>
+                                    <span class="role-pill <?php echo h(adminRoleClass((string) $admin['role'])); ?>"><?php echo h(adminRoleLabel((string) $admin['role'])); ?></span>
+                                </td>
+                                <td>
+                                    <span class="dc-badge <?php echo h(adminStatusClass((string) $admin['status'])); ?>"><?php echo h(ucfirst($admin['status'])); ?></span>
+                                </td>
+                                <td>
+                                    <div class="adm-actions">
+                                        <a class="adm-action" href="<?php echo h(adminPageUrl($listState, ['edit' => $admin['id'], 'reset' => null, 'add' => null])); ?>">Edit</a>
+                                        <a class="adm-action" href="<?php echo h(adminPageUrl($listState, ['reset' => $admin['id'], 'edit' => null, 'add' => null])); ?>">Reset</a>
+
+                                        <?php if ($admin['status'] === 'active'): ?>
+                                            <form method="post" action="<?php echo h(adminPageUrl($listState)); ?>" onsubmit="return confirm('Block this admin account?');" style="display:inline;">
+                                                <?php echo csrfInput(); ?>
+                                                <input type="hidden" name="action" value="set_status">
+                                                <input type="hidden" name="admin_id" value="<?php echo h($admin['id']); ?>">
+                                                <input type="hidden" name="target_status" value="blocked">
+                                                <button type="submit" class="adm-action is-danger"<?php echo $isSelf ? ' disabled title="You cannot block your own account."' : ''; ?>>Block</button>
+                                            </form>
+                                        <?php else: ?>
+                                            <form method="post" action="<?php echo h(adminPageUrl($listState)); ?>" style="display:inline;">
+                                                <?php echo csrfInput(); ?>
+                                                <input type="hidden" name="action" value="set_status">
+                                                <input type="hidden" name="admin_id" value="<?php echo h($admin['id']); ?>">
+                                                <input type="hidden" name="target_status" value="active">
+                                                <button type="submit" class="adm-action is-go"><?php echo $admin['status'] === 'blocked' ? 'Unblock' : 'Activate'; ?></button>
+                                            </form>
+                                        <?php endif; ?>
+                                    </div>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+
+            <?php if ($totalPages > 1): ?>
+                <div class="adm-pager">
+                    <?php if ($page > 1): ?>
+                        <a href="<?php echo h(adminPageUrl($listState, ['page' => $page - 1])); ?>" class="dc-btn-secondary" style="background:var(--surface); text-decoration:none;">Previous</a>
+                    <?php else: ?>
+                        <span></span>
+                    <?php endif; ?>
+                    <span style="font-size:14px; font-weight:600; color:var(--ink-2);">Page <?php echo h($page); ?> of <?php echo h($totalPages); ?></span>
+                    <?php if ($page < $totalPages): ?>
+                        <a href="<?php echo h(adminPageUrl($listState, ['page' => $page + 1])); ?>" class="dc-btn-secondary" style="background:var(--surface); text-decoration:none;">Next</a>
+                    <?php else: ?>
+                        <span></span>
+                    <?php endif; ?>
+                </div>
+            <?php endif; ?>
+        <?php endif; ?>
+    </div>
+
+    <!-- Create / edit / reset panel -->
+    <div class="adm-panel-backdrop<?php echo $panelOpen ? ' is-open' : ''; ?>">
+        <a class="adm-panel-dismiss" href="<?php echo h(adminPageUrl($listState)); ?>" aria-label="Close the admin form"></a>
+        <section class="adm-panel" role="dialog" aria-modal="true" aria-labelledby="adminPanelTitle">
+            <header class="adm-panel-head">
+                <div>
+                    <div class="dc-mono-subtitle small" style="margin-bottom:6px">
+                        <?php echo $panelMode === 'edit' ? 'Edit' : ($panelMode === 'reset' ? 'Security' : 'New account'); ?>
+                    </div>
+                    <h2 class="dc-h2" style="font-size:20px;" id="adminPanelTitle">
+                        <?php echo $panelMode === 'edit' ? 'Update admin' : ($panelMode === 'reset' ? 'Reset password' : 'Add admin'); ?>
+                    </h2>
+                </div>
+                <a class="adm-panel-close" href="<?php echo h(adminPageUrl($listState)); ?>" aria-label="Close">&times;</a>
+            </header>
+
+            <div class="adm-panel-body">
             <?php if ($editAdmin): ?>
-                <h2 class="dc-h2" style="font-size:20px; margin-bottom:8px;">Edit Admin</h2>
-                <p class="dc-p" style="margin-bottom:24px; font-size:14px;">Update account details without changing the password.</p>
-                <form method="post" action="add_admin.php?edit=<?php echo h($editAdmin['id']); ?>">
+                <p class="dc-p" style="margin-bottom:20px; font-size:14px;">Update account details without changing the password.</p>
+                <form method="post" action="<?php echo h(adminPageUrl($listState, ['edit' => $editAdmin['id']])); ?>">
                     <?php echo csrfInput(); ?>
                     <input type="hidden" name="action" value="update_admin">
                     <input type="hidden" name="admin_id" value="<?php echo h($editAdmin['id']); ?>">
 
-                    <div style="display:flex; flex-direction:column; gap:16px;">
-                        <label style="display:block;">
-                            <span style="display:block; margin-bottom:6px; font-size:13px; font-weight:600;">Full Name</span>
+                    <div class="adm-field-stack">
+                        <label class="adm-field">
+                            <span class="adm-field-label">Full Name</span>
                             <input type="text" name="name" value="<?php echo h($editAdmin['name']); ?>" maxlength="100" required class="dc-input" style="width:100%;">
                         </label>
-                        <label style="display:block;">
-                            <span style="display:block; margin-bottom:6px; font-size:13px; font-weight:600;">Email</span>
+                        <label class="adm-field">
+                            <span class="adm-field-label">Email</span>
                             <input type="email" name="email" value="<?php echo h($editAdmin['email']); ?>" maxlength="150" required class="dc-input" style="width:100%;">
                         </label>
-                        <label style="display:block;">
-                            <span style="display:block; margin-bottom:6px; font-size:13px; font-weight:600;">Phone</span>
+                        <label class="adm-field">
+                            <span class="adm-field-label">Phone</span>
                             <input type="tel" name="phone" value="<?php echo h($editAdmin['phone'] ?? ''); ?>" maxlength="30" class="dc-input" style="width:100%;">
                         </label>
-                        <label style="display:block;">
-                            <span style="display:block; margin-bottom:6px; font-size:13px; font-weight:600;">Role</span>
+                        <label class="adm-field">
+                            <span class="adm-field-label">Role</span>
                             <select name="role" required class="dc-input" style="width:100%;">
                                 <?php foreach ($roles as $role): ?>
-                                    <option value="<?php echo h($role); ?>"<?php echo selectedIf($editAdmin['role'], $role); ?>><?php echo h($role); ?></option>
+                                    <option value="<?php echo h($role); ?>"<?php echo selectedIf($editAdmin['role'], $role); ?>><?php echo h(adminRoleLabel($role)); ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </label>
-                        <label style="display:block;">
-                            <span style="display:block; margin-bottom:6px; font-size:13px; font-weight:600;">Status</span>
+                        <label class="adm-field">
+                            <span class="adm-field-label">Status</span>
                             <select name="status" required class="dc-input" style="width:100%;">
                                 <?php foreach ($statuses as $status): ?>
                                     <option value="<?php echo h($status); ?>"<?php echo selectedIf($editAdmin['status'], $status); ?>><?php echo h(ucfirst($status)); ?></option>
@@ -404,9 +651,9 @@ include 'header.php';
                         </label>
                     </div>
 
-                    <div style="margin-top:24px; display:flex; flex-direction:column; gap:12px;">
-                        <button type="submit" class="dc-btn-primary" style="width:100%;">Save Changes</button>
-                        <a href="add_admin.php" style="color:#5b6273; font-weight:600; font-size:14px; text-decoration:none; text-align:center;">Cancel</a>
+                    <div class="adm-panel-actions" style="margin-top:24px;">
+                        <button type="submit" class="dc-btn-primary" style="width:100%; justify-content:center;">Save changes</button>
+                        <a class="adm-panel-cancel" href="<?php echo h(adminPageUrl($listState)); ?>">Cancel</a>
                     </div>
                 </form>
             <?php elseif ($resetAdmin): ?>
@@ -417,20 +664,20 @@ include 'header.php';
                     <input type="hidden" name="action" value="reset_password">
                     <input type="hidden" name="admin_id" value="<?php echo h($resetAdmin['id']); ?>">
 
-                    <div style="display:flex; flex-direction:column; gap:16px;">
-                        <label style="display:block;">
-                            <span style="display:block; margin-bottom:6px; font-size:13px; font-weight:600;">New Password</span>
+                    <div class="adm-field-stack">
+                        <label class="adm-field">
+                            <span class="adm-field-label">New Password</span>
                             <input type="password" name="password" autocomplete="new-password" required class="dc-input" style="width:100%;">
                         </label>
-                        <label style="display:block;">
-                            <span style="display:block; margin-bottom:6px; font-size:13px; font-weight:600;">Confirm New Password</span>
+                        <label class="adm-field">
+                            <span class="adm-field-label">Confirm New Password</span>
                             <input type="password" name="confirm_password" autocomplete="new-password" required class="dc-input" style="width:100%;">
                         </label>
                     </div>
 
-                    <div style="margin-top:24px; display:flex; flex-direction:column; gap:12px;">
-                        <button type="submit" class="dc-btn-primary" style="width:100%;">Reset Password</button>
-                        <a href="add_admin.php" style="color:#5b6273; font-weight:600; font-size:14px; text-decoration:none; text-align:center;">Cancel</a>
+                    <div class="adm-panel-actions" style="margin-top:24px;">
+                        <button type="submit" class="dc-btn-primary" style="width:100%; justify-content:center;">Reset password</button>
+                        <a class="adm-panel-cancel" href="<?php echo h(adminPageUrl($listState)); ?>">Cancel</a>
                     </div>
                 </form>
             <?php else: ?>
@@ -440,128 +687,53 @@ include 'header.php';
                     <?php echo csrfInput(); ?>
                     <input type="hidden" name="action" value="create_admin">
 
-                    <div style="display:flex; flex-direction:column; gap:16px;">
-                        <label style="display:block;">
-                            <span style="display:block; margin-bottom:6px; font-size:13px; font-weight:600;">Full Name</span>
+                    <div class="adm-field-stack">
+                        <label class="adm-field">
+                            <span class="adm-field-label">Full Name</span>
                             <input type="text" name="name" value="<?php echo h($formName); ?>" maxlength="100" required class="dc-input" style="width:100%;">
                         </label>
-                        <label style="display:block;">
-                            <span style="display:block; margin-bottom:6px; font-size:13px; font-weight:600;">Email</span>
+                        <label class="adm-field">
+                            <span class="adm-field-label">Email</span>
                             <input type="email" name="email" value="<?php echo h($formEmail); ?>" maxlength="150" required class="dc-input" style="width:100%;">
                         </label>
-                        <label style="display:block;">
-                            <span style="display:block; margin-bottom:6px; font-size:13px; font-weight:600;">Phone</span>
+                        <label class="adm-field">
+                            <span class="adm-field-label">Phone</span>
                             <input type="tel" name="phone" value="<?php echo h($formPhone); ?>" maxlength="30" class="dc-input" style="width:100%;">
                         </label>
-                        <label style="display:block;">
-                            <span style="display:block; margin-bottom:6px; font-size:13px; font-weight:600;">Role</span>
+                        <label class="adm-field">
+                            <span class="adm-field-label">Role</span>
                             <select name="role" required class="dc-input" style="width:100%;">
                                 <?php foreach ($roles as $role): ?>
-                                    <option value="<?php echo h($role); ?>"<?php echo selectedIf($createRole, $role); ?>><?php echo h($role); ?></option>
+                                    <option value="<?php echo h($role); ?>"<?php echo selectedIf($createRole, $role); ?>><?php echo h(adminRoleLabel($role)); ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </label>
-                        <label style="display:block;">
-                            <span style="display:block; margin-bottom:6px; font-size:13px; font-weight:600;">Status</span>
+                        <label class="adm-field">
+                            <span class="adm-field-label">Status</span>
                             <select name="status" required class="dc-input" style="width:100%;">
                                 <?php foreach ($statuses as $status): ?>
                                     <option value="<?php echo h($status); ?>"<?php echo selectedIf($createStatus, $status); ?>><?php echo h(ucfirst($status)); ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </label>
-                        <label style="display:block;">
-                            <span style="display:block; margin-bottom:6px; font-size:13px; font-weight:600;">Password</span>
+                        <label class="adm-field">
+                            <span class="adm-field-label">Password</span>
                             <input type="password" name="password" autocomplete="new-password" required class="dc-input" style="width:100%;">
                         </label>
-                        <label style="display:block;">
-                            <span style="display:block; margin-bottom:6px; font-size:13px; font-weight:600;">Confirm Password</span>
+                        <label class="adm-field">
+                            <span class="adm-field-label">Confirm Password</span>
                             <input type="password" name="confirm_password" autocomplete="new-password" required class="dc-input" style="width:100%;">
                         </label>
                     </div>
 
-                    <div style="margin-top:24px;">
-                        <button type="submit" class="dc-btn-primary" style="width:100%;">Create Admin</button>
+                    <div class="adm-panel-actions" style="margin-top:24px;">
+                        <button type="submit" class="dc-btn-primary" style="width:100%; justify-content:center;">Create admin</button>
+                        <a class="adm-panel-cancel" href="<?php echo h(adminPageUrl($listState)); ?>">Cancel</a>
                     </div>
                 </form>
             <?php endif; ?>
-        </div>
-
-        <div class="dc-card">
-            <div style="padding:24px; border-bottom:1px solid #e4e8f1;">
-                <div class="dc-mono-subtitle small" style="margin-bottom:8px">Accounts</div>
-                <h2 class="dc-h2" style="font-size:20px;">Admin List</h2>
             </div>
-            
-            <?php if (count($admins) === 0): ?>
-                <div style="padding: 40px 24px; text-align: center; color: #5b6273;">
-                    <p>No admin accounts found.</p>
-                </div>
-            <?php else: ?>
-                <div style="overflow-x: auto;">
-                    <table class="dc-table" style="width: 100%; border-collapse: collapse;">
-                        <thead>
-                            <tr style="border-bottom: 1px solid #e4e8f1; background: #f9fafc;">
-                                <th style="padding: 16px 24px; text-align: left; font-size: 13px; color: #5b6273; font-weight: 600;">ID</th>
-                                <th style="padding: 16px 24px; text-align: left; font-size: 13px; color: #5b6273; font-weight: 600;">Name & Email</th>
-                                <th style="padding: 16px 24px; text-align: left; font-size: 13px; color: #5b6273; font-weight: 600;">Role</th>
-                                <th style="padding: 16px 24px; text-align: left; font-size: 13px; color: #5b6273; font-weight: 600;">Status</th>
-                                <th style="padding: 16px 24px; text-align: right; font-size: 13px; color: #5b6273; font-weight: 600;">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($admins as $admin): ?>
-                                <tr style="border-bottom: 1px solid #e4e8f1;">
-                                    <td style="padding: 16px 24px; color: #131722; font-size: 14px;">#<?php echo h($admin['id']); ?></td>
-                                    <td style="padding: 16px 24px;">
-                                        <strong style="color: #131722; display:block; margin-bottom:4px;"><?php echo h($admin['name']); ?></strong>
-                                        <div style="color: #5b6273; font-size:13px;"><?php echo h($admin['email']); ?></div>
-                                        <?php if($admin['phone']): ?>
-                                            <div style="color: #5b6273; font-size:13px; margin-top:2px;">&#128222; <?php echo h($admin['phone']); ?></div>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td style="padding: 16px 24px;">
-                                        <span class="dc-badge" style="background:#eef1fb; color:#3b5fda;"><?php echo h($admin['role']); ?></span>
-                                    </td>
-                                    <td style="padding: 16px 24px;">
-                                        <?php 
-                                            $statusColor = $admin['status'] === 'active' ? '#0b7a5a' : ($admin['status'] === 'blocked' ? '#c23a52' : '#8891a5');
-                                            $statusBg = $admin['status'] === 'active' ? '#e6f6f1' : ($admin['status'] === 'blocked' ? '#fbeaed' : '#f1f3f9');
-                                        ?>
-                                        <span class="dc-badge" style="background:<?php echo $statusBg; ?>; color:<?php echo $statusColor; ?>;">
-                                            <?php echo h(ucfirst($admin['status'])); ?>
-                                        </span>
-                                    </td>
-                                    <td style="padding: 16px 24px; text-align: right;">
-                                        <div style="display:inline-flex; gap:8px;">
-                                            <a href="add_admin.php?edit=<?php echo h($admin['id']); ?>" style="color:#3b5fda; font-size:13px; font-weight:600; text-decoration:none;">Edit</a>
-                                            <a href="add_admin.php?reset=<?php echo h($admin['id']); ?>" style="color:#5b6273; font-size:13px; font-weight:600; text-decoration:none;">Reset</a>
-
-                                            <?php if ($admin['status'] === 'active'): ?>
-                                                <form method="post" action="add_admin.php" onsubmit="return confirm('Block this admin account?');" style="display:inline;">
-                                                    <?php echo csrfInput(); ?>
-                                                    <input type="hidden" name="action" value="set_status">
-                                                    <input type="hidden" name="admin_id" value="<?php echo h($admin['id']); ?>">
-                                                    <input type="hidden" name="target_status" value="blocked">
-                                                    <button type="submit" style="background:none; border:none; color:#c23a52; font-size:13px; font-weight:600; cursor:pointer; padding:0; font-family:inherit;">Block</button>
-                                                </form>
-                                            <?php else: ?>
-                                                <form method="post" action="add_admin.php" style="display:inline;">
-                                                    <?php echo csrfInput(); ?>
-                                                    <input type="hidden" name="action" value="set_status">
-                                                    <input type="hidden" name="admin_id" value="<?php echo h($admin['id']); ?>">
-                                                    <input type="hidden" name="target_status" value="active">
-                                                    <button type="submit" style="background:none; border:none; color:#0b7a5a; font-size:13px; font-weight:600; cursor:pointer; padding:0; font-family:inherit;"><?php echo $admin['status'] === 'blocked' ? 'Unblock' : 'Activate'; ?></button>
-                                                </form>
-                                            <?php endif; ?>
-                                        </div>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                </div>
-            <?php endif; ?>
-        </div>
+        </section>
     </div>
 </main>
 <?php include '../includes/layout_bottom.php'; ?>

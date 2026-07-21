@@ -338,7 +338,7 @@ include 'header.php';
         </div>
 
         <?php if ($error !== ''): ?>
-            <p class="message error" style="color: #c23a52; background: #fbeaed; padding: 12px; border-radius: 8px; font-weight: 600; margin-bottom:24px;"><?php echo h($error); ?></p>
+            <p class="message error" style="color: var(--stop); background: var(--stop-soft); padding: 12px; border-radius: 8px; font-weight: 600; margin-bottom:24px;"><?php echo h($error); ?></p>
         <?php endif; ?>
 
         <div style="display:grid; grid-template-columns: minmax(300px, 1fr) 2fr; gap:24px; align-items:start;">
@@ -349,22 +349,22 @@ include 'header.php';
                 </div>
 
                 <div style="display:flex; flex-direction:column; gap:16px; margin-bottom:24px;">
-                    <div><span style="display:block; font-size:12px; font-weight:700; color:#8891a5; text-transform:uppercase; margin-bottom:4px;">ID</span><span style="font-size:14px; color:#131722; font-weight:600;"><?php echo h($customer['id']); ?></span></div>
-                    <div><span style="display:block; font-size:12px; font-weight:700; color:#8891a5; text-transform:uppercase; margin-bottom:4px;">Name</span><span style="font-size:14px; color:#131722;"><?php echo h($customer['name']); ?></span></div>
-                    <div><span style="display:block; font-size:12px; font-weight:700; color:#8891a5; text-transform:uppercase; margin-bottom:4px;">Email</span><span style="font-size:14px; color:#131722;"><?php echo h($customer['email']); ?></span></div>
-                    <div><span style="display:block; font-size:12px; font-weight:700; color:#8891a5; text-transform:uppercase; margin-bottom:4px;">Phone</span><span style="font-size:14px; color:#131722;"><?php echo h($customer['phone'] ?: 'Not provided'); ?></span></div>
-                    <div><span style="display:block; font-size:12px; font-weight:700; color:#8891a5; text-transform:uppercase; margin-bottom:4px;">Address</span><span style="font-size:14px; color:#131722;"><?php echo h($customer['address'] ?: 'Not provided'); ?></span></div>
+                    <div><span style="display:block; font-size:12px; font-weight:700; color:var(--ink-3); text-transform:uppercase; margin-bottom:4px;">ID</span><span style="font-size:14px; color:var(--ink); font-weight:600;"><?php echo h($customer['id']); ?></span></div>
+                    <div><span style="display:block; font-size:12px; font-weight:700; color:var(--ink-3); text-transform:uppercase; margin-bottom:4px;">Name</span><span style="font-size:14px; color:var(--ink);"><?php echo h($customer['name']); ?></span></div>
+                    <div><span style="display:block; font-size:12px; font-weight:700; color:var(--ink-3); text-transform:uppercase; margin-bottom:4px;">Email</span><span style="font-size:14px; color:var(--ink);"><?php echo h($customer['email']); ?></span></div>
+                    <div><span style="display:block; font-size:12px; font-weight:700; color:var(--ink-3); text-transform:uppercase; margin-bottom:4px;">Phone</span><span style="font-size:14px; color:var(--ink);"><?php echo h($customer['phone'] ?: 'Not provided'); ?></span></div>
+                    <div><span style="display:block; font-size:12px; font-weight:700; color:var(--ink-3); text-transform:uppercase; margin-bottom:4px;">Address</span><span style="font-size:14px; color:var(--ink);"><?php echo h($customer['address'] ?: 'Not provided'); ?></span></div>
                     <div>
-                        <span style="display:block; font-size:12px; font-weight:700; color:#8891a5; text-transform:uppercase; margin-bottom:4px;">Status</span>
+                        <span style="display:block; font-size:12px; font-weight:700; color:var(--ink-3); text-transform:uppercase; margin-bottom:4px;">Status</span>
                         <?php 
-                            $statusColor = $customer['status'] === 'active' ? '#0b7a5a' : ($customer['status'] === 'blocked' ? '#c23a52' : '#8891a5');
-                            $statusBg = $customer['status'] === 'active' ? '#e6f6f1' : ($customer['status'] === 'blocked' ? '#fbeaed' : '#f1f3f9');
+                            $statusColor = $customer['status'] === 'active' ? 'var(--go)' : ($customer['status'] === 'blocked' ? 'var(--stop)' : 'var(--ink-3)');
+                            $statusBg = $customer['status'] === 'active' ? 'var(--go-soft)' : ($customer['status'] === 'blocked' ? 'var(--stop-soft)' : 'var(--surface-2)');
                         ?>
                         <span class="dc-badge" style="background:<?php echo $statusBg; ?>; color:<?php echo $statusColor; ?>;">
                             <?php echo h(ucfirst($customer['status'])); ?>
                         </span>
                     </div>
-                    <div><span style="display:block; font-size:12px; font-weight:700; color:#8891a5; text-transform:uppercase; margin-bottom:4px;">Created At</span><span style="font-size:14px; color:#131722;"><?php echo h(formatCustomerDate($customer['created_at'])); ?></span></div>
+                    <div><span style="display:block; font-size:12px; font-weight:700; color:var(--ink-3); text-transform:uppercase; margin-bottom:4px;">Created At</span><span style="font-size:14px; color:var(--ink);"><?php echo h(formatCustomerDate($customer['created_at'])); ?></span></div>
                 </div>
 
                 <div>
@@ -373,54 +373,54 @@ include 'header.php';
             </div>
 
             <div class="dc-card">
-                <div style="padding:24px; border-bottom:1px solid #e4e8f1;">
+                <div style="padding:24px; border-bottom:1px solid var(--line);">
                     <p class="dc-mono-subtitle small" style="margin-bottom:8px">Bookings</p>
                     <h2 class="dc-h2" style="font-size:20px;">Recent booking summary</h2>
                 </div>
 
-                <div style="padding:24px; display:grid; grid-template-columns:1fr 1fr; gap:16px; border-bottom:1px solid #e4e8f1; background:#f9fafc;">
-                    <div style="background:#fff; border:1px solid #e4e8f1; border-radius:8px; padding:16px;">
-                        <div style="font-size:24px; font-weight:800; color:#131722; margin-bottom:4px;"><?php echo h($bookingSummary['total_bookings'] ?? 0); ?></div>
-                        <div style="font-size:13px; color:#5b6273; font-weight:600;">Total bookings</div>
+                <div style="padding:24px; display:grid; grid-template-columns:1fr 1fr; gap:16px; border-bottom:1px solid var(--line); background:var(--surface-2);">
+                    <div style="background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:16px;">
+                        <div style="font-size:24px; font-weight:800; color:var(--ink); margin-bottom:4px;"><?php echo h($bookingSummary['total_bookings'] ?? 0); ?></div>
+                        <div style="font-size:13px; color:var(--ink-2); font-weight:600;">Total bookings</div>
                     </div>
-                    <div style="background:#fff; border:1px solid #e4e8f1; border-radius:8px; padding:16px;">
-                        <div style="font-size:16px; font-weight:800; color:#131722; margin-bottom:4px; padding-top:6px;"><?php echo h(formatCustomerDate($bookingSummary['latest_booking_at'] ?? null)); ?></div>
-                        <div style="font-size:13px; color:#5b6273; font-weight:600;">Latest booking</div>
+                    <div style="background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:16px;">
+                        <div style="font-size:16px; font-weight:800; color:var(--ink); margin-bottom:4px; padding-top:6px;"><?php echo h(formatCustomerDate($bookingSummary['latest_booking_at'] ?? null)); ?></div>
+                        <div style="font-size:13px; color:var(--ink-2); font-weight:600;">Latest booking</div>
                     </div>
                 </div>
 
                 <?php if (empty($bookingSummary['recent_bookings'])): ?>
-                    <div style="padding:40px 24px; text-align:center; color:#5b6273;">No bookings found for this customer.</div>
+                    <div style="padding:40px 24px; text-align:center; color:var(--ink-2);">No bookings found for this customer.</div>
                 <?php else: ?>
                     <div style="overflow-x:auto;">
                         <table class="dc-table" style="width:100%; border-collapse:collapse;">
                             <thead>
-                                <tr style="border-bottom:1px solid #e4e8f1; background:#fff;">
-                                    <th style="padding:16px 24px; text-align:left; font-size:13px; color:#5b6273; font-weight:600;">Booking</th>
-                                    <th style="padding:16px 24px; text-align:left; font-size:13px; color:#5b6273; font-weight:600;">Vehicle</th>
-                                    <th style="padding:16px 24px; text-align:left; font-size:13px; color:#5b6273; font-weight:600;">Dates</th>
-                                    <th style="padding:16px 24px; text-align:left; font-size:13px; color:#5b6273; font-weight:600;">Status</th>
+                                <tr style="border-bottom:1px solid var(--line); background:var(--surface);">
+                                    <th style="padding:16px 24px; text-align:left; font-size:13px; color:var(--ink-2); font-weight:600;">Booking</th>
+                                    <th style="padding:16px 24px; text-align:left; font-size:13px; color:var(--ink-2); font-weight:600;">Vehicle</th>
+                                    <th style="padding:16px 24px; text-align:left; font-size:13px; color:var(--ink-2); font-weight:600;">Dates</th>
+                                    <th style="padding:16px 24px; text-align:left; font-size:13px; color:var(--ink-2); font-weight:600;">Status</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <?php foreach ($bookingSummary['recent_bookings'] as $booking): ?>
-                                    <tr style="border-bottom:1px solid #e4e8f1;">
+                                    <tr style="border-bottom:1px solid var(--line);">
                                         <td style="padding:16px 24px;">
-                                            <strong style="display:block; color:#131722; font-size:14px; margin-bottom:4px;">#<?php echo h($booking['id']); ?></strong>
-                                            <span style="color:#5b6273; font-size:13px; font-weight:600;">RM <?php echo h(number_format((float) $booking['total_amount'], 2)); ?></span>
+                                            <strong style="display:block; color:var(--ink); font-size:14px; margin-bottom:4px;">#<?php echo h($booking['id']); ?></strong>
+                                            <span style="color:var(--ink-2); font-size:13px; font-weight:600;">RM <?php echo h(number_format((float) $booking['total_amount'], 2)); ?></span>
                                         </td>
                                         <td style="padding:16px 24px;">
-                                            <strong style="display:block; color:#131722; font-size:14px; margin-bottom:4px;"><?php echo h($booking['brand'] . ' ' . $booking['model']); ?></strong>
-                                            <span style="color:#5b6273; font-size:13px;"><?php echo h($booking['plate_number']); ?></span>
+                                            <strong style="display:block; color:var(--ink); font-size:14px; margin-bottom:4px;"><?php echo h($booking['brand'] . ' ' . $booking['model']); ?></strong>
+                                            <span style="color:var(--ink-2); font-size:13px;"><?php echo h($booking['plate_number']); ?></span>
                                         </td>
-                                        <td style="padding:16px 24px; color:#131722; font-size:14px;">
+                                        <td style="padding:16px 24px; color:var(--ink); font-size:14px;">
                                             <?php echo h(formatCustomerDate($booking['pickup_date']) . ' - ' . formatCustomerDate($booking['return_date'])); ?>
                                         </td>
                                         <td style="padding:16px 24px;">
                                             <?php 
                                                 $bStatus = $booking['booking_status'];
-                                                $bColor = $bStatus === 'confirmed' || $bStatus === 'completed' ? '#0b7a5a' : ($bStatus === 'cancelled' ? '#c23a52' : '#b25e09');
-                                                $bBg = $bStatus === 'confirmed' || $bStatus === 'completed' ? '#e6f6f1' : ($bStatus === 'cancelled' ? '#fbeaed' : '#fff3e0');
+                                                $bColor = $bStatus === 'confirmed' || $bStatus === 'completed' ? 'var(--go)' : ($bStatus === 'cancelled' ? 'var(--stop)' : 'var(--wait)');
+                                                $bBg = $bStatus === 'confirmed' || $bStatus === 'completed' ? 'var(--go-soft)' : ($bStatus === 'cancelled' ? 'var(--stop-soft)' : 'var(--wait-soft)');
                                             ?>
                                             <span class="dc-badge" style="background:<?php echo $bBg; ?>; color:<?php echo $bColor; ?>;">
                                                 <?php echo h(ucfirst($bStatus)); ?>
@@ -447,7 +447,7 @@ include 'header.php';
             <p class="dc-p" style="margin-bottom:24px; font-size:14px;">Update account details without changing the password.</p>
 
             <?php if ($error !== ''): ?>
-                <p class="message error" style="color: #c23a52; background: #fbeaed; padding: 12px; border-radius: 8px; font-weight: 600; margin-bottom:24px;"><?php echo h($error); ?></p>
+                <p class="message error" style="color: var(--stop); background: var(--stop-soft); padding: 12px; border-radius: 8px; font-weight: 600; margin-bottom:24px;"><?php echo h($error); ?></p>
             <?php endif; ?>
 
             <form method="post" action="<?php echo h(customerPageUrl($listState, ['edit' => $editCustomerId])); ?>">
@@ -486,7 +486,7 @@ include 'header.php';
 
                 <div style="margin-top:32px; display:flex; gap:12px; align-items:center;">
                     <button type="submit" class="dc-btn-primary" style="padding:12px 24px;">Save Changes</button>
-                    <a href="<?php echo h(customerPageUrl($listState)); ?>" style="color:#5b6273; font-weight:600; font-size:14px; text-decoration:none;">Cancel</a>
+                    <a href="<?php echo h(customerPageUrl($listState)); ?>" style="color:var(--ink-2); font-weight:600; font-size:14px; text-decoration:none;">Cancel</a>
                 </div>
             </form>
         </div>
@@ -499,15 +499,15 @@ include 'header.php';
         </header>
 
         <?php if ($error !== ''): ?>
-            <p class="message error" style="color: #c23a52; background: #fbeaed; padding: 12px; border-radius: 8px; font-weight: 600; margin-bottom:24px;"><?php echo h($error); ?></p>
+            <p class="message error" style="color: var(--stop); background: var(--stop-soft); padding: 12px; border-radius: 8px; font-weight: 600; margin-bottom:24px;"><?php echo h($error); ?></p>
         <?php endif; ?>
 
         <?php if ($success !== ''): ?>
-            <p class="message success" style="color: #0b7a5a; background: #e6f6f1; padding: 12px; border-radius: 8px; font-weight: 600; margin-bottom:24px;"><?php echo h($success); ?></p>
+            <p class="message success" style="color: var(--go); background: var(--go-soft); padding: 12px; border-radius: 8px; font-weight: 600; margin-bottom:24px;"><?php echo h($success); ?></p>
         <?php endif; ?>
 
         <div class="dc-card">
-            <div style="padding:24px; border-bottom:1px solid #e4e8f1;">
+            <div style="padding:24px; border-bottom:1px solid var(--line);">
                 <?php renderAdminFilterBar([
                     'action' => 'customers.php',
                     'search' => [
@@ -532,37 +532,37 @@ include 'header.php';
             </div>
 
             <?php if (count($customers) === 0): ?>
-                <div style="padding: 40px 24px; text-align: center; color: #5b6273;">
+                <div style="padding: 40px 24px; text-align: center; color: var(--ink-2);">
                     <p>No customers found.</p>
                 </div>
             <?php else: ?>
                 <div style="overflow-x: auto;">
                     <table class="dc-table" style="width: 100%; border-collapse: collapse;">
                         <thead>
-                            <tr style="border-bottom: 1px solid #e4e8f1; background: #f9fafc;">
-                                <th style="padding: 16px 24px; text-align: left; font-size: 13px; color: #5b6273; font-weight: 600;">ID</th>
-                                <th style="padding: 16px 24px; text-align: left; font-size: 13px; color: #5b6273; font-weight: 600;">Name & Email</th>
-                                <th style="padding: 16px 24px; text-align: left; font-size: 13px; color: #5b6273; font-weight: 600;">Contact</th>
-                                <th style="padding: 16px 24px; text-align: left; font-size: 13px; color: #5b6273; font-weight: 600;">Status</th>
-                                <th style="padding: 16px 24px; text-align: right; font-size: 13px; color: #5b6273; font-weight: 600;">Actions</th>
+                            <tr style="border-bottom: 1px solid var(--line); background: var(--surface-2);">
+                                <th style="padding: 16px 24px; text-align: left; font-size: 13px; color: var(--ink-2); font-weight: 600;">ID</th>
+                                <th style="padding: 16px 24px; text-align: left; font-size: 13px; color: var(--ink-2); font-weight: 600;">Name & Email</th>
+                                <th style="padding: 16px 24px; text-align: left; font-size: 13px; color: var(--ink-2); font-weight: 600;">Contact</th>
+                                <th style="padding: 16px 24px; text-align: left; font-size: 13px; color: var(--ink-2); font-weight: 600;">Status</th>
+                                <th style="padding: 16px 24px; text-align: right; font-size: 13px; color: var(--ink-2); font-weight: 600;">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php foreach ($customers as $row): ?>
-                                <tr style="border-bottom: 1px solid #e4e8f1;">
-                                    <td style="padding: 16px 24px; color: #131722; font-size: 14px;">#<?php echo h($row['id']); ?></td>
+                                <tr style="border-bottom: 1px solid var(--line);">
+                                    <td style="padding: 16px 24px; color: var(--ink); font-size: 14px;">#<?php echo h($row['id']); ?></td>
                                     <td style="padding: 16px 24px;">
-                                        <strong style="color: #131722; display:block; margin-bottom:4px;"><?php echo h($row['name']); ?></strong>
-                                        <div style="color: #5b6273; font-size:13px;"><?php echo h($row['email']); ?></div>
+                                        <strong style="color: var(--ink); display:block; margin-bottom:4px;"><?php echo h($row['name']); ?></strong>
+                                        <div style="color: var(--ink-2); font-size:13px;"><?php echo h($row['email']); ?></div>
                                     </td>
                                     <td style="padding: 16px 24px;">
-                                        <div style="color: #5b6273; font-size:13px; margin-bottom:4px;">&#128222; <?php echo h($row['phone'] ?: 'Not provided'); ?></div>
-                                        <div style="color: #5b6273; font-size:13px;">&#127968; <span style="display:inline-block; max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; vertical-align:bottom;"><?php echo h($row['address'] ?: 'Not provided'); ?></span></div>
+                                        <div style="color: var(--ink-2); font-size:13px; margin-bottom:4px;">&#128222; <?php echo h($row['phone'] ?: 'Not provided'); ?></div>
+                                        <div style="color: var(--ink-2); font-size:13px;">&#127968; <span style="display:inline-block; max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; vertical-align:bottom;"><?php echo h($row['address'] ?: 'Not provided'); ?></span></div>
                                     </td>
                                     <td style="padding: 16px 24px;">
                                         <?php 
-                                            $statusColor = $row['status'] === 'active' ? '#0b7a5a' : ($row['status'] === 'blocked' ? '#c23a52' : '#8891a5');
-                                            $statusBg = $row['status'] === 'active' ? '#e6f6f1' : ($row['status'] === 'blocked' ? '#fbeaed' : '#f1f3f9');
+                                            $statusColor = $row['status'] === 'active' ? 'var(--go)' : ($row['status'] === 'blocked' ? 'var(--stop)' : 'var(--ink-3)');
+                                            $statusBg = $row['status'] === 'active' ? 'var(--go-soft)' : ($row['status'] === 'blocked' ? 'var(--stop-soft)' : 'var(--surface-2)');
                                         ?>
                                         <span class="dc-badge" style="background:<?php echo $statusBg; ?>; color:<?php echo $statusColor; ?>;">
                                             <?php echo h(ucfirst($row['status'])); ?>
@@ -570,8 +570,8 @@ include 'header.php';
                                     </td>
                                     <td style="padding: 16px 24px; text-align: right;">
                                         <div style="display:inline-flex; gap:12px;">
-                                            <a href="<?php echo h(customerPageUrl($listState, ['view' => $row['id']])); ?>" style="color:#131722; font-size:13px; font-weight:600; text-decoration:none;">View</a>
-                                            <a href="<?php echo h(customerPageUrl($listState, ['edit' => $row['id']])); ?>" style="color:#3b5fda; font-size:13px; font-weight:600; text-decoration:none;">Edit</a>
+                                            <a href="<?php echo h(customerPageUrl($listState, ['view' => $row['id']])); ?>" style="color:var(--ink); font-size:13px; font-weight:600; text-decoration:none;">View</a>
+                                            <a href="<?php echo h(customerPageUrl($listState, ['edit' => $row['id']])); ?>" style="color:var(--accent); font-size:13px; font-weight:600; text-decoration:none;">Edit</a>
                                             
                                             <?php if ($row['status'] === 'blocked'): ?>
                                                 <form method="post" action="<?php echo h(customerPageUrl($listState)); ?>" style="display:inline;">
@@ -579,7 +579,7 @@ include 'header.php';
                                                     <input type="hidden" name="action" value="toggle_status">
                                                     <input type="hidden" name="customer_id" value="<?php echo h($row['id']); ?>">
                                                     <input type="hidden" name="target_status" value="active">
-                                                    <button type="submit" style="background:none; border:none; color:#0b7a5a; font-size:13px; font-weight:600; cursor:pointer; padding:0; font-family:inherit;">Unblock</button>
+                                                    <button type="submit" style="background:none; border:none; color:var(--go); font-size:13px; font-weight:600; cursor:pointer; padding:0; font-family:inherit;">Unblock</button>
                                                 </form>
                                             <?php else: ?>
                                                 <form method="post" action="<?php echo h(customerPageUrl($listState)); ?>" onsubmit="return confirm('Block this customer?');" style="display:inline;">
@@ -587,7 +587,7 @@ include 'header.php';
                                                     <input type="hidden" name="action" value="toggle_status">
                                                     <input type="hidden" name="customer_id" value="<?php echo h($row['id']); ?>">
                                                     <input type="hidden" name="target_status" value="blocked">
-                                                    <button type="submit" style="background:none; border:none; color:#c23a52; font-size:13px; font-weight:600; cursor:pointer; padding:0; font-family:inherit;">Block</button>
+                                                    <button type="submit" style="background:none; border:none; color:var(--stop); font-size:13px; font-weight:600; cursor:pointer; padding:0; font-family:inherit;">Block</button>
                                                 </form>
                                             <?php endif; ?>
                                         </div>
@@ -599,17 +599,17 @@ include 'header.php';
                 </div>
 
                 <?php if ($totalPages > 1): ?>
-                    <div style="padding:24px; border-top:1px solid #e4e8f1; display:flex; justify-content:space-between; align-items:center;">
+                    <div style="padding:24px; border-top:1px solid var(--line); display:flex; justify-content:space-between; align-items:center;">
                         <?php if ($page > 1): ?>
-                            <a href="<?php echo h(customerPageUrl($listState, ['page' => $page - 1])); ?>" class="dc-btn-secondary" style="background:#fff; text-decoration:none;">Previous</a>
+                            <a href="<?php echo h(customerPageUrl($listState, ['page' => $page - 1])); ?>" class="dc-btn-secondary" style="background:var(--surface); text-decoration:none;">Previous</a>
                         <?php else: ?>
                             <div style="width:100px;"></div>
                         <?php endif; ?>
 
-                        <span style="font-size:14px; font-weight:600; color:#5b6273;">Page <?php echo h($page); ?> of <?php echo h($totalPages); ?></span>
+                        <span style="font-size:14px; font-weight:600; color:var(--ink-2);">Page <?php echo h($page); ?> of <?php echo h($totalPages); ?></span>
 
                         <?php if ($page < $totalPages): ?>
-                            <a href="<?php echo h(customerPageUrl($listState, ['page' => $page + 1])); ?>" class="dc-btn-secondary" style="background:#fff; text-decoration:none;">Next</a>
+                            <a href="<?php echo h(customerPageUrl($listState, ['page' => $page + 1])); ?>" class="dc-btn-secondary" style="background:var(--surface); text-decoration:none;">Next</a>
                         <?php else: ?>
                             <div style="width:100px;"></div>
                         <?php endif; ?>
