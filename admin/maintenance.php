@@ -38,49 +38,49 @@ include 'header.php';
     </header>
 
     <div class="dc-card">
-        <div style="padding:24px; border-bottom:1px solid #e4e8f1;">
+        <div style="padding:24px; border-bottom:1px solid var(--line);">
             <h2 class="dc-h2" style="font-size:20px;">Vehicles Needing Maintenance</h2>
         </div>
         
         <?php if (empty($carsNeedingMaintenance)): ?>
-            <div style="padding: 40px 24px; text-align: center; color: #5b6273;">
+            <div style="padding: 40px 24px; text-align: center; color: var(--ink-2);">
                 <p>No vehicles currently flagged for maintenance.</p>
             </div>
         <?php else: ?>
             <div style="overflow-x: auto;">
                 <table class="dc-table" style="width: 100%; border-collapse: collapse;">
                     <thead>
-                        <tr style="border-bottom: 1px solid #e4e8f1; background: #f9fafc;">
-                            <th style="padding: 16px 24px; text-align: left; font-size: 13px; color: #5b6273; font-weight: 600;">Car ID</th>
-                            <th style="padding: 16px 24px; text-align: left; font-size: 13px; color: #5b6273; font-weight: 600;">Brand & Model</th>
-                            <th style="padding: 16px 24px; text-align: left; font-size: 13px; color: #5b6273; font-weight: 600;">Plate Number</th>
-                            <th style="padding: 16px 24px; text-align: left; font-size: 13px; color: #5b6273; font-weight: 600;">Status</th>
-                            <th style="padding: 16px 24px; text-align: left; font-size: 13px; color: #5b6273; font-weight: 600;">Total Bookings (Indicator)</th>
+                        <tr style="border-bottom: 1px solid var(--line); background: var(--surface-2);">
+                            <th style="padding: 16px 24px; text-align: left; font-size: 13px; color: var(--ink-2); font-weight: 600;">Car ID</th>
+                            <th style="padding: 16px 24px; text-align: left; font-size: 13px; color: var(--ink-2); font-weight: 600;">Brand & Model</th>
+                            <th style="padding: 16px 24px; text-align: left; font-size: 13px; color: var(--ink-2); font-weight: 600;">Plate Number</th>
+                            <th style="padding: 16px 24px; text-align: left; font-size: 13px; color: var(--ink-2); font-weight: 600;">Status</th>
+                            <th style="padding: 16px 24px; text-align: left; font-size: 13px; color: var(--ink-2); font-weight: 600;">Total Bookings (Indicator)</th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php foreach ($carsNeedingMaintenance as $car): ?>
-                            <tr style="border-bottom: 1px solid #e4e8f1;">
-                                <td style="padding: 16px 24px; color:#131722; font-weight:600;">
+                            <tr style="border-bottom: 1px solid var(--line);">
+                                <td style="padding: 16px 24px; color:var(--ink); font-weight:600;">
                                     #<?= htmlspecialchars($car['id']) ?>
                                 </td>
                                 <td style="padding: 16px 24px;">
-                                    <strong style="color: #131722; display:block; margin-bottom:4px;"><?= htmlspecialchars($car['brand'] . ' ' . $car['model']) ?></strong>
+                                    <strong style="color: var(--ink); display:block; margin-bottom:4px;"><?= htmlspecialchars($car['brand'] . ' ' . $car['model']) ?></strong>
                                 </td>
-                                <td style="padding: 16px 24px; color:#5b6273; font-weight:600;">
+                                <td style="padding: 16px 24px; color:var(--ink-2); font-weight:600;">
                                     <?= htmlspecialchars($car['plate_number']) ?>
                                 </td>
                                 <td style="padding: 16px 24px;">
                                     <?php 
                                         $statusLabel = htmlspecialchars(ucfirst($car['status']));
-                                        $statusColor = $car['status'] === 'available' ? '#0b7a5a' : ($car['status'] === 'maintenance' ? '#c23a52' : '#b25e09');
-                                        $statusBg = $car['status'] === 'available' ? '#e6f6f1' : ($car['status'] === 'maintenance' ? '#fbeaed' : '#fff3e0');
+                                        $statusColor = $car['status'] === 'available' ? 'var(--go)' : ($car['status'] === 'maintenance' ? 'var(--stop)' : 'var(--wait)');
+                                        $statusBg = $car['status'] === 'available' ? 'var(--go-soft)' : ($car['status'] === 'maintenance' ? 'var(--stop-soft)' : 'var(--wait-soft)');
                                     ?>
                                     <span class="dc-badge" style="background:<?= $statusBg ?>; color:<?= $statusColor ?>;">
                                         <?= $statusLabel ?>
                                     </span>
                                 </td>
-                                <td style="padding: 16px 24px; color:#131722; font-weight:600;">
+                                <td style="padding: 16px 24px; color:var(--ink); font-weight:600;">
                                     <?= htmlspecialchars($car['total_bookings']) ?>
                                 </td>
                             </tr>

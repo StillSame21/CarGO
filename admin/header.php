@@ -29,6 +29,16 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                 Search system
             </div>
             
+            <button type="button" class="theme-toggle" id="themeToggle" aria-label="Switch colour theme" title="Switch colour theme">
+                <svg class="icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                </svg>
+                <svg class="icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="4"></circle>
+                    <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path>
+                </svg>
+            </button>
+
             <!-- User Menu -->
             <div style="position: relative;" class="dashboard-account">
                 <button type="button" class="dc-user-btn" onclick="document.getElementById('adminDropdown').classList.toggle('show')">
@@ -39,11 +49,11 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                     </span>
                     <svg width="11" height="11" viewBox="0 0 12 12" aria-hidden="true" style="margin-left:2px;"><path d="M2.5 4.5 L6 8 L9.5 4.5" fill="none" stroke="#9097a8" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>
                 </button>
-                <div id="adminDropdown" style="display:none; position:absolute; top:100%; right:0; background:#fff; border:1px solid #e4e8f1; border-radius:12px; padding:8px; min-width:150px; box-shadow:0 12px 24px rgba(0,0,0,0.1); margin-top:8px;">
+                <div id="adminDropdown" style="display:none; position:absolute; top:100%; right:0; background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:8px; min-width:150px; box-shadow:var(--shadow-pop); margin-top:8px;">
                     <form method="post" action="../logout.php" style="margin:0;">
                         <?php echo csrfInput(); ?>
                         <input type="hidden" name="type" value="admin">
-                        <button type="submit" style="width:100%; text-align:left; padding:8px 12px; background:none; border:none; cursor:pointer; font-size:14px; font-weight:600; color:#c23a52; border-radius:8px;" onmouseover="this.style.background='#fbeaed'" onmouseout="this.style.background='none'">Logout</button>
+                        <button type="submit" style="width:100%; text-align:left; padding:8px 12px; background:none; border:none; cursor:pointer; font-size:14px; font-weight:600; color:var(--stop); border-radius:8px;" onmouseover="this.style.background='var(--stop-soft)'" onmouseout="this.style.background='none'">Logout</button>
                     </form>
                 </div>
             </div>
@@ -51,6 +61,28 @@ $currentPage = basename($_SERVER['PHP_SELF']);
     </div>
 </header>
 <script>
+// Theme toggle. First click from the OS default flips to the opposite of
+// whatever is currently on screen, so the button always does what it shows.
+(function () {
+    var btn = document.getElementById('themeToggle');
+    if (!btn) return;
+
+    btn.addEventListener('click', function () {
+        var root = document.documentElement;
+        var current = root.getAttribute('data-theme');
+
+        if (!current) {
+            var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            current = prefersDark ? 'dark' : 'light';
+        }
+
+        var next = current === 'dark' ? 'light' : 'dark';
+        root.setAttribute('data-theme', next);
+
+        try { localStorage.setItem('cargo-theme', next); } catch (e) {}
+    });
+})();
+
 // Simple click outside to close dropdown
 document.addEventListener('click', function(e) {
     var btn = e.target.closest('.dc-user-btn');

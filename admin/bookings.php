@@ -406,11 +406,11 @@ include 'header.php';
         </div>
 
         <?php if ($error !== ''): ?>
-            <p class="message error" style="color: #c23a52; background: #fbeaed; padding: 12px; border-radius: 8px; font-weight: 600; margin-bottom:24px;"><?php echo h($error); ?></p>
+            <p class="message error" style="color: var(--stop); background: var(--stop-soft); padding: 12px; border-radius: 8px; font-weight: 600; margin-bottom:24px;"><?php echo h($error); ?></p>
         <?php endif; ?>
 
         <?php if ($success !== ''): ?>
-            <p class="message success" style="color: #0b7a5a; background: #e6f6f1; padding: 12px; border-radius: 8px; font-weight: 600; margin-bottom:24px;"><?php echo h($success); ?></p>
+            <p class="message success" style="color: var(--go); background: var(--go-soft); padding: 12px; border-radius: 8px; font-weight: 600; margin-bottom:24px;"><?php echo h($success); ?></p>
         <?php endif; ?>
 
         <div style="display:grid; grid-template-columns: minmax(400px, 1fr) 300px; gap:24px; align-items:start;">
@@ -419,8 +419,8 @@ include 'header.php';
                     <div>
                         <p class="dc-mono-subtitle small" style="margin-bottom:8px">Booking #<?php echo h($booking['id']); ?></p>
                         <h1 class="dc-h1" style="font-size:24px; margin-bottom:8px;"><?php echo h($booking['brand'] . ' ' . $booking['model']); ?></h1>
-                        <p style="color:#5b6273; font-size:14px; font-weight:600;"><?php echo h(formatAdminDate($booking['pickup_date']) . ' to ' . formatAdminDate($booking['return_date'])); ?></p>
-                        <div style="display:flex; gap:16px; margin-top:16px; font-size:13px; color:#5b6273;">
+                        <p style="color:var(--ink-2); font-size:14px; font-weight:600;"><?php echo h(formatAdminDate($booking['pickup_date']) . ' to ' . formatAdminDate($booking['return_date'])); ?></p>
+                        <div style="display:flex; gap:16px; margin-top:16px; font-size:13px; color:var(--ink-2);">
                             <span><strong><?php echo h($booking['total_days']); ?></strong> Rental days</span>
                             <span><strong>RM <?php echo h(number_format($paymentBreakdown['payable_total'], 2)); ?></strong> Est. total</span>
                             <span><strong><?php echo h($booking['pickup_location']); ?></strong> Pickup</span>
@@ -429,43 +429,43 @@ include 'header.php';
                     <div style="text-align:right;">
                         <?php 
                             $bStatus = $displayStatus['label'];
-                            $bColor = $bStatus === 'Confirmed' || $bStatus === 'Completed' || $bStatus === 'Paid' ? '#0b7a5a' : ($bStatus === 'Cancelled' ? '#c23a52' : '#b25e09');
-                            $bBg = $bStatus === 'Confirmed' || $bStatus === 'Completed' || $bStatus === 'Paid' ? '#e6f6f1' : ($bStatus === 'Cancelled' ? '#fbeaed' : '#fff3e0');
+                            $bColor = $bStatus === 'Confirmed' || $bStatus === 'Completed' || $bStatus === 'Paid' ? 'var(--go)' : ($bStatus === 'Cancelled' ? 'var(--stop)' : 'var(--wait)');
+                            $bBg = $bStatus === 'Confirmed' || $bStatus === 'Completed' || $bStatus === 'Paid' ? 'var(--go-soft)' : ($bStatus === 'Cancelled' ? 'var(--stop-soft)' : 'var(--wait-soft)');
                         ?>
                         <span class="dc-badge" style="background:<?php echo $bBg; ?>; color:<?php echo $bColor; ?>; margin-bottom:12px; display:inline-block;">
                             <?php echo h($bStatus); ?>
                         </span>
-                        <div style="width:120px; height:80px; border-radius:8px; overflow:hidden; background:#f1f3f9;">
+                        <div style="width:120px; height:80px; border-radius:8px; overflow:hidden; background:var(--surface-2);">
                             <img src="<?php echo h(carImageUrl($booking['image'], 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=700&q=80')); ?>" alt="Car" style="width:100%; height:100%; object-fit:cover;">
                         </div>
                     </div>
                 </div>
 
                 <div class="dc-card">
-                    <div style="padding:24px; border-bottom:1px solid #e4e8f1;">
+                    <div style="padding:24px; border-bottom:1px solid var(--line);">
                         <p class="dc-mono-subtitle small" style="margin-bottom:8px">Trip</p>
                         <h2 class="dc-h2" style="font-size:20px;">Rental timeline</h2>
                     </div>
                     <div style="padding:24px;">
-                        <div style="display:flex; flex-direction:column; gap:24px; position:relative; padding-left:16px; border-left:2px solid #e4e8f1; margin-left:8px;">
+                        <div style="display:flex; flex-direction:column; gap:24px; position:relative; padding-left:16px; border-left:2px solid var(--line); margin-left:8px;">
                             <div style="position:relative;">
-                                <div style="position:absolute; left:-25px; top:4px; width:16px; height:16px; background:#fff; border:4px solid var(--accent); border-radius:50%;"></div>
-                                <p style="font-size:12px; font-weight:700; color:#8891a5; text-transform:uppercase; margin-bottom:4px;">Pickup</p>
-                                <div style="font-size:16px; color:#131722; font-weight:600; margin-bottom:2px;"><?php echo h(formatAdminDate($booking['pickup_date'])); ?></div>
-                                <div style="font-size:13px; color:#5b6273;"><?php echo h($booking['pickup_location']); ?></div>
+                                <div style="position:absolute; left:-25px; top:4px; width:16px; height:16px; background:var(--surface); border:4px solid var(--accent); border-radius:50%;"></div>
+                                <p style="font-size:12px; font-weight:700; color:var(--ink-3); text-transform:uppercase; margin-bottom:4px;">Pickup</p>
+                                <div style="font-size:16px; color:var(--ink); font-weight:600; margin-bottom:2px;"><?php echo h(formatAdminDate($booking['pickup_date'])); ?></div>
+                                <div style="font-size:13px; color:var(--ink-2);"><?php echo h($booking['pickup_location']); ?></div>
                             </div>
                             <div style="position:relative;">
-                                <div style="position:absolute; left:-25px; top:4px; width:16px; height:16px; background:#fff; border:4px solid #8891a5; border-radius:50%;"></div>
-                                <p style="font-size:12px; font-weight:700; color:#8891a5; text-transform:uppercase; margin-bottom:4px;">Expected Return</p>
-                                <div style="font-size:16px; color:#131722; font-weight:600; margin-bottom:2px;"><?php echo h(formatAdminDate($booking['return_date'])); ?></div>
-                                <div style="font-size:13px; color:#5b6273;"><?php echo h($booking['pickup_location']); ?></div>
+                                <div style="position:absolute; left:-25px; top:4px; width:16px; height:16px; background:var(--surface); border:4px solid var(--ink-3); border-radius:50%;"></div>
+                                <p style="font-size:12px; font-weight:700; color:var(--ink-3); text-transform:uppercase; margin-bottom:4px;">Expected Return</p>
+                                <div style="font-size:16px; color:var(--ink); font-weight:600; margin-bottom:2px;"><?php echo h(formatAdminDate($booking['return_date'])); ?></div>
+                                <div style="font-size:13px; color:var(--ink-2);"><?php echo h($booking['pickup_location']); ?></div>
                             </div>
                             <?php if ($booking['actual_return_date']): ?>
                                 <div style="position:relative;">
-                                    <div style="position:absolute; left:-25px; top:4px; width:16px; height:16px; background:#fff; border:4px solid <?php echo $booking['total_late_days'] > 0 ? '#c23a52' : '#0b7a5a'; ?>; border-radius:50%;"></div>
-                                    <p style="font-size:12px; font-weight:700; color:#8891a5; text-transform:uppercase; margin-bottom:4px;">Actual Return</p>
-                                    <div style="font-size:16px; color:#131722; font-weight:600; margin-bottom:2px;"><?php echo h(formatAdminDate($booking['actual_return_date'])); ?></div>
-                                    <div style="font-size:13px; color:<?php echo $booking['total_late_days'] > 0 ? '#c23a52' : '#0b7a5a'; ?>; font-weight:600;"><?php echo h($booking['total_late_days'] > 0 ? $booking['total_late_days'] . ' late day(s)' : 'Returned on time'); ?></div>
+                                    <div style="position:absolute; left:-25px; top:4px; width:16px; height:16px; background:var(--surface); border:4px solid <?php echo $booking['total_late_days'] > 0 ? 'var(--stop)' : 'var(--go)'; ?>; border-radius:50%;"></div>
+                                    <p style="font-size:12px; font-weight:700; color:var(--ink-3); text-transform:uppercase; margin-bottom:4px;">Actual Return</p>
+                                    <div style="font-size:16px; color:var(--ink); font-weight:600; margin-bottom:2px;"><?php echo h(formatAdminDate($booking['actual_return_date'])); ?></div>
+                                    <div style="font-size:13px; color:<?php echo $booking['total_late_days'] > 0 ? 'var(--stop)' : 'var(--go)'; ?>; font-weight:600;"><?php echo h($booking['total_late_days'] > 0 ? $booking['total_late_days'] . ' late day(s)' : 'Returned on time'); ?></div>
                                 </div>
                             <?php endif; ?>
                         </div>
@@ -474,27 +474,27 @@ include 'header.php';
 
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px;">
                     <div class="dc-card">
-                        <div style="padding:24px; border-bottom:1px solid #e4e8f1;">
+                        <div style="padding:24px; border-bottom:1px solid var(--line);">
                             <p class="dc-mono-subtitle small" style="margin-bottom:8px">Customer</p>
                             <h2 class="dc-h2" style="font-size:20px;">Customer information</h2>
                         </div>
                         <div style="padding:24px; display:flex; flex-direction:column; gap:16px;">
-                            <div><span style="display:block; font-size:12px; font-weight:700; color:#8891a5; text-transform:uppercase; margin-bottom:4px;">Name</span><span style="font-size:14px; color:#131722;"><?php echo h($booking['customer_name']); ?></span></div>
-                            <div><span style="display:block; font-size:12px; font-weight:700; color:#8891a5; text-transform:uppercase; margin-bottom:4px;">Email</span><span style="font-size:14px; color:#131722;"><?php echo h($booking['customer_email']); ?></span></div>
-                            <div><span style="display:block; font-size:12px; font-weight:700; color:#8891a5; text-transform:uppercase; margin-bottom:4px;">Phone</span><span style="font-size:14px; color:#131722;"><?php echo h($booking['customer_phone'] ?: 'Not provided'); ?></span></div>
-                            <div><span style="display:block; font-size:12px; font-weight:700; color:#8891a5; text-transform:uppercase; margin-bottom:4px;">Address</span><span style="font-size:14px; color:#131722;"><?php echo h($booking['customer_address'] ?: 'Not provided'); ?></span></div>
+                            <div><span style="display:block; font-size:12px; font-weight:700; color:var(--ink-3); text-transform:uppercase; margin-bottom:4px;">Name</span><span style="font-size:14px; color:var(--ink);"><?php echo h($booking['customer_name']); ?></span></div>
+                            <div><span style="display:block; font-size:12px; font-weight:700; color:var(--ink-3); text-transform:uppercase; margin-bottom:4px;">Email</span><span style="font-size:14px; color:var(--ink);"><?php echo h($booking['customer_email']); ?></span></div>
+                            <div><span style="display:block; font-size:12px; font-weight:700; color:var(--ink-3); text-transform:uppercase; margin-bottom:4px;">Phone</span><span style="font-size:14px; color:var(--ink);"><?php echo h($booking['customer_phone'] ?: 'Not provided'); ?></span></div>
+                            <div><span style="display:block; font-size:12px; font-weight:700; color:var(--ink-3); text-transform:uppercase; margin-bottom:4px;">Address</span><span style="font-size:14px; color:var(--ink);"><?php echo h($booking['customer_address'] ?: 'Not provided'); ?></span></div>
                         </div>
                     </div>
                     <div class="dc-card">
-                        <div style="padding:24px; border-bottom:1px solid #e4e8f1;">
+                        <div style="padding:24px; border-bottom:1px solid var(--line);">
                             <p class="dc-mono-subtitle small" style="margin-bottom:8px">Vehicle</p>
                             <h2 class="dc-h2" style="font-size:20px;">Car information</h2>
                         </div>
                         <div style="padding:24px; display:flex; flex-direction:column; gap:16px;">
-                            <div><span style="display:block; font-size:12px; font-weight:700; color:#8891a5; text-transform:uppercase; margin-bottom:4px;">Vehicle</span><span style="font-size:14px; color:#131722;"><?php echo h($booking['brand'] . ' ' . $booking['model']); ?></span></div>
-                            <div><span style="display:block; font-size:12px; font-weight:700; color:#8891a5; text-transform:uppercase; margin-bottom:4px;">Plate</span><span style="font-size:14px; color:#131722; font-weight:600;"><?php echo h($booking['plate_number']); ?></span></div>
-                            <div><span style="display:block; font-size:12px; font-weight:700; color:#8891a5; text-transform:uppercase; margin-bottom:4px;">Type</span><span style="font-size:14px; color:#131722;"><?php echo h($booking['car_type']); ?></span></div>
-                            <div><span style="display:block; font-size:12px; font-weight:700; color:#8891a5; text-transform:uppercase; margin-bottom:4px;">Specs</span><span style="font-size:14px; color:#131722;"><?php echo h($booking['transmission'] . ' / ' . $booking['fuel_type'] . ' / ' . $booking['seats'] . ' seats'); ?></span></div>
+                            <div><span style="display:block; font-size:12px; font-weight:700; color:var(--ink-3); text-transform:uppercase; margin-bottom:4px;">Vehicle</span><span style="font-size:14px; color:var(--ink);"><?php echo h($booking['brand'] . ' ' . $booking['model']); ?></span></div>
+                            <div><span style="display:block; font-size:12px; font-weight:700; color:var(--ink-3); text-transform:uppercase; margin-bottom:4px;">Plate</span><span style="font-size:14px; color:var(--ink); font-weight:600;"><?php echo h($booking['plate_number']); ?></span></div>
+                            <div><span style="display:block; font-size:12px; font-weight:700; color:var(--ink-3); text-transform:uppercase; margin-bottom:4px;">Type</span><span style="font-size:14px; color:var(--ink);"><?php echo h($booking['car_type']); ?></span></div>
+                            <div><span style="display:block; font-size:12px; font-weight:700; color:var(--ink-3); text-transform:uppercase; margin-bottom:4px;">Specs</span><span style="font-size:14px; color:var(--ink);"><?php echo h($booking['transmission'] . ' / ' . $booking['fuel_type'] . ' / ' . $booking['seats'] . ' seats'); ?></span></div>
                         </div>
                     </div>
                 </div>
@@ -502,31 +502,31 @@ include 'header.php';
 
             <div style="display:flex; flex-direction:column; gap:24px; position:sticky; top:24px;">
                 <div class="dc-card">
-                    <div style="padding:24px; border-bottom:1px solid #e4e8f1;">
+                    <div style="padding:24px; border-bottom:1px solid var(--line);">
                         <p class="dc-mono-subtitle small" style="margin-bottom:8px">Payment</p>
                         <h2 class="dc-h2" style="font-size:20px;">Payment details</h2>
                     </div>
                     <div style="padding:24px; display:flex; flex-direction:column; gap:16px;">
-                        <div style="display:flex; justify-content:space-between; font-size:14px;"><span style="color:#5b6273;">Daily Rate</span><span style="color:#131722; font-weight:600;">RM <?php echo h(number_format((float) $booking['daily_rate'], 2)); ?></span></div>
-                        <div style="display:flex; justify-content:space-between; font-size:14px;"><span style="color:#5b6273;">Total Days</span><span style="color:#131722; font-weight:600;"><?php echo h($booking['total_days']); ?></span></div>
-                        <div style="display:flex; justify-content:space-between; font-size:14px;"><span style="color:#5b6273;">Payment Status</span><span style="color:#131722; font-weight:600;"><?php echo h(ucfirst($booking['payment_status'] ?: 'unpaid')); ?></span></div>
-                        <div style="display:flex; justify-content:space-between; font-size:14px;"><span style="color:#5b6273;">Method</span><span style="color:#131722; font-weight:600;"><?php echo h($booking['payment_method'] ?: 'Not paid'); ?></span></div>
-                        <div style="display:flex; justify-content:space-between; font-size:14px;"><span style="color:#5b6273;">Payment Date</span><span style="color:#131722; font-weight:600;"><?php echo h(formatAdminDate($booking['payment_date'])); ?></span></div>
+                        <div style="display:flex; justify-content:space-between; font-size:14px;"><span style="color:var(--ink-2);">Daily Rate</span><span style="color:var(--ink); font-weight:600;">RM <?php echo h(number_format((float) $booking['daily_rate'], 2)); ?></span></div>
+                        <div style="display:flex; justify-content:space-between; font-size:14px;"><span style="color:var(--ink-2);">Total Days</span><span style="color:var(--ink); font-weight:600;"><?php echo h($booking['total_days']); ?></span></div>
+                        <div style="display:flex; justify-content:space-between; font-size:14px;"><span style="color:var(--ink-2);">Payment Status</span><span style="color:var(--ink); font-weight:600;"><?php echo h(ucfirst($booking['payment_status'] ?: 'unpaid')); ?></span></div>
+                        <div style="display:flex; justify-content:space-between; font-size:14px;"><span style="color:var(--ink-2);">Method</span><span style="color:var(--ink); font-weight:600;"><?php echo h($booking['payment_method'] ?: 'Not paid'); ?></span></div>
+                        <div style="display:flex; justify-content:space-between; font-size:14px;"><span style="color:var(--ink-2);">Payment Date</span><span style="color:var(--ink); font-weight:600;"><?php echo h(formatAdminDate($booking['payment_date'])); ?></span></div>
                         <?php if ((float) $booking['total_late_fee'] > 0): ?>
-                            <div style="display:flex; justify-content:space-between; font-size:14px; color:#c23a52;"><span style="font-weight:600;">Late Days</span><span style="font-weight:600;"><?php echo h($booking['total_late_days']); ?></span></div>
+                            <div style="display:flex; justify-content:space-between; font-size:14px; color:var(--stop);"><span style="font-weight:600;">Late Days</span><span style="font-weight:600;"><?php echo h($booking['total_late_days']); ?></span></div>
                         <?php endif; ?>
                         
-                        <div style="margin-top:8px; padding-top:16px; border-top:1px solid #e4e8f1;">
-                            <div style="display:flex; justify-content:space-between; font-size:16px; font-weight:700;"><span style="color:#131722;">Total Amount</span><span style="color:#131722;">RM <?php echo h(number_format($paymentBreakdown['payable_total'], 2)); ?></span></div>
+                        <div style="margin-top:8px; padding-top:16px; border-top:1px solid var(--line);">
+                            <div style="display:flex; justify-content:space-between; font-size:16px; font-weight:700;"><span style="color:var(--ink);">Total Amount</span><span style="color:var(--ink);">RM <?php echo h(number_format($paymentBreakdown['payable_total'], 2)); ?></span></div>
                             <?php if ($amountDue > 0): ?>
-                                <div style="display:flex; justify-content:space-between; font-size:14px; margin-top:8px; color:#c23a52;"><span style="font-weight:600;">Amount due</span><span style="font-weight:600;">RM <?php echo h(number_format($amountDue, 2)); ?></span></div>
+                                <div style="display:flex; justify-content:space-between; font-size:14px; margin-top:8px; color:var(--stop);"><span style="font-weight:600;">Amount due</span><span style="font-weight:600;">RM <?php echo h(number_format($amountDue, 2)); ?></span></div>
                             <?php endif; ?>
                         </div>
                     </div>
                 </div>
 
                 <div class="dc-card">
-                    <div style="padding:24px; border-bottom:1px solid #e4e8f1;">
+                    <div style="padding:24px; border-bottom:1px solid var(--line);">
                         <p class="dc-mono-subtitle small" style="margin-bottom:8px">Admin</p>
                         <h2 class="dc-h2" style="font-size:20px;">Booking actions</h2>
                     </div>
@@ -541,7 +541,7 @@ include 'header.php';
                         <?php endif; ?>
 
                         <?php if ($booking['booking_status'] === BOOKING_STATUS_ONGOING): ?>
-                            <form method="post" action="bookings.php?id=<?php echo h($booking['id']); ?>" style="margin-bottom:16px; padding:16px; background:#f9fafc; border:1px solid #e4e8f1; border-radius:8px;">
+                            <form method="post" action="bookings.php?id=<?php echo h($booking['id']); ?>" style="margin-bottom:16px; padding:16px; background:var(--surface-2); border:1px solid var(--line); border-radius:8px;">
                                 <?php echo csrfInput(); ?>
                                 <input type="hidden" name="action" value="confirm_return">
                                 <input type="hidden" name="booking_id" value="<?php echo h($booking['id']); ?>">
@@ -549,16 +549,16 @@ include 'header.php';
                                     <span style="display:block; margin-bottom:6px; font-size:13px; font-weight:600;">Actual Return Date</span>
                                     <input type="date" name="actual_return_date" value="<?php echo h($today); ?>" required class="dc-input" style="width:100%;">
                                 </label>
-                                <button type="submit" class="dc-btn-primary" style="width:100%; justify-content:center; background:#131722; color:#fff;">Confirm Return</button>
+                                <button type="submit" class="dc-btn-primary" style="width:100%; justify-content:center; background:var(--ink); color:var(--surface);">Confirm Return</button>
                             </form>
                         <?php endif; ?>
 
                         <?php if (!$isPaid): ?>
-                            <p style="font-size:13px; color:#5b6273; text-align:center; padding:12px; background:#f1f3f9; border-radius:8px;">Pickup can be confirmed only after payment is paid.</p>
+                            <p style="font-size:13px; color:var(--ink-2); text-align:center; padding:12px; background:var(--surface-2); border-radius:8px;">Pickup can be confirmed only after payment is paid.</p>
                         <?php elseif ($booking['booking_status'] === BOOKING_STATUS_COMPLETED): ?>
-                            <p style="font-size:13px; color:#0b7a5a; text-align:center; padding:12px; background:#e6f6f1; border-radius:8px; font-weight:600;">This booking has been returned and completed.</p>
+                            <p style="font-size:13px; color:var(--go); text-align:center; padding:12px; background:var(--go-soft); border-radius:8px; font-weight:600;">This booking has been returned and completed.</p>
                         <?php elseif (in_array($booking['booking_status'], ['cancelled', 'rejected'], true)): ?>
-                            <p style="font-size:13px; color:#5b6273; text-align:center; padding:12px; background:#f1f3f9; border-radius:8px;">No pickup or return actions are available for this booking.</p>
+                            <p style="font-size:13px; color:var(--ink-2); text-align:center; padding:12px; background:var(--surface-2); border-radius:8px;">No pickup or return actions are available for this booking.</p>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -573,11 +573,11 @@ include 'header.php';
         </header>
 
         <?php if ($error !== ''): ?>
-            <p class="message error" style="color: #c23a52; background: #fbeaed; padding: 12px; border-radius: 8px; font-weight: 600; margin-bottom:24px;"><?php echo h($error); ?></p>
+            <p class="message error" style="color: var(--stop); background: var(--stop-soft); padding: 12px; border-radius: 8px; font-weight: 600; margin-bottom:24px;"><?php echo h($error); ?></p>
         <?php endif; ?>
 
         <div class="dc-card">
-            <div style="padding:24px; border-bottom:1px solid #e4e8f1;">
+            <div style="padding:24px; border-bottom:1px solid var(--line);">
                 <?php renderAdminFilterBar([
                     'action' => 'bookings.php',
                     'search' => [
@@ -617,58 +617,58 @@ include 'header.php';
             </div>
 
             <?php if (count($bookings) === 0): ?>
-                <div style="padding: 40px 24px; text-align: center; color: #5b6273;">
+                <div style="padding: 40px 24px; text-align: center; color: var(--ink-2);">
                     <p>No bookings found.</p>
                 </div>
             <?php else: ?>
                 <div style="overflow-x: auto;">
                     <table class="dc-table" style="width: 100%; border-collapse: collapse;">
                         <thead>
-                            <tr style="border-bottom: 1px solid #e4e8f1; background: #f9fafc;">
-                                <th style="padding: 16px 24px; text-align: left; font-size: 13px; color: #5b6273; font-weight: 600;">Booking</th>
-                                <th style="padding: 16px 24px; text-align: left; font-size: 13px; color: #5b6273; font-weight: 600;">Customer</th>
-                                <th style="padding: 16px 24px; text-align: left; font-size: 13px; color: #5b6273; font-weight: 600;">Vehicle</th>
-                                <th style="padding: 16px 24px; text-align: left; font-size: 13px; color: #5b6273; font-weight: 600;">Dates</th>
-                                <th style="padding: 16px 24px; text-align: left; font-size: 13px; color: #5b6273; font-weight: 600;">Amount</th>
-                                <th style="padding: 16px 24px; text-align: left; font-size: 13px; color: #5b6273; font-weight: 600;">Status</th>
-                                <th style="padding: 16px 24px; text-align: right; font-size: 13px; color: #5b6273; font-weight: 600;">Action</th>
+                            <tr style="border-bottom: 1px solid var(--line); background: var(--surface-2);">
+                                <th style="padding: 16px 24px; text-align: left; font-size: 13px; color: var(--ink-2); font-weight: 600;">Booking</th>
+                                <th style="padding: 16px 24px; text-align: left; font-size: 13px; color: var(--ink-2); font-weight: 600;">Customer</th>
+                                <th style="padding: 16px 24px; text-align: left; font-size: 13px; color: var(--ink-2); font-weight: 600;">Vehicle</th>
+                                <th style="padding: 16px 24px; text-align: left; font-size: 13px; color: var(--ink-2); font-weight: 600;">Dates</th>
+                                <th style="padding: 16px 24px; text-align: left; font-size: 13px; color: var(--ink-2); font-weight: 600;">Amount</th>
+                                <th style="padding: 16px 24px; text-align: left; font-size: 13px; color: var(--ink-2); font-weight: 600;">Status</th>
+                                <th style="padding: 16px 24px; text-align: right; font-size: 13px; color: var(--ink-2); font-weight: 600;">Action</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php foreach ($bookings as $row): ?>
                                 <?php $rowStatus = bookingDisplayStatus((string) $row['booking_status'], $row['payment_status'] ?? null, (float) $row['total_late_fee']); ?>
                                 <?php $rowBreakdown = buildPaymentBreakdown((float) $row['total_amount'], (float) $row['total_late_fee']); ?>
-                                <tr style="border-bottom: 1px solid #e4e8f1;">
+                                <tr style="border-bottom: 1px solid var(--line);">
                                     <td style="padding: 16px 24px;">
-                                        <strong style="color: #131722; display:block; margin-bottom:4px; font-size:14px;">#<?php echo h($row['id']); ?></strong>
-                                        <div style="color: #5b6273; font-size:13px; font-weight:600;"><?php echo h(ucfirst($row['booking_status'])); ?></div>
+                                        <strong style="color: var(--ink); display:block; margin-bottom:4px; font-size:14px;">#<?php echo h($row['id']); ?></strong>
+                                        <div style="color: var(--ink-2); font-size:13px; font-weight:600;"><?php echo h(ucfirst($row['booking_status'])); ?></div>
                                     </td>
                                     <td style="padding: 16px 24px;">
-                                        <strong style="color: #131722; display:block; margin-bottom:4px;"><?php echo h($row['customer_name'] ?: 'Customer removed'); ?></strong>
-                                        <div style="color: #5b6273; font-size:13px;"><?php echo h($row['customer_email'] ?: 'No email'); ?></div>
+                                        <strong style="color: var(--ink); display:block; margin-bottom:4px;"><?php echo h($row['customer_name'] ?: 'Customer removed'); ?></strong>
+                                        <div style="color: var(--ink-2); font-size:13px;"><?php echo h($row['customer_email'] ?: 'No email'); ?></div>
                                     </td>
                                     <td style="padding: 16px 24px;">
-                                        <strong style="color: #131722; display:block; margin-bottom:4px;"><?php echo h(trim(($row['brand'] ?? '') . ' ' . ($row['model'] ?? '')) ?: 'Car removed'); ?></strong>
-                                        <div style="color: #5b6273; font-size:13px;"><?php echo h($row['plate_number'] ?: 'No plate'); ?></div>
+                                        <strong style="color: var(--ink); display:block; margin-bottom:4px;"><?php echo h(trim(($row['brand'] ?? '') . ' ' . ($row['model'] ?? '')) ?: 'Car removed'); ?></strong>
+                                        <div style="color: var(--ink-2); font-size:13px;"><?php echo h($row['plate_number'] ?: 'No plate'); ?></div>
                                     </td>
-                                    <td style="padding: 16px 24px; color:#131722; font-size:14px;">
+                                    <td style="padding: 16px 24px; color:var(--ink); font-size:14px;">
                                         <?php echo h(formatAdminDate($row['pickup_date']) . ' - ' . formatAdminDate($row['return_date'])); ?>
                                     </td>
-                                    <td style="padding: 16px 24px; color:#131722; font-size:14px; font-weight:600;">
+                                    <td style="padding: 16px 24px; color:var(--ink); font-size:14px; font-weight:600;">
                                         RM <?php echo h(number_format($rowBreakdown['payable_total'], 2)); ?>
                                     </td>
                                     <td style="padding: 16px 24px;">
                                         <?php 
                                             $rsLabel = $rowStatus['label'];
-                                            $rsColor = $rsLabel === 'Confirmed' || $rsLabel === 'Completed' || $rsLabel === 'Paid' ? '#0b7a5a' : ($rsLabel === 'Cancelled' ? '#c23a52' : '#b25e09');
-                                            $rsBg = $rsLabel === 'Confirmed' || $rsLabel === 'Completed' || $rsLabel === 'Paid' ? '#e6f6f1' : ($rsLabel === 'Cancelled' ? '#fbeaed' : '#fff3e0');
+                                            $rsColor = $rsLabel === 'Confirmed' || $rsLabel === 'Completed' || $rsLabel === 'Paid' ? 'var(--go)' : ($rsLabel === 'Cancelled' ? 'var(--stop)' : 'var(--wait)');
+                                            $rsBg = $rsLabel === 'Confirmed' || $rsLabel === 'Completed' || $rsLabel === 'Paid' ? 'var(--go-soft)' : ($rsLabel === 'Cancelled' ? 'var(--stop-soft)' : 'var(--wait-soft)');
                                         ?>
                                         <span class="dc-badge" style="background:<?php echo $rsBg; ?>; color:<?php echo $rsColor; ?>;">
                                             <?php echo h($rsLabel); ?>
                                         </span>
                                     </td>
                                     <td style="padding: 16px 24px; text-align: right;">
-                                        <a href="<?php echo h(bookingListUrl($bookingListState, ['id' => $row['id']])); ?>" style="color:#3b5fda; font-size:13px; font-weight:600; text-decoration:none;">View Details</a>
+                                        <a href="<?php echo h(bookingListUrl($bookingListState, ['id' => $row['id']])); ?>" style="color:var(--accent); font-size:13px; font-weight:600; text-decoration:none;">View Details</a>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -677,17 +677,17 @@ include 'header.php';
                 </div>
 
                 <?php if ($totalBookingPages > 1): ?>
-                    <div style="padding:24px; border-top:1px solid #e4e8f1; display:flex; justify-content:space-between; align-items:center;">
+                    <div style="padding:24px; border-top:1px solid var(--line); display:flex; justify-content:space-between; align-items:center;">
                         <?php if ($bookingPage > 1): ?>
-                            <a href="<?php echo h(bookingListUrl($bookingListState, ['page' => $bookingPage - 1])); ?>" class="dc-btn-secondary" style="background:#fff; text-decoration:none;">Previous</a>
+                            <a href="<?php echo h(bookingListUrl($bookingListState, ['page' => $bookingPage - 1])); ?>" class="dc-btn-secondary" style="background:var(--surface); text-decoration:none;">Previous</a>
                         <?php else: ?>
                             <div style="width:100px;"></div>
                         <?php endif; ?>
 
-                        <span style="font-size:14px; font-weight:600; color:#5b6273;">Page <?php echo h($bookingPage); ?> of <?php echo h($totalBookingPages); ?></span>
+                        <span style="font-size:14px; font-weight:600; color:var(--ink-2);">Page <?php echo h($bookingPage); ?> of <?php echo h($totalBookingPages); ?></span>
 
                         <?php if ($bookingPage < $totalBookingPages): ?>
-                            <a href="<?php echo h(bookingListUrl($bookingListState, ['page' => $bookingPage + 1])); ?>" class="dc-btn-secondary" style="background:#fff; text-decoration:none;">Next</a>
+                            <a href="<?php echo h(bookingListUrl($bookingListState, ['page' => $bookingPage + 1])); ?>" class="dc-btn-secondary" style="background:var(--surface); text-decoration:none;">Next</a>
                         <?php else: ?>
                             <div style="width:100px;"></div>
                         <?php endif; ?>

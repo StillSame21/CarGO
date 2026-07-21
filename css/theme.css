@@ -1,0 +1,1011 @@
+/* ===========================================================
+   Admin theme layer — light + dark.
+
+   Loaded last for admin pages so it wins the cascade over
+   template.css / admin.css hardcoded colours. Everything below
+   reads from tokens; change a token, not a component.
+
+   The theme is applied as data-theme="light|dark" on <html>.
+   An inline script in layout_top.php sets it before first paint,
+   so there is no flash of the wrong theme.
+   =========================================================== */
+
+:root {
+    --surface: #ffffff;
+    --surface-2: #f6f8fc;
+    --surface-3: #eef1f7;
+    --ground: #eef1f7;
+
+    --line: #e4e8f1;
+    --line-soft: #edf0f7;
+
+    --ink: #131722;
+    --ink-2: #4d556a;
+    --ink-3: #9097a8;
+
+    --accent: #2f6bff;
+    --accent-ink: #ffffff;
+    --accent-soft: #e6edff;
+
+    --go: #0d7a55;
+    --go-soft: #e0f3ec;
+    --wait: #9a6410;
+    --wait-soft: #fbeed6;
+    --stop: #c23a52;
+    --stop-soft: #fbe6ea;
+
+    --header-bg: rgba(255, 255, 255, 0.82);
+    --shadow-card: 0 1px 2px rgba(18, 22, 31, 0.04), 0 10px 28px -18px rgba(18, 22, 31, 0.28);
+    --shadow-pop: 0 12px 28px rgba(18, 22, 31, 0.14);
+}
+
+:root[data-theme="dark"] {
+    --surface: #161b2a;
+    --surface-2: #1c2233;
+    --surface-3: #212840;
+    --ground: #0e1220;
+
+    --line: #29314a;
+    --line-soft: #222941;
+
+    --ink: #e9ecf4;
+    --ink-2: #b0b8cc;
+    --ink-3: #7b8499;
+
+    --accent: #6d97ff;
+    --accent-ink: #0e1220;
+    --accent-soft: #1e2a4d;
+
+    --go: #4cc79a;
+    --go-soft: #12332a;
+    --wait: #e0a63f;
+    --wait-soft: #382a12;
+    --stop: #f0798f;
+    --stop-soft: #3a1c24;
+
+    --header-bg: rgba(22, 27, 42, 0.86);
+    --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.32), 0 10px 28px -18px rgba(0, 0, 0, 0.8);
+    --shadow-pop: 0 12px 28px rgba(0, 0, 0, 0.55);
+}
+
+/* Follow the OS only when the admin has not chosen explicitly. */
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+        --surface: #161b2a;
+        --surface-2: #1c2233;
+        --surface-3: #212840;
+        --ground: #0e1220;
+
+        --line: #29314a;
+        --line-soft: #222941;
+
+        --ink: #e9ecf4;
+        --ink-2: #b0b8cc;
+        --ink-3: #7b8499;
+
+        --accent: #6d97ff;
+        --accent-ink: #0e1220;
+        --accent-soft: #1e2a4d;
+
+        --go: #4cc79a;
+        --go-soft: #12332a;
+        --wait: #e0a63f;
+        --wait-soft: #382a12;
+        --stop: #f0798f;
+        --stop-soft: #3a1c24;
+
+        --header-bg: rgba(22, 27, 42, 0.86);
+        --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.32), 0 10px 28px -18px rgba(0, 0, 0, 0.8);
+        --shadow-pop: 0 12px 28px rgba(0, 0, 0, 0.55);
+    }
+}
+
+/* ---------- shell ---------- */
+
+body {
+    background: var(--ground);
+    color: var(--ink);
+}
+
+.dc-header {
+    background: var(--header-bg);
+    border-bottom-color: var(--line);
+}
+
+.dc-logo { color: var(--ink); }
+
+.dc-nav a { color: var(--ink-2); }
+.dc-nav a:hover { color: var(--ink); }
+.dc-nav a.active {
+    background: var(--accent-soft);
+    color: var(--accent);
+}
+
+.dc-search {
+    background: var(--surface-2);
+    border-color: var(--line);
+    color: var(--ink-3);
+}
+
+.dc-user-btn {
+    background: var(--surface);
+    border-color: var(--line);
+}
+.dc-user-name { color: var(--ink); }
+.dc-user-role { color: var(--ink-3); }
+.dc-avatar {
+    background: var(--accent-soft);
+    color: var(--accent);
+}
+
+.dc-card,
+.dc-card-hero {
+    background: var(--surface);
+    border-color: var(--line);
+    box-shadow: var(--shadow-card);
+}
+
+.dc-h1, .dc-h2 { color: var(--ink); }
+.dc-p { color: var(--ink-2); }
+.dc-mono-subtitle { color: var(--ink-3); }
+.dc-stat-number { color: var(--ink); }
+.dc-stat-label { color: var(--ink-3); }
+
+.dc-list-item { border-bottom-color: var(--line-soft); }
+
+.dc-input, .dc-select, .dc-textarea {
+    background: var(--surface);
+    border-color: var(--line);
+    color: var(--ink);
+}
+.dc-input::placeholder, .dc-textarea::placeholder { color: var(--ink-3); }
+
+.dc-btn-primary {
+    background: var(--accent);
+    color: var(--accent-ink);
+}
+.dc-btn-secondary {
+    background: var(--surface);
+    border-color: var(--line);
+    color: var(--ink);
+}
+
+.dc-table th {
+    color: var(--ink-3);
+    border-bottom-color: var(--line);
+}
+.dc-table td {
+    color: var(--ink);
+    border-bottom-color: var(--line-soft);
+}
+.dc-table tbody tr:hover { background: var(--surface-2); }
+
+.admin-form-card,
+.cars-list-panel,
+.dashboard-overview-panel,
+.table-wrap {
+    background: var(--surface);
+    border-color: var(--line);
+    color: var(--ink);
+}
+
+/* ---------- status pills ----------
+   admin.css styles .status-pill, customer.css styles
+   .booking-status-pill, and the admin pages used the customer
+   class — which is never loaded for admin. Support both names
+   here so a status is legible wherever it is written. */
+
+.status-pill,
+.booking-status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 650;
+    line-height: 1.6;
+    padding: 3px 10px;
+    border-radius: 100px;
+    white-space: nowrap;
+    background: var(--pill-bg, var(--surface-2));
+    color: var(--pill-fg, var(--ink-2));
+}
+
+.status-pill.status-approved,
+.booking-status-pill.status-approved {
+    --pill-bg: var(--accent-soft);
+    --pill-fg: var(--accent);
+}
+
+.status-pill.status-completed,
+.status-pill.status-paid,
+.status-pill.status-active,
+.status-pill.status-available,
+.booking-status-pill.status-completed,
+.booking-status-pill.status-paid,
+.booking-status-pill.status-active,
+.booking-status-pill.status-available {
+    --pill-bg: var(--go-soft);
+    --pill-fg: var(--go);
+}
+
+.status-pill.status-pending,
+.status-pill.status-ongoing,
+.status-pill.status-maintenance,
+.status-pill.status-late-fees,
+.booking-status-pill.status-pending,
+.booking-status-pill.status-ongoing,
+.booking-status-pill.status-maintenance,
+.booking-status-pill.status-late-fees {
+    --pill-bg: var(--wait-soft);
+    --pill-fg: var(--wait);
+}
+
+.status-pill.status-cancelled,
+.status-pill.status-rejected,
+.status-pill.status-unavailable,
+.status-pill.status-inactive,
+.status-pill.status-blocked,
+.booking-status-pill.status-cancelled,
+.booking-status-pill.status-rejected,
+.booking-status-pill.status-unavailable,
+.booking-status-pill.status-inactive,
+.booking-status-pill.status-blocked {
+    --pill-bg: var(--stop-soft);
+    --pill-fg: var(--stop);
+}
+
+/* ---------- theme toggle ---------- */
+
+.theme-toggle {
+    display: inline-grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    flex: none;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    color: var(--ink-2);
+    cursor: pointer;
+    padding: 0;
+    transition: color .16s ease, border-color .16s ease, background .16s ease;
+}
+
+.theme-toggle:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+}
+
+.theme-toggle:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+.theme-toggle .icon-sun { display: none; }
+.theme-toggle .icon-moon { display: block; }
+:root[data-theme="dark"] .theme-toggle .icon-sun { display: block; }
+:root[data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .theme-toggle .icon-sun { display: block; }
+    :root:not([data-theme="light"]) .theme-toggle .icon-moon { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .theme-toggle { transition: none; }
+}
+
+/* ===========================================================
+   Dashboard overview — work queue first, money second,
+   ledger last.
+   =========================================================== */
+
+.ov-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.ov-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.ov-stamp {
+    font-family: 'IBM Plex Mono', ui-monospace, monospace;
+    font-size: 11.5px;
+    letter-spacing: 0.06em;
+    color: var(--ink-3);
+    text-transform: uppercase;
+}
+
+.ov-section-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.ov-section-head h2 {
+    font-size: 18px;
+    font-weight: 750;
+    letter-spacing: -0.01em;
+    margin: 0;
+    color: var(--ink);
+}
+
+.ov-link {
+    font-size: 12.5px;
+    font-weight: 650;
+    color: var(--accent);
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+}
+.ov-link:hover, .ov-link:focus-visible { border-bottom-color: currentColor; }
+
+/* ---- action rail ---- */
+
+.ov-rail {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.ov-queue {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    text-decoration: none;
+    color: inherit;
+    box-shadow: var(--shadow-card);
+    transition: transform .16s ease, border-color .16s ease;
+}
+
+.ov-queue:hover,
+.ov-queue:focus-visible {
+    transform: translateY(-2px);
+    border-color: var(--tone, var(--accent));
+}
+
+.ov-queue:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+.ov-queue.is-hot  { --tone: var(--stop); }
+.ov-queue.is-due  { --tone: var(--wait); }
+.ov-queue.is-calm { --tone: var(--go); }
+
+.ov-queue-top { display: flex; align-items: center; gap: 8px; }
+
+.ov-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--tone, var(--ink-3));
+    flex: none;
+}
+
+.ov-queue-label {
+    font-family: 'IBM Plex Mono', ui-monospace, monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+}
+
+.ov-queue-n {
+    font-size: 30px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+}
+
+.ov-queue.is-hot .ov-queue-n { color: var(--stop); }
+.ov-queue.is-due .ov-queue-n { color: var(--wait); }
+
+.ov-queue-sub { font-size: 12.5px; color: var(--ink-3); }
+
+/* ---- money band ---- */
+
+.ov-band {
+    display: grid;
+    grid-template-columns: 1.35fr 1fr;
+    gap: 14px;
+}
+
+.ov-money-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 18px;
+    flex-wrap: wrap;
+}
+
+.ov-money {
+    font-size: 36px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+}
+
+.ov-delta {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12.5px;
+    font-weight: 650;
+    padding: 4px 10px;
+    border-radius: 100px;
+    font-variant-numeric: tabular-nums;
+    background: var(--go-soft);
+    color: var(--go);
+}
+.ov-delta.is-down { background: var(--stop-soft); color: var(--stop); }
+.ov-delta.is-flat { background: var(--surface-2); color: var(--ink-3); }
+
+.ov-spark { width: 100%; height: 64px; display: block; margin-top: 16px; }
+
+.ov-split { display: flex; flex-direction: column; gap: 12px; }
+.ov-split-row { display: flex; flex-direction: column; gap: 6px; }
+.ov-split-top { display: flex; justify-content: space-between; font-size: 13px; color: var(--ink); }
+.ov-split-top span:last-child {
+    font-family: 'IBM Plex Mono', ui-monospace, monospace;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-2);
+}
+.ov-meter { height: 7px; border-radius: 100px; background: var(--surface-2); overflow: hidden; }
+.ov-meter i { display: block; height: 100%; border-radius: 100px; background: var(--m, var(--accent)); }
+
+/* ---- fleet ---- */
+
+.ov-fleet-bar {
+    display: flex;
+    height: 34px;
+    border-radius: 9px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    margin-bottom: 14px;
+    background: var(--surface-2);
+}
+
+.ov-fleet-seg {
+    display: grid;
+    place-items: center;
+    font-family: 'IBM Plex Mono', ui-monospace, monospace;
+    font-size: 11px;
+    font-weight: 600;
+    color: #fff;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.ov-legend { display: flex; flex-wrap: wrap; gap: 8px 20px; }
+.ov-leg { display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: var(--ink-2); }
+.ov-leg b { color: var(--ink); font-variant-numeric: tabular-nums; }
+.ov-chip { width: 9px; height: 9px; border-radius: 3px; flex: none; }
+
+.ov-foot { font-size: 12.5px; color: var(--ink-3); margin: 12px 0 0; }
+
+/* ---- ledger ---- */
+
+.ov-tbl-scroll { overflow-x: auto; }
+
+.ov-tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; min-width: 620px; }
+.ov-tbl thead th {
+    text-align: left;
+    font-family: 'IBM Plex Mono', ui-monospace, monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    font-weight: 600;
+    padding: 0 12px 10px;
+    border-bottom: 1px solid var(--line);
+}
+.ov-tbl tbody td {
+    padding: 12px;
+    border-bottom: 1px solid var(--line-soft);
+    vertical-align: middle;
+    color: var(--ink);
+}
+.ov-tbl tbody tr:last-child td { border-bottom: none; }
+
+.ov-id {
+    font-family: 'IBM Plex Mono', ui-monospace, monospace;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+.ov-amt { font-variant-numeric: tabular-nums; font-weight: 650; text-align: right; }
+.ov-sub { font-size: 11.5px; color: var(--ink-3); }
+
+.ov-flag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 650;
+    color: var(--stop);
+    margin-top: 3px;
+}
+
+.ov-empty { font-size: 14px; color: var(--ink-3); margin: 0; }
+
+.ov-pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+
+@media (max-width: 980px) {
+    .ov-rail { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .ov-band { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 560px) {
+    .ov-rail { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ov-queue { transition: none; }
+}
+
+/* ===========================================================
+   admin.css overrides.
+
+   admin.css targets bare th / td / td strong with fixed hex,
+   which left table text dark-on-dark once a dark theme existed.
+   These rules match the same selectors and load afterwards, so
+   they win without touching the original file.
+   =========================================================== */
+
+.empty-admin-panel,
+.admin-management-panel,
+.car-form-card,
+.panel-heading,
+.dashboard-overview-panel {
+    background: var(--surface);
+    color: var(--ink);
+    border-color: var(--line);
+}
+
+th,
+td {
+    border-top-color: var(--line);
+}
+
+th { color: var(--ink-3); }
+td { color: var(--ink); }
+td strong { color: var(--ink); }
+td span { color: var(--ink-3); }
+
+.dc-table th,
+.table-wrap table thead th {
+    background: var(--surface-2);
+    color: var(--ink-3);
+    border-bottom-color: var(--line);
+}
+
+/* Field labels must stay legible on the darker ground. */
+.dc-form label,
+.form-grid label,
+.car-form-card label {
+    color: var(--ink-2);
+}
+
+.empty-table-message,
+.field-note,
+.dashboard-heading-subtitle,
+.panel-heading p {
+    color: var(--ink-3);
+}
+
+.page-heading,
+.page-heading h1,
+.panel-heading h2 {
+    color: var(--ink);
+}
+
+.table-action-link,
+.back-link,
+.cancel-edit-link {
+    color: var(--accent);
+}
+
+.dashboard-status-list li,
+.dashboard-revenue-list li {
+    border-top-color: var(--line);
+    color: var(--ink);
+}
+
+.dashboard-revenue-total { color: var(--ink); }
+
+.role-pill {
+    display: inline-flex;
+    align-items: center;
+    font-size: 11px;
+    font-weight: 650;
+    line-height: 1.6;
+    padding: 3px 10px;
+    border-radius: 100px;
+    white-space: nowrap;
+    background: var(--pill-bg, var(--surface-2));
+    color: var(--pill-fg, var(--ink-2));
+}
+
+/* One colour per role, so a viewer never reads as a super admin.
+   admin.css declared these variants but nothing ever used them. */
+.role-pill.role-super_admin { background: var(--stop-soft);   color: var(--stop); }
+.role-pill.role-manager     { background: var(--accent-soft); color: var(--accent); }
+.role-pill.role-staff       { background: var(--go-soft);     color: var(--go); }
+.role-pill.role-viewer      { background: var(--surface-2);   color: var(--ink-2); }
+
+/* Danger actions stay semantic in both themes. */
+.table-action-link.is-danger,
+.archive-link {
+    color: var(--stop);
+}
+
+/* ===========================================================
+   Legacy token bridge.
+
+   style.css still carries an amber theme from an earlier design
+   (--primary-color: #f9c74f) and generic input/button rules that
+   consume it. Rather than edit every call site, repoint the old
+   names at the current tokens. Anything still asking for
+   --primary-color now gets the accent, in both themes.
+   =========================================================== */
+
+:root,
+:root[data-theme="dark"],
+:root[data-theme="light"] {
+    --primary-color: var(--accent);
+    --primary-color-hover: var(--accent);
+    --primary-color-dark: var(--accent);
+    --primary-bg: var(--accent-soft);
+    --primary-bg-light: var(--accent-soft);
+
+    --secondary-color: var(--accent);
+    --secondary-bg: var(--surface-2);
+
+    --text-color: var(--ink);
+    --text-color-strong: var(--ink);
+    --text-muted: var(--ink-3);
+
+    --border-color: var(--line);
+    --border-color-dark: var(--line);
+
+    --background-color: var(--ground);
+    --background-alt: var(--surface-2);
+    --surface-color: var(--surface);
+
+    --success-color: var(--go);
+    --success-bg: var(--go-soft);
+    --danger-color: var(--stop);
+    --danger-color-strong: var(--stop);
+    --danger-color-hover: var(--stop);
+    --danger-bg: var(--stop-soft);
+}
+
+/* style.css leaves inputs with no background, so they fell back to
+   the UA default white on a dark ground. */
+input,
+select,
+textarea {
+    background: var(--surface);
+    color: var(--ink);
+    border-color: var(--line);
+}
+
+input::placeholder,
+textarea::placeholder { color: var(--ink-3); }
+
+button {
+    background: var(--accent);
+    color: var(--accent-ink);
+}
+
+button:hover { background: var(--accent); filter: brightness(1.08); }
+
+/* Buttons that carry their own component styling keep it. */
+button.dc-btn-secondary,
+button.filter-modal-button {
+    background: var(--surface);
+    color: var(--ink);
+    border: 1px solid var(--line);
+}
+button.dc-btn-secondary:hover,
+button.filter-modal-button:hover { filter: none; background: var(--surface-2); }
+
+/* ===========================================================
+   Global label colour.
+
+   style.css sets `label { color: #253447 }` — a hardcoded navy that
+   made every admin form caption unreadable on the dark ground.
+   theme.css only loads for admin, so customer pages keep theirs.
+   =========================================================== */
+
+label { color: var(--ink-2); }
+
+/* ===========================================================
+   .dc-badge
+
+   Used across five admin pages but defined in no stylesheet — the
+   chips only looked coloured because of inline background/color,
+   with no padding or radius. Same geometry as .status-pill so all
+   three badge names finally agree.
+   =========================================================== */
+
+.dc-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 650;
+    line-height: 1.6;
+    padding: 3px 10px;
+    border-radius: 100px;
+    white-space: nowrap;
+    background: var(--pill-bg, var(--surface-2));
+    color: var(--pill-fg, var(--ink-2));
+}
+
+.dc-badge.status-available,
+.dc-badge.status-active,
+.dc-badge.status-paid,
+.dc-badge.status-completed { --pill-bg: var(--go-soft);   --pill-fg: var(--go); }
+
+.dc-badge.status-maintenance,
+.dc-badge.status-pending,
+.dc-badge.status-ongoing { --pill-bg: var(--wait-soft); --pill-fg: var(--wait); }
+
+.dc-badge.status-unavailable,
+.dc-badge.status-cancelled,
+.dc-badge.status-rejected,
+.dc-badge.status-blocked { --pill-bg: var(--stop-soft); --pill-fg: var(--stop); }
+
+.dc-badge.status-approved { --pill-bg: var(--accent-soft); --pill-fg: var(--accent); }
+
+/* ===========================================================
+   Manage cars
+   =========================================================== */
+
+.adm-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-bottom: 22px;
+}
+
+.adm-add-btn {
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    white-space: nowrap;
+}
+
+.adm-list-card { overflow: hidden; }
+.adm-filter-wrap { border-bottom: 1px solid var(--line); }
+
+.adm-empty { padding: 56px 24px; text-align: center; }
+.adm-link { color: var(--accent); font-weight: 650; }
+
+.adm-tbl-scroll { overflow-x: auto; }
+
+.adm-tbl {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13.5px;
+    min-width: 720px;
+}
+
+.adm-tbl thead th {
+    text-align: left;
+    font-family: 'IBM Plex Mono', ui-monospace, monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    font-weight: 600;
+    background: var(--surface-2);
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--line);
+}
+
+.adm-tbl tbody td {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--line-soft);
+    vertical-align: middle;
+    color: var(--ink);
+}
+
+.adm-tbl tbody tr:last-child td { border-bottom: none; }
+.adm-tbl tbody tr:hover { background: var(--surface-2); }
+
+.mc-vehicle { display: flex; align-items: center; gap: 14px; min-width: 0; }
+
+.mc-thumb {
+    width: 64px;
+    height: 44px;
+    object-fit: cover;
+    border-radius: 7px;
+    border: 1px solid var(--line);
+    flex: none;
+    background: var(--surface-2);
+}
+
+.mc-vehicle-name { display: block; font-weight: 700; color: var(--ink); }
+.mc-vehicle-spec { font-size: 12px; color: var(--ink-3); margin-top: 2px; }
+.mc-plate {
+    font-family: 'IBM Plex Mono', ui-monospace, monospace;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+.adm-muted { color: var(--ink-2); }
+.mc-rate { text-align: right; font-weight: 650; font-variant-numeric: tabular-nums; }
+
+.adm-actions { display: flex; align-items: center; gap: 14px; justify-content: flex-end; }
+
+.adm-action {
+    background: none;
+    border: none;
+    padding: 0;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 650;
+    color: var(--accent);
+    cursor: pointer;
+    text-decoration: none;
+}
+.adm-action:hover { text-decoration: underline; }
+.adm-action.is-danger { color: var(--stop); }
+
+.adm-pager {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 18px 20px;
+    border-top: 1px solid var(--line);
+}
+
+/* ---- slide-over panel ---- */
+
+.adm-panel-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 80;
+    display: none;
+}
+.adm-panel-backdrop.is-open { display: block; }
+
+.adm-panel-dismiss {
+    position: absolute;
+    inset: 0;
+    background: rgba(10, 13, 20, 0.5);
+    backdrop-filter: blur(3px);
+    display: block;
+}
+
+.adm-panel {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: min(480px, 100%);
+    background: var(--surface);
+    border-left: 1px solid var(--line);
+    box-shadow: var(--shadow-pop);
+    display: flex;
+    flex-direction: column;
+    animation: adm-slide-in .22s ease;
+}
+
+@keyframes adm-slide-in {
+    from { transform: translateX(24px); opacity: .6; }
+    to   { transform: translateX(0);    opacity: 1; }
+}
+
+.adm-panel-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 22px 24px;
+    border-bottom: 1px solid var(--line);
+    flex: none;
+}
+
+.adm-panel-close {
+    font-size: 26px;
+    line-height: 1;
+    color: var(--ink-3);
+    text-decoration: none;
+    padding: 0 4px;
+}
+.adm-panel-close:hover { color: var(--ink); }
+
+.adm-panel-body { padding: 24px; overflow-y: auto; flex: 1; }
+
+.adm-field-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+.adm-field-stack { display: flex; flex-direction: column; gap: 16px; margin-bottom: 24px; }
+
+.adm-field { display: block; }
+
+.adm-field-label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+}
+
+.adm-panel-actions { display: flex; flex-direction: column; gap: 12px; }
+
+.adm-panel-cancel {
+    color: var(--ink-2);
+    font-weight: 600;
+    font-size: 14px;
+    text-decoration: none;
+    text-align: center;
+}
+.adm-panel-cancel:hover { color: var(--ink); }
+
+@media (max-width: 640px) {
+    .adm-field-row { grid-template-columns: 1fr; }
+    .adm-panel { width: 100%; border-left: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .adm-panel { animation: none; }
+}
+
+
+/* ---- admin management extras ---- */
+
+.adm-id {
+    font-family: 'IBM Plex Mono', ui-monospace, monospace;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-2);
+}
+
+.adm-you {
+    display: inline-block;
+    margin-left: 6px;
+    font-size: 10px;
+    font-weight: 650;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 1px 7px;
+    border-radius: 100px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    vertical-align: middle;
+}
+
+.adm-action.is-go { color: var(--go); }
+
+.adm-action:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    text-decoration: none;
+}
+.adm-action:disabled:hover { text-decoration: none; }

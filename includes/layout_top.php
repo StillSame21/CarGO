@@ -14,6 +14,20 @@ $cssPrefix = ($isAdmin || $isCustomer) ? '../' : './';
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <?php if ($isAdmin) : ?>
+        <script>
+            // Apply the saved theme before first paint so the page never
+            // flashes the wrong one. No stored choice means follow the OS.
+            (function () {
+                try {
+                    var saved = localStorage.getItem('cargo-theme');
+                    if (saved === 'light' || saved === 'dark') {
+                        document.documentElement.setAttribute('data-theme', saved);
+                    }
+                } catch (e) {}
+            })();
+        </script>
+    <?php endif; ?>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo htmlspecialchars($pageTitle, ENT_QUOTES, 'UTF-8'); ?></title>
@@ -25,8 +39,9 @@ $cssPrefix = ($isAdmin || $isCustomer) ? '../' : './';
     <link rel="stylesheet" href="<?php echo $cssPrefix; ?>css/template.css?v=3">
     <?php if ($isAdmin) : ?>
         <link rel="stylesheet" href="<?php echo $cssPrefix; ?>css/admin.css?v=3">
+        <link rel="stylesheet" href="<?php echo $cssPrefix; ?>css/theme.css?v=7">
     <?php elseif ($isCustomer) : ?>
-        <link rel="stylesheet" href="<?php echo $cssPrefix; ?>css/customer.css?v=4">
+        <link rel="stylesheet" href="<?php echo $cssPrefix; ?>css/customer.css?v=6">
     <?php endif; ?>
 </head>
 <body>

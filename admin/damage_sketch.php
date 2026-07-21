@@ -59,21 +59,21 @@ include 'header.php';
     </header>
 
     <?php if ($message): ?>
-        <p class="message success" style="color: #0b7a5a; background: #e6f6f1; padding: 12px; border-radius: 8px; font-weight: 600; margin-bottom:24px;"><?= htmlspecialchars($message) ?></p>
+        <p class="message success" style="color: var(--go); background: var(--go-soft); padding: 12px; border-radius: 8px; font-weight: 600; margin-bottom:24px;"><?= htmlspecialchars($message) ?></p>
     <?php endif; ?>
     <?php if ($error): ?>
-        <p class="message error" style="color: #c23a52; background: #fbeaed; padding: 12px; border-radius: 8px; font-weight: 600; margin-bottom:24px;"><?= htmlspecialchars($error) ?></p>
+        <p class="message error" style="color: var(--stop); background: var(--stop-soft); padding: 12px; border-radius: 8px; font-weight: 600; margin-bottom:24px;"><?= htmlspecialchars($error) ?></p>
     <?php endif; ?>
 
     <div class="dc-card" style="max-width: 600px;">
-        <div style="padding:24px; border-bottom:1px solid #e4e8f1;">
+        <div style="padding:24px; border-bottom:1px solid var(--line);">
             <h2 class="dc-h2" style="font-size:20px;">Report New Damage</h2>
         </div>
         
         <form method="POST" style="padding:24px; display:flex; flex-direction:column; gap:20px;">
             <?php echo csrfInput(); ?>
             <div class="form-group">
-                <label for="car_id" style="display:block; margin-bottom:8px; font-size:13px; font-weight:600; color:#131722;">Select Car</label>
+                <label for="car_id" style="display:block; margin-bottom:8px; font-size:13px; font-weight:600; color:var(--ink);">Select Car</label>
                 <select name="car_id" id="car_id" required class="dc-input" style="width:100%;">
                     <option value="">-- Select a Car --</option>
                     <?php foreach ($cars as $car): ?>
@@ -83,7 +83,7 @@ include 'header.php';
             </div>
             
             <div class="form-group">
-                <label for="description" style="display:block; margin-bottom:8px; font-size:13px; font-weight:600; color:#131722;">Damage Description / "Sketch"</label>
+                <label for="description" style="display:block; margin-bottom:8px; font-size:13px; font-weight:600; color:var(--ink);">Damage Description / "Sketch"</label>
                 <textarea name="description" id="description" rows="5" required class="dc-input" style="width:100%; min-height:100px; resize:vertical;" placeholder="Describe the damage..."></textarea>
             </div>
             
