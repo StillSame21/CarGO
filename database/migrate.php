@@ -22,7 +22,9 @@ try {
         'ensure_cancelled_booking_status.sql',
         'ensure_completed_booking_status.sql',
         'addons.sql',
-        'maintenance.sql'
+        'maintenance.sql',
+        'ensure_payment_methods.sql',
+        'ensure_booking_addons.sql'
     ];
 
     foreach ($migrations as $migration) {

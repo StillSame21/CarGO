@@ -16,6 +16,9 @@ $customerName = $_SESSION['customer_name'] ?? $_SESSION['user_email'] ?? 'Custom
 $firstName = trim(explode(' ', (string) $customerName)[0]);
 $firstName = $firstName !== '' ? $firstName : 'there';
 
+$currentHour = (int) date('G');
+$greeting = $currentHour < 12 ? 'Good morning' : ($currentHour < 18 ? 'Good afternoon' : 'Good evening');
+
 $availableCars = [];
 $dashboardError = '';
 $availableCarCount = 0;
@@ -134,7 +137,7 @@ $pendingCount = $bookingCounts['pending'];
     <section class="dc-card-hero">
         <div>
             <div class="dc-mono-subtitle">Customer Dashboard</div>
-            <h1 class="dc-h1">Good morning, <?php echo h($firstName); ?>.</h1>
+            <h1 class="dc-h1"><?php echo h($greeting); ?>, <?php echo h($firstName); ?>.</h1>
             <p class="dc-p">Review your trips, continue payments, and find your next rental — all from one calm workspace.</p>
             <div class="dc-btn-group">
                 <a href="browse_cars.php" class="dc-btn-primary">Browse Cars</a>

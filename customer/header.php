@@ -15,16 +15,15 @@ $isProfilePage = $currentPage === 'profile.php';
             <a href="dashboard.php" class="<?php echo $currentPage === 'dashboard.php' ? 'active' : ''; ?>">Dashboard</a>
             <a href="browse_cars.php" class="<?php echo in_array($currentPage, ['browse_cars.php', 'car_detail.php'], true) ? 'active' : ''; ?>">Browse Cars</a>
             <a href="my_bookings.php" class="<?php echo in_array($currentPage, ['my_bookings.php', 'booking.php'], true) ? 'active' : ''; ?>">My Bookings</a>
-            <a href="#">Support</a>
+            <a href="my_payments.php" class="<?php echo $currentPage === 'my_payments.php' ? 'active' : ''; ?>">Payments</a>
         </nav>
 
         <div class="dc-header-actions">
-            <!-- Search bar placeholder -->
-            <div class="dc-search">
+            <a href="browse_cars.php" class="dc-search" style="text-decoration:none; color:inherit;">
                 <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="5" fill="none" stroke="#9097a8" stroke-width="1.6"></circle><line x1="10.8" y1="10.8" x2="14.5" y2="14.5" stroke="#9097a8" stroke-width="1.6" stroke-linecap="round"></line></svg>
-                Search cars, bookings
-            </div>
-            
+                Search cars
+            </a>
+
             <!-- User Menu -->
             <div style="position: relative;" class="dashboard-account">
                 <button type="button" class="dc-user-btn" onclick="document.getElementById('customerDropdown').classList.toggle('show')">

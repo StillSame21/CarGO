@@ -1,21 +1,35 @@
 <?php
 
-const PAYMENT_METHODS = ['Cash', 'Bank Transfer', 'Online Payment'];
+const PAYMENT_METHODS = [
+    'Cash',
+    'Bank Transfer',
+    'Online Payment',
+    'Credit Card',
+    'Debit Card',
+    'Online Banking',
+    'E-Wallet',
+];
+
+// Methods settled through the payment gateway rather than handled at the counter.
+const PAYMENT_GATEWAY_METHODS = [
+    'Online Payment',
+    'Credit Card',
+    'Debit Card',
+    'Online Banking',
+    'E-Wallet',
+];
+
 const PAYMENT_STATUS_UNPAID = 'unpaid';
 const PAYMENT_STATUS_PAID = 'paid';
-const PAYMENT_DISPLAY_TAX_RATE = 0.08;
 
 function buildPaymentBreakdown(float $rentalSubtotal, float $lateFeeTotal): array
 {
     $rentalSubtotal = round(max(0, $rentalSubtotal), 2);
     $lateFeeTotal = round(max(0, $lateFeeTotal), 2);
-    $displayTaxAmount = round($rentalSubtotal * PAYMENT_DISPLAY_TAX_RATE, 2);
 
     return [
         'rental_subtotal' => $rentalSubtotal,
         'late_fee_total' => $lateFeeTotal,
-        'display_tax_rate' => PAYMENT_DISPLAY_TAX_RATE,
-        'display_tax_amount' => $displayTaxAmount,
         'payable_total' => round($rentalSubtotal + $lateFeeTotal, 2),
     ];
 }
@@ -53,7 +67,7 @@ function markBookingPaymentPaid(mysqli $conn, int $bookingId, float $amount, str
         throw new InvalidArgumentException('Please choose a valid payment method.');
     }
 
-    if ($paymentMethod === 'Online Payment') {
+    if (in_array($paymentMethod, PAYMENT_GATEWAY_METHODS, true)) {
         require_once __DIR__ . '/../includes/stripe_stub.php';
         $stripe = new StripeClientStub();
         $charge = $stripe->createCharge($amount, 'usd', 'tok_visa', "Payment for booking $bookingId");
