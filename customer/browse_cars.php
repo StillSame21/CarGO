@@ -150,8 +150,9 @@ include 'header.php';
             <?php endforeach; ?>
             </section>
         </form>
-        <div id="compare-bar" style="display: none; position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: #131722; color:#fff; padding: 12px 24px; border-radius: 999px; box-shadow: 0 14px 30px rgba(19, 23, 34, 0.3); z-index: 1000; align-items: center; gap: 20px;">
+        <div id="compare-bar" style="display: none; position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: #131722; color:#fff; padding: 12px 24px; border-radius: 999px; box-shadow: 0 14px 30px rgba(19, 23, 34, 0.3); z-index: 1000; align-items: center; gap: 16px;">
             <span id="compare-count" style="font-weight: 600; font-size:14px;">0 cars selected</span>
+            <button type="button" id="clear-selection" class="compare-clear">Clear</button>
             <button type="submit" form="compare-form" class="dc-btn-primary" id="compare-btn" style="padding: 10px 20px; box-shadow:none;">Compare</button>
         </div>
         
@@ -166,34 +167,50 @@ include 'header.php';
         const compareBar = document.getElementById('compare-bar');
         const compareCount = document.getElementById('compare-count');
         const compareBtn = document.getElementById('compare-btn');
+        const clearBtn = document.getElementById('clear-selection');
 
-        checkboxes.forEach(cb => {
-            cb.addEventListener('change', () => {
-                const selected = document.querySelectorAll('.compare-checkbox:checked');
-                if (selected.length > 0) {
-                    compareBar.style.display = 'flex';
-                    compareCount.textContent = selected.length + ' cars selected';
-                    
-                    if (selected.length > 4) {
-                        compareBtn.disabled = true;
-                        compareCount.textContent += ' (Max 4)';
-                        compareCount.style.color = '#ff6b6b';
-                        compareBtn.style.opacity = '0.5';
-                    } else if (selected.length < 2) {
-                        compareBtn.disabled = true;
-                        compareCount.textContent += ' (Need at least 2)';
-                        compareCount.style.color = '#fff';
-                        compareBtn.style.opacity = '0.5';
-                    } else {
-                        compareBtn.disabled = false;
-                        compareCount.style.color = '#fff';
-                        compareBtn.style.opacity = '1';
-                    }
-                } else {
-                    compareBar.style.display = 'none';
-                }
+        function refreshCompareBar() {
+            const selected = document.querySelectorAll('.compare-checkbox:checked');
+
+            if (selected.length === 0) {
+                compareBar.style.display = 'none';
+                return;
+            }
+
+            compareBar.style.display = 'flex';
+            compareCount.textContent = selected.length + (selected.length === 1 ? ' car selected' : ' cars selected');
+
+            if (selected.length > 4) {
+                compareBtn.disabled = true;
+                compareCount.textContent += ' (Max 4)';
+                compareCount.style.color = '#ff6b6b';
+                compareBtn.style.opacity = '0.5';
+            } else if (selected.length < 2) {
+                compareBtn.disabled = true;
+                compareCount.textContent += ' (Need at least 2)';
+                compareCount.style.color = '#fff';
+                compareBtn.style.opacity = '0.5';
+            } else {
+                compareBtn.disabled = false;
+                compareCount.style.color = '#fff';
+                compareBtn.style.opacity = '1';
+            }
+        }
+
+        checkboxes.forEach(cb => cb.addEventListener('change', refreshCompareBar));
+
+        if (clearBtn) {
+            clearBtn.addEventListener('click', () => {
+                // Every box, not just the visible ones — a car hidden by an
+                // active filter stays selected and would still be compared.
+                checkboxes.forEach(cb => {
+                    cb.checked = false;
+                });
+                refreshCompareBar();
             });
-        });
+        }
+
+        refreshCompareBar();
     });
 </script>
 <?php include '../includes/layout_bottom.php'; ?>

@@ -22,7 +22,9 @@ if (count($ids) < 2) {
     try {
         $conn = getDbConnection();
         $placeholders = implode(',', array_fill(0, count($ids), '?'));
-        $stmt = $conn->prepare("SELECT * FROM cars WHERE id IN ($placeholders) AND status = 'available'");
+        // Same availability rule as browse_cars.php, so a car can never be
+        // comparable but unlistable.
+        $stmt = $conn->prepare("SELECT * FROM cars WHERE id IN ($placeholders) AND status = 'available' AND archived_at IS NULL");
         
         $types = str_repeat('i', count($ids));
         $stmt->bind_param($types, ...$ids);
@@ -64,57 +66,6 @@ include 'header.php';
     <?php if ($error !== ''): ?>
         <p class="message error" style="color: #c23a52; background: #fbeaed; padding: 12px; border-radius: 8px; font-weight: 600; margin-bottom:24px;"><?php echo htmlspecialchars($error); ?></p>
     <?php else: ?>
-        <style>
-            .compare-table {
-                width: 100%;
-                border-collapse: collapse;
-                background: #fff;
-                border-radius: 12px;
-                overflow: hidden;
-                box-shadow: 0 4px 20px rgba(10, 13, 20, 0.05);
-            }
-            .compare-table th, .compare-table td {
-                padding: 20px;
-                text-align: center;
-                border-bottom: 1px solid #e4e8f1;
-                border-right: 1px solid #e4e8f1;
-            }
-            .compare-table th:last-child, .compare-table td:last-child {
-                border-right: none;
-            }
-            .compare-table tbody tr:last-child td {
-                border-bottom: none;
-            }
-            .compare-table th {
-                background: #f9fafc;
-                font-weight: 700;
-                color: #5b6273;
-                text-transform: uppercase;
-                font-size: 13px;
-                letter-spacing: 0.5px;
-            }
-            .compare-table td {
-                color: #131722;
-                font-size: 15px;
-                font-weight: 500;
-            }
-            .compare-car-img {
-                width: 100%;
-                height: 160px;
-                object-fit: cover;
-                border-radius: 8px;
-                margin-bottom: 16px;
-            }
-            .compare-table td.feature-col {
-                text-align: left;
-                font-weight: 700;
-                background: #f1f3f9;
-                color: #5b6273;
-                width: 180px;
-                border-right: 1px solid #e4e8f1;
-            }
-        </style>
-        
         <div style="overflow-x: auto; padding-bottom: 24px;">
             <table class="compare-table">
                 <thead>
@@ -122,7 +73,9 @@ include 'header.php';
                         <th style="background: #f1f3f9; border-right: 1px solid #e4e8f1;">Feature</th>
                         <?php foreach ($cars as $car): ?>
                             <th style="background: #fff; vertical-align: top;">
-                                <img src="<?php echo htmlspecialchars(carImageUrl($car['image'], 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=700&q=80')); ?>" class="compare-car-img" alt="<?php echo htmlspecialchars($car['brand']); ?>">
+                                <div class="compare-car-media">
+                                    <img src="<?php echo htmlspecialchars(carImageUrl($car['image'], 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=700&q=80')); ?>" alt="<?php echo htmlspecialchars($car['brand'] . ' ' . $car['model']); ?>">
+                                </div>
                                 <div style="font-size: 20px; color: #131722; font-weight: 800; margin-bottom: 16px; line-height: 1.2; text-transform:none; letter-spacing:normal;"><?php echo htmlspecialchars($car['brand'] . ' ' . $car['model']); ?></div>
                                 <a href="car_detail.php?id=<?php echo $car['id']; ?>" class="dc-btn-primary" style="justify-content:center; padding:10px; text-decoration:none;">View Details</a>
                             </th>
