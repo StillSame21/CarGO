@@ -1,0 +1,153 @@
+/* Shared login/auth page styles. Colourway set by body theme class. */
+
+body.auth-page {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 24px;
+    background-attachment: fixed;
+}
+
+/* --- Colourways --- */
+
+body.auth-customer {
+    background: #eef1fa;
+    background-image:
+        radial-gradient(60rem 40rem at 12% 18%, rgba(47,107,255,0.28), transparent 60%),
+        radial-gradient(50rem 36rem at 88% 12%, rgba(139,92,246,0.24), transparent 62%),
+        radial-gradient(46rem 34rem at 78% 92%, rgba(34,211,238,0.20), transparent 60%),
+        linear-gradient(160deg, #f4f6fd 0%, #e7ecfb 55%, #eae6fb 100%);
+}
+
+body.auth-admin {
+    background: #0f1524;
+    background-image:
+        radial-gradient(58rem 40rem at 15% 15%, rgba(47,107,255,0.30), transparent 62%),
+        radial-gradient(48rem 34rem at 85% 20%, rgba(20,184,166,0.22), transparent 60%),
+        radial-gradient(52rem 38rem at 70% 95%, rgba(99,102,241,0.24), transparent 62%),
+        linear-gradient(160deg, #131a2b 0%, #0f1524 60%, #131722 100%);
+}
+
+/* --- Card --- */
+
+.login-wrapper {
+    display: flex;
+    width: 100%;
+    max-width: 960px;
+    min-height: 560px;
+    background: #fff;
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 24px 60px -20px rgba(19,23,34,0.35);
+}
+
+.login-brand {
+    flex: 1 1 50%;
+    padding: 48px;
+    background: #131722;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+}
+
+.login-brand::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: url('https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?auto=format&fit=crop&w=1000&q=80') center/cover;
+    opacity: 0.2;
+}
+
+.login-brand > * { position: relative; z-index: 1; }
+.login-brand-logo { font-size: 24px; font-weight: 800; margin-bottom: auto; color: var(--accent); }
+.login-brand-copy { margin-top: 40px; }
+.login-brand h1 { font-size: 34px; margin-bottom: 16px; font-weight: 700; line-height: 1.2; letter-spacing: -0.02em; }
+.login-brand p { font-size: 16px; color: rgba(255,255,255,0.7); line-height: 1.5; }
+
+/* --- Form panel --- */
+
+.login-form-wrap {
+    flex: 1 1 50%;
+    padding: 56px 48px;
+    display: flex;
+    flex-direction: column;
+}
+
+.login-form-wrap h2 { font-size: 28px; margin-bottom: 8px; font-weight: 700; letter-spacing: -0.01em; color: #131722; }
+.login-form-wrap > p { color: #5b6273; margin-bottom: 32px; font-size: 15px; }
+
+.form-group { margin-bottom: 20px; }
+.form-group label { display: block; margin-bottom: 8px; font-size: 13px; font-weight: 600; color: #131722; }
+
+.dc-input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid #e4e8f1;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 14px;
+    background: #fff;
+    color: #131722;
+    transition: all 0.2s ease;
+}
+
+.dc-input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 15%, transparent);
+}
+
+.dc-btn-primary {
+    width: 100%;
+    justify-content: center;
+    padding: 14px 24px;
+    font-size: 15px;
+    border-radius: 8px;
+    background: var(--accent);
+    color: #fff;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-top: 8px;
+}
+
+.dc-btn-primary:hover {
+    background: var(--accent-hover, color-mix(in srgb, var(--accent) 85%, #000));
+    transform: translateY(-1px);
+}
+
+.message.error {
+    color: #c23a52;
+    background: #fbeaed;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 24px;
+}
+
+/* Pinned to bottom so both pages align despite differing link counts. */
+.auth-links {
+    margin-top: auto;
+    padding-top: 32px;
+    font-size: 14px;
+    color: #5b6273;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.auth-links p { margin: 0; }
+.auth-links a { color: var(--accent); font-weight: 600; text-decoration: none; }
+.auth-links a:hover { text-decoration: underline; }
+
+@media (max-width: 768px) {
+    .login-wrapper { flex-direction: column; min-height: 0; }
+    .login-brand { padding: 40px 24px; }
+    .login-form-wrap { padding: 40px 24px; }
+}
