@@ -48,7 +48,7 @@ function carTypeValues(mysqli $conn): array
     preg_match_all("/'((?:[^'\\\\]|\\\\.)*)'/", $matches[1], $enumMatches);
     $types = array_map(
         static fn($value) => stripcslashes($value),
-        $enumMatches[1] 
+        $enumMatches[1]
     );
 
     return $types ?: CAR_TYPE_FALLBACK;
