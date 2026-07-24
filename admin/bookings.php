@@ -396,7 +396,7 @@ include 'header.php';
         <?php $displayStatus = bookingDisplayStatus((string) $booking['booking_status'], $booking['payment_status'] ?? null, (float) $booking['total_late_fee']); ?>
         <?php $isPaid = ($booking['payment_status'] ?? '') === PAYMENT_STATUS_PAID; ?>
         <?php $paymentBreakdown = buildPaymentBreakdown((float) $booking['total_amount'], (float) $booking['total_late_fee']); ?>
-        <?php $amountDue = calculatePaymentAmountDue($paymentBreakdown['payable_total'], $booking['payment_status'] ?? null, isset($booking['payment_amount']) ? (float) $booking['payment_amount'] : null); ?>
+        <?php $amountDue = calculatePaymentAmountDue($booking['payment_status'] ?? null, isset($booking['payment_amount']) ? (float) $booking['payment_amount'] : null); ?>
 
         <div style="margin-bottom: 24px;">
             <a href="<?php echo h(bookingListUrl($bookingListState)); ?>" style="color:var(--accent); font-weight:600; text-decoration:none; font-size:14px; display:inline-flex; align-items:center; gap:6px;">
