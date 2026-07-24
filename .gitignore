@@ -4,6 +4,7 @@ vendor/
 # Environment variables
 .env
 .env.local
+config.local.php
 
 # Testing cache
 .phpunit.cache

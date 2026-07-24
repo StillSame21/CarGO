@@ -67,7 +67,7 @@ CREATE TABLE `bookings` (
   `booking_status` enum('pending','approved','rejected','ongoing','completed','cancelled') NOT NULL DEFAULT 'pending',
   `admin_note` text DEFAULT NULL,
   `created_at` datetime DEFAULT current_timestamp()
-) ;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `bookings`
@@ -98,7 +98,7 @@ CREATE TABLE `cars` (
   `status` enum('available','unavailable','maintenance') NOT NULL DEFAULT 'available',
   `created_at` datetime DEFAULT current_timestamp(),
   `archived_at` datetime DEFAULT NULL
-) ;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `cars`
@@ -145,7 +145,7 @@ CREATE TABLE `late_fees` (
   `late_days` int(11) NOT NULL,
   `late_fee_amount` decimal(10,2) NOT NULL,
   `created_at` datetime DEFAULT current_timestamp()
-) ;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `late_fees`
@@ -169,7 +169,7 @@ CREATE TABLE `payments` (
   `payment_status` enum('unpaid','paid','refunded') NOT NULL DEFAULT 'unpaid',
   `payment_date` datetime DEFAULT NULL,
   `created_at` datetime DEFAULT current_timestamp()
-) ;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `payments`

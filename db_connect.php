@@ -10,11 +10,17 @@ if (!function_exists('getDbConnection')) {
             return $conn;
         }
 
-        $host = $_ENV['DB_HOST'] ?? '127.0.0.1';
-        $username = $_ENV['DB_USER'] ?? 'root';
-        $password = $_ENV['DB_PASS'] ?? '';
-        $database = $_ENV['DB_NAME'] ?? 'cargo_rental';
-        $port = (int)($_ENV['DB_PORT'] ?? 3306);
+        $cfg = [];
+        $cfgPath = __DIR__ . '/config.local.php';
+        if (is_file($cfgPath)) {
+            $cfg = require $cfgPath;
+        }
+
+        $host = $cfg['DB_HOST'] ?? $_ENV['DB_HOST'] ?? '127.0.0.1';
+        $username = $cfg['DB_USER'] ?? $_ENV['DB_USER'] ?? 'root';
+        $password = $cfg['DB_PASS'] ?? $_ENV['DB_PASS'] ?? '';
+        $database = $cfg['DB_NAME'] ?? $_ENV['DB_NAME'] ?? 'cargo_rental';
+        $port = (int)($cfg['DB_PORT'] ?? $_ENV['DB_PORT'] ?? 3306);
 
         mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 

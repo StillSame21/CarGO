@@ -1,0 +1,9 @@
+php_value display_errors Off
+php_value mbstring.http_input auto
+php_value date.timezone Asia/Kuala_Lumpur
+
+DirectoryIndex index.php
+
+RewriteEngine On
+RewriteCond %{HTTPS} off
+RewriteRule ^(.*)$ https://%{HTTP_HOST}/$1 [R=301,L]
