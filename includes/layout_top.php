@@ -41,7 +41,7 @@ $cssPrefix = ($isAdmin || $isCustomer) ? '../' : './';
         <link rel="stylesheet" href="<?php echo $cssPrefix; ?>css/admin.css?v=3">
         <link rel="stylesheet" href="<?php echo $cssPrefix; ?>css/theme.css?v=7">
     <?php elseif ($isCustomer) : ?>
-        <link rel="stylesheet" href="<?php echo $cssPrefix; ?>css/customer.css?v=8">
+        <link rel="stylesheet" href="<?php echo $cssPrefix; ?>css/customer.css?v=9">
     <?php endif; ?>
 </head>
 <body class="<?php echo $isCustomer ? 'is-customer' : ($isAdmin ? 'is-admin' : ''); ?>">

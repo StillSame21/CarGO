@@ -1750,3 +1750,36 @@ body.modal-open {
         bottom: 80px;
     }
 }
+
+/* car_detail.php — inline booking panel (dates → add-ons → payment) */
+.booking-panel {
+    display: none;
+}
+
+.booking-panel.is-open {
+    display: block;
+    animation: booking-panel-reveal 0.2s ease;
+}
+
+@keyframes booking-panel-reveal {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.checkout-date-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+@media (max-width: 768px) {
+    .checkout-date-grid {
+        grid-template-columns: 1fr;
+    }
+}
