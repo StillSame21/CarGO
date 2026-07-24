@@ -34,15 +34,22 @@ function buildPaymentBreakdown(float $rentalSubtotal, float $lateFeeTotal): arra
     ];
 }
 
-function calculatePaymentAmountDue(float $payableTotal, ?string $paymentStatus, ?float $paidAmount): float
+/**
+ * What's currently owed on this booking.
+ *
+ * markBookingPaymentPaid() / markBookingPaymentUnpaid() always write
+ * payments.amount as exactly what was outstanding at that moment (e.g. a late
+ * return only sets it to the late fee, not the whole rental again), so the
+ * stored amount is the source of truth here — it is never recomputed from a
+ * fresh rental+fee total, which would resurrect charges already settled.
+ */
+function calculatePaymentAmountDue(?string $paymentStatus, ?float $paidAmount): float
 {
-    $payableTotal = round(max(0, $payableTotal), 2);
-
     if ($paymentStatus === PAYMENT_STATUS_PAID) {
-        return round(max(0, $payableTotal - max(0, (float) $paidAmount)), 2);
+        return 0.0;
     }
 
-    return $payableTotal;
+    return round(max(0, (float) $paidAmount), 2);
 }
 
 function loadPaymentByBookingId(mysqli $conn, int $bookingId): ?array
