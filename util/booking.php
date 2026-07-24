@@ -134,10 +134,21 @@ function createBookingWithPayment(
         try {
             $stmt = $conn->prepare(
                 'INSERT INTO bookings
-                    (customer_id, car_id, pickup_date, return_date, pickup_location, total_days, total_amount, booking_status)
+                    (customer_id, car_id, pickup_date, return_date, pickup_location,
+                     total_days, total_amount, booking_status)
                  VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
             );
-            $stmt->bind_param('iisssids', $customerId, $carId, $pickupDate, $returnDate, $pickupLocation, $totalDays, $totalAmount, $status);
+            $stmt->bind_param(
+                'iisssids',
+                $customerId,
+                $carId,
+                $pickupDate,
+                $returnDate,
+                $pickupLocation,
+                $totalDays,
+                $totalAmount,
+                $status
+            );
             $stmt->execute();
             $newBookingId = $stmt->insert_id;
 
