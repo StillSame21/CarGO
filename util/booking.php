@@ -80,6 +80,82 @@ function carHasBookingConflict(mysqli $conn, int $carId, string $pickupDate, str
     return (int) ($result['conflict_count'] ?? 0) > 0;
 }
 
+/**
+ * Create an auto-approved, auto-paid booking with its add-ons in one transaction.
+ *
+ * Callers must already have validated dates and unpaid late fees before calling
+ * this. The booking-conflict check IS re-run in here (see below) — a caller's
+ * earlier check is only a fast-fail UX hint, not the real guard.
+ *
+ * @param array $car             Row with at least `id` and `daily_rate`.
+ * @param array $selectedAddons  Rows from filterSelectedAddons() — never raw
+ *                                submitted ids/prices.
+ * @return int The new booking id.
+ */
+function createBookingWithPayment(
+    mysqli $conn,
+    int $customerId,
+    array $car,
+    string $pickupDate,
+    string $returnDate,
+    array $selectedAddons,
+    string $paymentMethod
+): int {
+    $carId = (int) $car['id'];
+
+    // carHasBookingConflict() is a plain SELECT with no row lock, and there is no
+    // DB constraint preventing overlapping bookings for the same car — so two
+    // concurrent checkouts could both pass a conflict check before either commits.
+    // A MySQL advisory lock keyed on the car id serializes check-then-insert across
+    // requests without needing a schema change.
+    $lockName = 'cargo_booking_car_' . $carId;
+    $lockStmt = $conn->prepare('SELECT GET_LOCK(?, 5) AS acquired');
+    $lockStmt->bind_param('s', $lockName);
+    $lockStmt->execute();
+    $acquired = (int) ($lockStmt->get_result()->fetch_assoc()['acquired'] ?? 0);
+
+    if ($acquired !== 1) {
+        throw new RuntimeException('This car is busy being booked by someone else. Please try again.');
+    }
+
+    try {
+        if (carHasBookingConflict($conn, $carId, $pickupDate, $returnDate)) {
+            throw new InvalidArgumentException('This car is already booked for the selected dates.');
+        }
+
+        $totalDays = bookingTotalDays($pickupDate, $returnDate);
+        $totalAmount = bookingTotalAmount($totalDays, (float) $car['daily_rate'])
+            + addonsTotalAmount($selectedAddons, $totalDays);
+        $pickupLocation = BOOKING_DEFAULT_PICKUP_LOCATION;
+        $status = 'approved'; // auto approve for this demo
+
+        $conn->begin_transaction();
+
+        try {
+            $stmt = $conn->prepare(
+                'INSERT INTO bookings
+                    (customer_id, car_id, pickup_date, return_date, pickup_location, total_days, total_amount, booking_status)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+            );
+            $stmt->bind_param('iisssids', $customerId, $carId, $pickupDate, $returnDate, $pickupLocation, $totalDays, $totalAmount, $status);
+            $stmt->execute();
+            $newBookingId = $stmt->insert_id;
+
+            saveBookingAddons($conn, $newBookingId, $selectedAddons, $totalDays);
+            markBookingPaymentPaid($conn, $newBookingId, $totalAmount, $paymentMethod);
+
+            $conn->commit();
+        } catch (Throwable $e) {
+            $conn->rollback();
+            throw $e;
+        }
+    } finally {
+        $conn->query("SELECT RELEASE_LOCK('$lockName')");
+    }
+
+    return $newBookingId;
+}
+
 function canCancelBooking(string $bookingStatus): bool
 {
     return in_array($bookingStatus, BOOKING_CANCELLABLE_STATUSES, true);
@@ -188,7 +264,10 @@ function confirmBookingReturn(mysqli $conn, array $booking, int $adminId, string
             $stmt->bind_param('iiid', $bookingId, $adminId, $lateDays, $lateFeeAmount);
             $stmt->execute();
 
-            markBookingPaymentUnpaid($conn, $bookingId, (float) $booking['total_amount'] + $lateFeeAmount);
+            // Only the late fee is newly owed — the rental itself was already paid
+            // in full at checkout. Re-billing total_amount + lateFee here would
+            // double-charge the rental portion (see calculatePaymentAmountDue()).
+            markBookingPaymentUnpaid($conn, $bookingId, $lateFeeAmount);
         }
 
         $conn->commit();
