@@ -67,92 +67,14 @@ $bookingId = filter_input(INPUT_POST, 'booking_id', FILTER_VALIDATE_INT) ?: filt
 $customerId = (int) ($_SESSION['customer_id'] ?? 0);
 
 $carId = filter_input(INPUT_POST, 'car_id', FILTER_VALIDATE_INT) ?: filter_input(INPUT_GET, 'car_id', FILTER_VALIDATE_INT);
-$checkoutCar = null;
-$checkoutError = '';
-$checkoutPickupDate = '';
-$checkoutReturnDate = '';
-$checkoutAddons = [];
-$checkoutSelectedAddonIds = [];
 
+// The standalone checkout page moved to car_detail.php (inline booking panel) so
+// the customer never has to leave the car they're looking at. Old links/bookmarks
+// to booking.php?car_id=X still work — they land back on the car page with the
+// panel auto-opened.
 if ($carId && !$bookingId) {
-    try {
-        $conn = getDbConnection();
-        $stmt = $conn->prepare("SELECT * FROM cars WHERE id = ? AND status = 'available'");
-        $stmt->bind_param('i', $carId);
-        $stmt->execute();
-        $checkoutCar = $stmt->get_result()->fetch_assoc();
-
-        if (!$checkoutCar) {
-            $checkoutError = 'This car is not available for booking.';
-        }
-
-        $checkoutAddons = loadAvailableAddons($conn);
-
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'checkout' && $checkoutCar) {
-            requireValidCsrfToken();
-            $checkoutPickupDate = trim($_POST['pickup_date'] ?? '');
-            $checkoutReturnDate = trim($_POST['return_date'] ?? '');
-            $paymentMethod = $_POST['payment_method'] ?? '';
-
-            // The date inputs only carry a client-side min attribute, so re-check everything here.
-            $dateError = validateBookingDates($checkoutPickupDate, $checkoutReturnDate);
-
-            if ($dateError !== null) {
-                throw new InvalidArgumentException($dateError);
-            }
-
-            if (customerHasUnpaidLateFees($conn, $customerId)) {
-                throw new InvalidArgumentException('Please settle your unpaid late fees in My Bookings before booking another car.');
-            }
-
-            if (carHasBookingConflict($conn, (int) $checkoutCar['id'], $checkoutPickupDate, $checkoutReturnDate)) {
-                throw new InvalidArgumentException('This car is already booked for the selected dates.');
-            }
-
-            $totalDays = bookingTotalDays($checkoutPickupDate, $checkoutReturnDate);
-
-            // Price add-ons from the database, never from the submitted form values.
-            $checkoutSelectedAddonIds = (array) ($_POST['addons'] ?? []);
-            $selectedAddons = filterSelectedAddons($checkoutSelectedAddonIds, $checkoutAddons);
-
-            $totalAmount = bookingTotalAmount($totalDays, (float) $checkoutCar['daily_rate'])
-                + addonsTotalAmount($selectedAddons, $totalDays);
-
-            $pickupLocation = BOOKING_DEFAULT_PICKUP_LOCATION;
-            $status = 'approved'; // auto approve for this demo
-
-            // Booking, add-ons and payment must land together, or none should exist.
-            $conn->begin_transaction();
-
-            try {
-                $stmt = $conn->prepare(
-                    'INSERT INTO bookings
-                        (customer_id, car_id, pickup_date, return_date, pickup_location, total_days, total_amount, booking_status)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
-                );
-                $stmt->bind_param('iisssids', $customerId, $carId, $checkoutPickupDate, $checkoutReturnDate, $pickupLocation, $totalDays, $totalAmount, $status);
-                $stmt->execute();
-                $newBookingId = $stmt->insert_id;
-
-                saveBookingAddons($conn, $newBookingId, $selectedAddons, $totalDays);
-                markBookingPaymentPaid($conn, $newBookingId, $totalAmount, $paymentMethod);
-
-                $conn->commit();
-            } catch (Throwable $e) {
-                $conn->rollback();
-                throw $e;
-            }
-
-            header('Location: booking.php?id=' . $newBookingId);
-            exit;
-        }
-    } catch (InvalidArgumentException $e) {
-        $checkoutError = $e->getMessage();
-    } catch (RuntimeException $e) {
-        $checkoutError = $e->getMessage();
-    } catch (mysqli_sql_exception $e) {
-        $checkoutError = 'Could not complete this booking. Please try again.';
-    }
+    header('Location: car_detail.php?id=' . $carId . '&book=1');
+    exit;
 }
 
 $booking = null;
@@ -186,9 +108,24 @@ if (!$bookingId || $customerId <= 0) {
                     throw new InvalidArgumentException('This booking cannot be paid.');
                 }
 
-                $lateFeeSummary = loadLateFeeSummary($conn, $bookingId);
-                $paymentBreakdown = buildPaymentBreakdown((float) $booking['total_amount'], $lateFeeSummary['total_late_fee']);
-                markBookingPaymentPaid($conn, $bookingId, $paymentBreakdown['payable_total'], $paymentMethod);
+                // The UI hides "Pay Now" once a booking is paid, but that's client-only —
+                // without this, a replayed/duplicated POST (double-click, back+resubmit)
+                // would charge an already-paid booking again.
+                $existingPayment = loadPaymentByBookingId($conn, $bookingId);
+                if (($existingPayment['payment_status'] ?? null) === PAYMENT_STATUS_PAID) {
+                    throw new InvalidArgumentException('This booking has already been paid.');
+                }
+
+                // markBookingPaymentPaid()/markBookingPaymentUnpaid() always write
+                // payments.amount as exactly what's currently outstanding (e.g. only the
+                // late fee after a late return, not the rental total again), so charge
+                // that stored amount rather than recomputing a fresh rental+fee total —
+                // recomputing would re-bill the rental portion that was already paid.
+                $amountToCharge = isset($existingPayment['amount'])
+                    ? (float) $existingPayment['amount']
+                    : (float) $booking['total_amount'];
+
+                markBookingPaymentPaid($conn, $bookingId, $amountToCharge, $paymentMethod);
                 header('Location: booking.php?id=' . $bookingId . '&payment=1');
                 exit;
             } catch (InvalidArgumentException $e) {
@@ -253,171 +190,7 @@ include 'header.php';
         </a>
     </div>
 
-    <?php if ($checkoutCar): ?>
-        <div class="dc-card padded" style="max-width: 800px; margin: 0 auto;">
-            <div class="dc-h2-title">
-                <div>
-                    <div class="dc-mono-subtitle small" style="margin-bottom:8px">Checkout</div>
-                    <h1 class="dc-h1">Complete your booking</h1>
-                </div>
-            </div>
-
-            <?php if ($checkoutError !== ''): ?>
-                <p class="message error" style="color: #c23a52; background: #fbeaed; padding: 12px 16px; border-radius: 8px; font-weight: 600; margin-bottom:24px;"><?php echo h($checkoutError); ?></p>
-            <?php endif; ?>
-
-            <div style="display:flex; gap:10px; margin-bottom:30px;">
-                <div class="checkout-step" id="step1-indicator" style="flex:1; padding:12px; background:#f1f3f9; text-align:center; font-weight:600; border-radius:8px; color:#5b6273;">1. Select Dates</div>
-                <div class="checkout-step" id="step2-indicator" style="flex:1; padding:12px; background:#f9fafc; text-align:center; font-weight:600; border-radius:8px; color:#9097a8;">2. Add-ons</div>
-                <div class="checkout-step" id="step3-indicator" style="flex:1; padding:12px; background:#f9fafc; text-align:center; font-weight:600; border-radius:8px; color:#9097a8;">3. Payment</div>
-            </div>
-
-            <form method="post" action="booking.php" id="checkout-form">
-                <?php echo csrfInput(); ?>
-                <input type="hidden" name="action" value="checkout">
-                <input type="hidden" name="car_id" value="<?php echo h($checkoutCar['id']); ?>">
-                
-                <!-- Step 1 -->
-                <div class="checkout-section" id="step1">
-                    <h2 class="dc-h2" style="font-size:20px; margin-bottom:20px;">Select your rental dates</h2>
-                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
-                        <label style="display:block;">
-                            <span style="display:block; margin-bottom:6px; font-size:13px; font-weight:600;">Pickup Date</span>
-                            <input type="date" name="pickup_date" id="chk_pickup" class="dc-input" required min="<?php echo date('Y-m-d'); ?>" value="<?php echo h($checkoutPickupDate); ?>" style="width:100%;">
-                        </label>
-                        <label style="display:block;">
-                            <span style="display:block; margin-bottom:6px; font-size:13px; font-weight:600;">Return Date</span>
-                            <input type="date" name="return_date" id="chk_return" class="dc-input" required min="<?php echo date('Y-m-d'); ?>" value="<?php echo h($checkoutReturnDate); ?>" style="width:100%;">
-                        </label>
-                    </div>
-                    <button type="button" class="dc-btn-primary next-btn" data-next="step2" style="margin-top:24px;">Next: Add-ons</button>
-                </div>
-                
-                <!-- Step 2 -->
-                <div class="checkout-section" id="step2" style="display:none;">
-                    <h2 class="dc-h2" style="font-size:20px; margin-bottom:20px;">Enhance your trip</h2>
-                    <div style="display:flex; flex-direction:column; gap:12px;">
-                        <?php if (count($checkoutAddons) === 0): ?>
-                            <p style="font-size:14px; color:#9097a8;">No extras are available right now.</p>
-                        <?php else: ?>
-                            <?php foreach ($checkoutAddons as $addon): ?>
-                                <label style="display:flex; align-items:center; gap:12px; padding:16px; border:1px solid #e4e8f1; border-radius:8px; cursor:pointer;">
-                                    <input
-                                        type="checkbox"
-                                        name="addons[]"
-                                        value="<?php echo h($addon['id']); ?>"
-                                        data-price="<?php echo (float) $addon['price']; ?>"
-                                        <?php echo in_array((string) $addon['id'], array_map('strval', $checkoutSelectedAddonIds), true) ? 'checked' : ''; ?>
-                                        style="width:18px; height:18px;"
-                                    >
-                                    <span style="font-weight:600;">
-                                        <?php echo h($addon['name']); ?>
-                                        <span style="color:#5b6273; font-weight:400;">(+RM <?php echo h(number_format((float) $addon['price'], 0)); ?>/day)</span>
-                                    </span>
-                                </label>
-                            <?php endforeach; ?>
-                        <?php endif; ?>
-                    </div>
-                    <div style="display:flex; gap:12px; margin-top:24px;">
-                        <button type="button" class="dc-btn-secondary prev-btn" data-prev="step1">Back</button>
-                        <button type="button" class="dc-btn-primary next-btn" data-next="step3">Next: Payment</button>
-                    </div>
-                </div>
-                
-                <!-- Step 3 -->
-                <div class="checkout-section" id="step3" style="display:none;">
-                    <h2 class="dc-h2" style="font-size:20px; margin-bottom:20px;">Payment Details</h2>
-                    <div style="margin-bottom:24px; padding:20px; background:#f9fafc; border-radius:12px; border:1px solid #e4e8f1;">
-                        <p style="margin-bottom:8px;">Car: <strong><?php echo h($checkoutCar['brand'] . ' ' . $checkoutCar['model']); ?></strong></p>
-                        <p style="margin-bottom:16px;">Rate: RM <?php echo number_format($checkoutCar['daily_rate'], 2); ?> / day</p>
-                        <div style="padding-top:16px; border-top:1px solid #e4e8f1; display:flex; justify-content:space-between; align-items:center;">
-                            <span style="font-weight:600; font-size:16px;">Total</span>
-                            <strong style="font-size:24px; color:#131722;" id="checkout-total">RM 0.00</strong>
-                        </div>
-                    </div>
-                    
-                    <label style="display:block; margin-bottom:24px;">
-                        <span style="display:block; margin-bottom:6px; font-size:13px; font-weight:600;">Payment Method</span>
-                        <select name="payment_method" class="dc-select" required style="width:100%;">
-                            <?php foreach (PAYMENT_METHODS as $method): ?>
-                                <option value="<?php echo h($method); ?>"><?php echo h($method); ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </label>
-                    
-                    <div style="display:flex; gap:12px;">
-                        <button type="button" class="dc-btn-secondary prev-btn" data-prev="step2">Back</button>
-                        <button type="submit" class="dc-btn-primary">Confirm & Pay</button>
-                    </div>
-                </div>
-            </form>
-        </div>
-
-        <script>
-            document.addEventListener('DOMContentLoaded', () => {
-                const dailyRate = <?php echo (float)$checkoutCar['daily_rate']; ?>;
-                const pickup = document.getElementById('chk_pickup');
-                const returnDate = document.getElementById('chk_return');
-                const totalEl = document.getElementById('checkout-total');
-                const addons = document.querySelectorAll('input[name="addons[]"]');
-                
-                function calcTotal() {
-                    if(!pickup.value || !returnDate.value) return;
-                    const d1 = new Date(pickup.value);
-                    const d2 = new Date(returnDate.value);
-                    let days = Math.ceil((d2 - d1) / (1000 * 60 * 60 * 24));
-                    if(days < 1) days = 1;
-                    
-                    let total = days * dailyRate;
-                    addons.forEach(a => {
-                        if (a.checked) {
-                            total += parseFloat(a.dataset.price || 0) * days;
-                        }
-                    });
-                    totalEl.innerText = 'RM ' + total.toFixed(2);
-                }
-                
-                pickup.addEventListener('change', calcTotal);
-                returnDate.addEventListener('change', calcTotal);
-                addons.forEach(a => a.addEventListener('change', calcTotal));
-                
-                function updateSteps(activeStepId) {
-                    document.querySelectorAll('.checkout-step').forEach(s => {
-                        s.style.background = '#f9fafc';
-                        s.style.color = '#9097a8';
-                    });
-                    const active = document.getElementById(activeStepId + '-indicator');
-                    if (active) {
-                        active.style.background = '#f1f3f9';
-                        active.style.color = '#5b6273';
-                    }
-                }
-                
-                document.querySelectorAll('.next-btn').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        if(e.target.dataset.next === 'step2' && (!pickup.value || !returnDate.value)) {
-                            alert('Please select dates');
-                            return;
-                        }
-                        document.querySelectorAll('.checkout-section').forEach(s => s.style.display = 'none');
-                        document.getElementById(e.target.dataset.next).style.display = 'block';
-                        updateSteps(e.target.dataset.next);
-                        calcTotal();
-                    });
-                });
-                document.querySelectorAll('.prev-btn').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        document.querySelectorAll('.checkout-section').forEach(s => s.style.display = 'none');
-                        document.getElementById(e.target.dataset.prev).style.display = 'block';
-                        updateSteps(e.target.dataset.prev);
-                    });
-                });
-            });
-        </script>
-
-    <?php elseif ($checkoutError !== ''): ?>
-        <p class="message error" style="color: #c23a52; background: #fbeaed; padding: 12px; border-radius: 8px; font-weight: 600;"><?php echo h($checkoutError); ?></p>
-    <?php elseif ($error !== '' && !$booking): ?>
+    <?php if ($error !== '' && !$booking): ?>
         <p class="message error" style="color: #c23a52; background: #fbeaed; padding: 12px; border-radius: 8px; font-weight: 600;"><?php echo h($error); ?></p>
     <?php elseif ($booking): ?>
         <?php $bookingStatus = (string) $booking['booking_status']; ?>
@@ -426,7 +199,7 @@ include 'header.php';
         <?php $isPaid = $paymentStatus === PAYMENT_STATUS_PAID; ?>
         <?php $canPay = canPayBooking($bookingStatus); ?>
         <?php $paymentBreakdown = buildPaymentBreakdown((float) $booking['total_amount'], $lateFeeSummary['total_late_fee']); ?>
-        <?php $amountDue = calculatePaymentAmountDue($paymentBreakdown['payable_total'], $paymentStatus, isset($payment['amount']) ? (float) $payment['amount'] : null); ?>
+        <?php $amountDue = calculatePaymentAmountDue($paymentStatus, isset($payment['amount']) ? (float) $payment['amount'] : null); ?>
         <?php $amountDue = $canPay ? $amountDue : 0.0; ?>
 
         <?php if ($error !== ''): ?>
