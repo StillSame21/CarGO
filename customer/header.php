@@ -45,6 +45,26 @@ $isProfilePage = $currentPage === 'profile.php';
         </div>
     </div>
 </header>
+
+<nav class="dc-bottombar" aria-label="Mobile navigation">
+    <a href="dashboard.php" class="<?php echo $currentPage === 'dashboard.php' ? 'active' : ''; ?>">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 11.5 12 4l8 7.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 10v9h12v-9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>Dashboard</span>
+    </a>
+    <a href="browse_cars.php" class="<?php echo in_array($currentPage, ['browse_cars.php', 'car_detail.php'], true) ? 'active' : ''; ?>">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 16v-4l2-5h12l2 5v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="7.5" cy="16.5" r="1.6" stroke="currentColor" stroke-width="1.8"/><circle cx="16.5" cy="16.5" r="1.6" stroke="currentColor" stroke-width="1.8"/></svg>
+        <span>Browse</span>
+    </a>
+    <a href="my_bookings.php" class="<?php echo in_array($currentPage, ['my_bookings.php', 'booking.php'], true) ? 'active' : ''; ?>">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4.5" y="4.5" width="15" height="15" rx="2.5" stroke="currentColor" stroke-width="1.8"/><path d="M8 8.5h8M8 12h8M8 15.5h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <span>Bookings</span>
+    </a>
+    <a href="my_payments.php" class="<?php echo $currentPage === 'my_payments.php' ? 'active' : ''; ?>">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3.5" y="6" width="17" height="12" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M3.5 10h17" stroke="currentColor" stroke-width="1.8"/></svg>
+        <span>Payments</span>
+    </a>
+</nav>
+
 <script>
 // Simple click outside to close dropdown
 document.addEventListener('click', function(e) {

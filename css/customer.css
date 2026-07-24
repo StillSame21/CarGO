@@ -1689,3 +1689,64 @@ body.modal-open {
         padding: 24px;
     }
 }
+
+/* Browse cars — filter sidebar / drawer */
+.browse-layout {
+    display: flex;
+    gap: 32px;
+    align-items: flex-start;
+    margin-top: 24px;
+}
+
+.browse-filters {
+    width: 260px;
+    flex-shrink: 0;
+    padding: 24px;
+    position: sticky;
+    top: 94px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    box-sizing: border-box;
+    z-index: 10;
+}
+
+.browse-results {
+    flex: 1;
+    min-width: 0;
+}
+
+.browse-filter-toggle {
+    display: none;
+}
+
+.dc-compare-bar {
+    position: fixed;
+    bottom: 30px;
+}
+
+@media (max-width: 768px) {
+    .browse-layout {
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .browse-filter-toggle {
+        display: flex;
+        width: 100%;
+    }
+
+    .browse-filters {
+        position: static;
+        width: 100%;
+        display: none;
+    }
+
+    .browse-filters.is-open {
+        display: flex;
+    }
+
+    .dc-compare-bar {
+        bottom: 80px;
+    }
+}

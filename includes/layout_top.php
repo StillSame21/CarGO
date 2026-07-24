@@ -36,13 +36,13 @@ $cssPrefix = ($isAdmin || $isCustomer) ? '../' : './';
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="<?php echo $cssPrefix; ?>css/style.css?v=3">
-    <link rel="stylesheet" href="<?php echo $cssPrefix; ?>css/template.css?v=3">
+    <link rel="stylesheet" href="<?php echo $cssPrefix; ?>css/template.css?v=4">
     <?php if ($isAdmin) : ?>
         <link rel="stylesheet" href="<?php echo $cssPrefix; ?>css/admin.css?v=3">
         <link rel="stylesheet" href="<?php echo $cssPrefix; ?>css/theme.css?v=7">
     <?php elseif ($isCustomer) : ?>
-        <link rel="stylesheet" href="<?php echo $cssPrefix; ?>css/customer.css?v=7">
+        <link rel="stylesheet" href="<?php echo $cssPrefix; ?>css/customer.css?v=8">
     <?php endif; ?>
 </head>
-<body>
+<body class="<?php echo $isCustomer ? 'is-customer' : ($isAdmin ? 'is-admin' : ''); ?>">
 <div class="dc-layout">

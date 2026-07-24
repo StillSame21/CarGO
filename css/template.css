@@ -590,3 +590,67 @@ a {
 .dc-table tbody tr:hover {
     background: #fbfcfe;
 }
+
+/* Mobile bottom tab bar (customer nav) */
+.dc-bottombar {
+    display: none;
+}
+
+/* Scoped to body.is-customer — admin shares .dc-nav/.dc-search/.dc-main but
+   has no bottom bar, so these rules must not leak onto admin pages. */
+@media (max-width: 768px) {
+    body.is-customer .dc-nav,
+    body.is-customer .dc-search {
+        display: none;
+    }
+
+    body.is-customer .dc-header-inner {
+        gap: 12px;
+        padding: 0 16px;
+        height: 60px;
+    }
+
+    body.is-customer .dc-user-info {
+        display: none;
+    }
+
+    body.is-customer .dc-main {
+        padding: 18px 16px 84px;
+    }
+
+    body.is-customer .dc-bottombar {
+        display: flex;
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 40;
+        background: rgba(255, 255, 255, 0.92);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        border-top: 1px solid #e4e8f1;
+        padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+    }
+
+    body.is-customer .dc-bottombar a {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 3px;
+        padding: 6px 4px;
+        border-radius: 11px;
+        font-size: 11px;
+        font-weight: 600;
+        color: #5b6273;
+    }
+
+    body.is-customer .dc-bottombar a.active {
+        color: var(--accent);
+        background: color-mix(in srgb, var(--accent) 9%, #ffffff);
+    }
+
+    body.is-customer .dc-grid-3 {
+        grid-template-columns: 1fr;
+    }
+}

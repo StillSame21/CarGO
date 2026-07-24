@@ -39,7 +39,7 @@ include 'header.php';
     <header class="dc-h2-title" style="margin-bottom: 0;">
         <div>
             <div class="dc-mono-subtitle small" style="margin-bottom:8px">Available Fleet</div>
-            <h1 class="dc-h1" style="font-size:32px;">Browse cars ready to rent.</h1>
+            <h1 class="dc-h1" style="font-size:clamp(24px, 6vw, 32px);">Browse cars ready to rent.</h1>
         </div>
     </header>
 
@@ -51,14 +51,16 @@ include 'header.php';
             <p class="dc-p" style="margin-top:12px;">Please check again later for newly listed rental cars.</p>
         </div>
     <?php else: ?>
-        <div style="display: flex; gap: 32px; align-items: flex-start; margin-top: 24px;">
-            
+        <div class="browse-layout">
+
+            <button type="button" class="browse-filter-toggle dc-btn-secondary" aria-expanded="false" aria-controls="browse-filters">Filter &amp; Sort</button>
+
             <!-- Sidebar Filters -->
-            <aside class="dc-card" style="width: 260px; flex-shrink: 0; padding: 24px; position: sticky; top: 94px; display: flex; flex-direction: column; gap: 16px; box-sizing: border-box; z-index: 10;">
+            <aside class="dc-card browse-filters" id="browse-filters">
                 <div style="font-size: 16px; font-weight: 700; color: var(--text-color-strong); border-bottom: 1px solid var(--border-color); padding-bottom: 12px; margin-bottom: 4px;">
                     Filter & Sort
                 </div>
-                
+
                 <div>
                     <label style="display: block; font-size: 11px; font-weight: 700; margin-bottom: 8px; color: #5b6273; text-transform: uppercase; letter-spacing: 0.05em;">Search</label>
                     <input type="text" id="car-search" class="dc-input" placeholder="Brand or model..." style="width: 100%;">
@@ -109,7 +111,7 @@ include 'header.php';
             </aside>
             
             <!-- Main Content -->
-            <div style="flex: 1; min-width: 0;">
+            <div class="browse-results">
                 <div style="margin-bottom: 20px; font-size: 14px; font-weight: 600; color: #5b6273;">
                     <span id="results-count">Showing <?php echo count($cars); ?> cars</span>
                 </div>
@@ -150,7 +152,7 @@ include 'header.php';
             <?php endforeach; ?>
             </section>
         </form>
-        <div id="compare-bar" style="display: none; position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: #131722; color:#fff; padding: 12px 24px; border-radius: 999px; box-shadow: 0 14px 30px rgba(19, 23, 34, 0.3); z-index: 1000; align-items: center; gap: 16px;">
+        <div id="compare-bar" class="dc-compare-bar" style="display: none; left: 50%; transform: translateX(-50%); background: #131722; color:#fff; padding: 12px 24px; border-radius: 999px; box-shadow: 0 14px 30px rgba(19, 23, 34, 0.3); z-index: 1000; align-items: center; gap: 16px;">
             <span id="compare-count" style="font-weight: 600; font-size:14px;">0 cars selected</span>
             <button type="button" id="clear-selection" class="compare-clear">Clear</button>
             <button type="submit" form="compare-form" class="dc-btn-primary" id="compare-btn" style="padding: 10px 20px; box-shadow:none;">Compare</button>
@@ -211,6 +213,16 @@ include 'header.php';
         }
 
         refreshCompareBar();
+
+        // Mobile filter drawer toggle
+        const filterToggle = document.querySelector('.browse-filter-toggle');
+        const filterPanel = document.getElementById('browse-filters');
+        if (filterToggle && filterPanel) {
+            filterToggle.addEventListener('click', () => {
+                const isOpen = filterPanel.classList.toggle('is-open');
+                filterToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+            });
+        }
     });
 </script>
 <?php include '../includes/layout_bottom.php'; ?>
