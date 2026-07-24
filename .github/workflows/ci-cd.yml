@@ -126,3 +126,37 @@ jobs:
             ghcr.io/${{ env.REPO }}/cargo-app:latest
             ghcr.io/${{ env.REPO }}/cargo-app:${{ github.sha }}
 
+  ftp-deploy:
+    name: Deploy to InfinityFree
+    needs: [static-analysis, unit-tests]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: FTP Deploy
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+        with:
+          server: ftpupload.net
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: ./
+          server-dir: /htdocs/
+          exclude: |
+            **/.git*
+            **/.git*/**
+            .github/**
+            tests/**
+            database/**
+            Dockerfile
+            docker-compose.yml
+            .env
+            .env.example
+            composer.json
+            composer.lock
+            phpunit.xml
+            DockerCommand.txt
+            RUN_GUIDE.md
+            asset/**
+
