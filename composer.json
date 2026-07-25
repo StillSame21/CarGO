@@ -17,7 +17,6 @@
             "includes/security.php",
             "util/car_archive.php",
             "util/car_display.php",
-            "util/car_image.php",
             "util/booking.php",
             "util/payment.php"
         ]
