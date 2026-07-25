@@ -1,12 +1,7 @@
 <?php
 
-/**
- * Optional extras a customer can attach to a booking at checkout.
- *
- * Prices are read from the `addons` table and copied onto `booking_addons` at
- * purchase time, so a later price change never rewrites what an existing
- * booking was charged.
- */
+// Optional extras a customer can attach to a booking. Prices are copied onto booking_addons
+// at purchase time, so a later addon price change never rewrites an existing booking's charge.
 
 function loadAvailableAddons(mysqli $conn): array
 {
@@ -17,10 +12,9 @@ function loadAvailableAddons(mysqli $conn): array
 
 /**
  * Keep only the submitted ids that match a real add-on.
- *
  * @param array<int|string> $selectedIds Raw ids from the checkout form.
- * @param array<int, array> $addons      Rows from loadAvailableAddons().
- * @return array<int, array>             Matching add-on rows.
+ * @param array<int, array> $addons Rows from loadAvailableAddons().
+ * @return array<int, array>
  */
 function filterSelectedAddons(array $selectedIds, array $addons): array
 {

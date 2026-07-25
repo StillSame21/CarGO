@@ -68,10 +68,7 @@ $customerId = (int) ($_SESSION['customer_id'] ?? 0);
 
 $carId = filter_input(INPUT_POST, 'car_id', FILTER_VALIDATE_INT) ?: filter_input(INPUT_GET, 'car_id', FILTER_VALIDATE_INT);
 
-// The standalone checkout page moved to car_detail.php (inline booking panel) so
-// the customer never has to leave the car they're looking at. Old links/bookmarks
-// to booking.php?car_id=X still work — they land back on the car page with the
-// panel auto-opened.
+// Checkout moved to car_detail.php's inline panel; old booking.php?car_id=X links still work.
 if ($carId && !$bookingId) {
     header('Location: car_detail.php?id=' . $carId . '&book=1');
     exit;
@@ -116,11 +113,8 @@ if (!$bookingId || $customerId <= 0) {
                     throw new InvalidArgumentException('This booking has already been paid.');
                 }
 
-                // markBookingPaymentPaid()/markBookingPaymentUnpaid() always write
-                // payments.amount as exactly what's currently outstanding (e.g. only the
-                // late fee after a late return, not the rental total again), so charge
-                // that stored amount rather than recomputing a fresh rental+fee total —
-                // recomputing would re-bill the rental portion that was already paid.
+                // Charge the stored payments.amount (exactly what's outstanding), never a
+                // recomputed rental+fee total — that would re-bill the already-paid rental.
                 $amountToCharge = isset($existingPayment['amount'])
                     ? (float) $existingPayment['amount']
                     : (float) $booking['total_amount'];
@@ -230,7 +224,7 @@ include 'header.php';
                         </div>
                     </div>
                     <div class="booking-summary-media">
-                        <img src="<?php echo h(carImageUrl($booking['image'], 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=700&q=80')); ?>" alt="Car image">
+                        <?php echo carImageTag($booking['image'], 'Car image', '300px', ['loading' => 'eager']); ?>
                         <div style="position:absolute; top:16px; right:16px;">
                             <span class="dc-status <?php echo h($displayStatus['class']); ?>"><?php echo h($displayStatus['label']); ?></span>
                         </div>

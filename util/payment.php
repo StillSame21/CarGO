@@ -35,13 +35,8 @@ function buildPaymentBreakdown(float $rentalSubtotal, float $lateFeeTotal): arra
 }
 
 /**
- * What's currently owed on this booking.
- *
- * markBookingPaymentPaid() / markBookingPaymentUnpaid() always write
- * payments.amount as exactly what was outstanding at that moment (e.g. a late
- * return only sets it to the late fee, not the whole rental again), so the
- * stored amount is the source of truth here — it is never recomputed from a
- * fresh rental+fee total, which would resurrect charges already settled.
+ * What's currently owed. The stored payments.amount is the source of truth (never recomputed
+ * from a fresh rental+fee total), since markBookingPayment*() always write exactly what's owed.
  */
 function calculatePaymentAmountDue(?string $paymentStatus, ?float $paidAmount): float
 {
@@ -142,6 +137,7 @@ function calculateLateFeeAmount(int $lateDays, float $dailyRate): float
     return round(max(0, $lateDays) * $dailyRate, 2);
 }
 
+// True if any booking has late fees not yet fully covered by its payment.
 function customerHasUnpaidLateFees(mysqli $conn, int $customerId): bool
 {
     $paidStatus = PAYMENT_STATUS_PAID;
@@ -171,6 +167,7 @@ function customerHasUnpaidLateFees(mysqli $conn, int $customerId): bool
     return (int) ($result['unpaid_late_fees'] ?? 0) > 0;
 }
 
+// Precedence chain: unpaid late fees outrank every other booking/payment status shown to a user.
 function bookingDisplayStatus(string $bookingStatus, ?string $paymentStatus, float $lateFeeTotal): array
 {
     if ($lateFeeTotal > 0 && $paymentStatus !== PAYMENT_STATUS_PAID) {

@@ -1,13 +1,8 @@
 <?php
 
 /**
- * Seed for this visitor's car recommendations.
- *
- * Generated once per session so the dashboard shows the same picks on a
- * refresh — re-rolling every request makes the page feel broken — while a new
- * login draws a fresh set. random_int() is the CSPRNG and leaves the global
- * mt_rand sequence alone; the upper bound keeps the value inside signed 32-bit
- * range for the 'i' bind in loadRecommendedCars().
+ * Seed for this visitor's car recommendations, generated once per session so a refresh
+ * shows the same picks; a new login draws a fresh set.
  */
 function recommendationSeed(): int
 {
@@ -19,12 +14,8 @@ function recommendationSeed(): int
 }
 
 /**
- * A stable random sample of rentable cars.
- *
- * Ordering in SQL keeps the work proportional to the handful of rows shown
- * rather than to the whole fleet. MariaDB seeds its generator from RAND(N), so
- * the same seed always yields the same order.
- *
+ * A stable random sample of rentable cars, ordered via RAND($seed) so the same seed
+ * always yields the same order without scanning the whole fleet in PHP.
  * @return array<int, array<string, mixed>>
  */
 function loadRecommendedCars(mysqli $conn, int $seed, int $limit = 3): array

@@ -52,6 +52,7 @@ function bookingTotalAmount(int $totalDays, float $dailyRate): float
     return round($totalDays * $dailyRate, 2);
 }
 
+// True if any blocking booking's date range overlaps [$pickupDate, $returnDate] for this car.
 function carHasBookingConflict(mysqli $conn, int $carId, string $pickupDate, string $returnDate): bool
 {
     $statuses = BOOKING_BLOCKING_STATUSES;
@@ -81,15 +82,10 @@ function carHasBookingConflict(mysqli $conn, int $carId, string $pickupDate, str
 }
 
 /**
- * Create an auto-approved, auto-paid booking with its add-ons in one transaction.
- *
- * Callers must already have validated dates and unpaid late fees before calling
- * this. The booking-conflict check IS re-run in here (see below) — a caller's
- * earlier check is only a fast-fail UX hint, not the real guard.
- *
- * @param array $car             Row with at least `id` and `daily_rate`.
- * @param array $selectedAddons  Rows from filterSelectedAddons() — never raw
- *                                submitted ids/prices.
+ * Create an auto-approved, auto-paid booking with its add-ons in one transaction. Callers must
+ * already have validated dates/late fees; the conflict check is re-run here as the real guard.
+ * @param array $car Row with at least `id` and `daily_rate`.
+ * @param array $selectedAddons Rows from filterSelectedAddons(), never raw submitted values.
  * @return int The new booking id.
  */
 function createBookingWithPayment(
@@ -103,11 +99,8 @@ function createBookingWithPayment(
 ): int {
     $carId = (int) $car['id'];
 
-    // carHasBookingConflict() is a plain SELECT with no row lock, and there is no
-    // DB constraint preventing overlapping bookings for the same car — so two
-    // concurrent checkouts could both pass a conflict check before either commits.
-    // A MySQL advisory lock keyed on the car id serializes check-then-insert across
-    // requests without needing a schema change.
+    // No DB constraint stops overlapping bookings, so a MySQL advisory lock keyed on the
+    // car id serializes check-then-insert across concurrent checkout requests.
     $lockName = 'cargo_booking_car_' . $carId;
     $lockStmt = $conn->prepare('SELECT GET_LOCK(?, 5) AS acquired');
     $lockStmt->bind_param('s', $lockName);
@@ -193,6 +186,7 @@ function bookingLateDays(string $expectedReturnDate, string $actualReturnDate): 
     return $expected->diff($actual)->days;
 }
 
+// Guarded 3-table UPDATE; affected_rows === 0 means the booking wasn't a paid, not-yet-picked-up one.
 function confirmBookingPickup(mysqli $conn, int $bookingId, int $adminId): void
 {
     $paidStatus = PAYMENT_STATUS_PAID;
@@ -275,9 +269,7 @@ function confirmBookingReturn(mysqli $conn, array $booking, int $adminId, string
             $stmt->bind_param('iiid', $bookingId, $adminId, $lateDays, $lateFeeAmount);
             $stmt->execute();
 
-            // Only the late fee is newly owed — the rental itself was already paid
-            // in full at checkout. Re-billing total_amount + lateFee here would
-            // double-charge the rental portion (see calculatePaymentAmountDue()).
+            // Only the late fee is newly owed - the rental was already paid at checkout.
             markBookingPaymentUnpaid($conn, $bookingId, $lateFeeAmount);
         }
 
