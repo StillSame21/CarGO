@@ -1,5 +1,7 @@
 <?php
 
+// phpcs:disable PSR1.Files.SideEffects -- require_once is intentional here; car_image.php is
+// excluded from composer's autoload files to avoid redeclaring its functions.
 require_once __DIR__ . '/car_image.php';
 
 // Placeholder for cars with no photo, relative to the project root.
@@ -83,17 +85,27 @@ function carImageTag(?string $imagePath, string $alt, string $sizes, array $opts
 
     $sources = '';
     if ($webpSrcset !== []) {
-        $sources .= '<source type="image/webp" srcset="' . carImageEscape(implode(', ', $webpSrcset)) . '" sizes="' . carImageEscape($sizes) . '">';
+        $sources .= '<source type="image/webp" srcset="' . carImageEscape(implode(', ', $webpSrcset))
+            . '" sizes="' . carImageEscape($sizes) . '">';
     }
     if ($jpegSrcset !== []) {
-        $sources .= '<source type="image/jpeg" srcset="' . carImageEscape(implode(', ', $jpegSrcset)) . '" sizes="' . carImageEscape($sizes) . '">';
+        $sources .= '<source type="image/jpeg" srcset="' . carImageEscape(implode(', ', $jpegSrcset))
+            . '" sizes="' . carImageEscape($sizes) . '">';
     }
 
     return '<picture>' . $sources . $imgTag . '</picture>';
 }
 
-function carImageImgTag(string $src, string $alt, string $loadingAttr, ?string $fetchPriority, ?int $width, ?int $height, ?string $class, ?string $style = null): string
-{
+function carImageImgTag(
+    string $src,
+    string $alt,
+    string $loadingAttr,
+    ?string $fetchPriority,
+    ?int $width,
+    ?int $height,
+    ?string $class,
+    ?string $style = null
+): string {
     $html = '<img src="' . carImageEscape($src) . '" alt="' . carImageEscape($alt) . '"';
 
     if ($class !== null) {

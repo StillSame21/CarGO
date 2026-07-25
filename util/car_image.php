@@ -65,7 +65,8 @@ function processCarImageUpload(?array $file): string
     $channels = $imageInfo['channels'] ?? 4;
     if (estimateImageDecodeBytes($imageInfo[0], $imageInfo[1], $channels) > carImageDecodeCeilingBytes()) {
         throw new InvalidArgumentException(
-            'This image resolution is too high to process. Please upload an image no larger than about 35 megapixels (for example 7000x5000 pixels).'
+            'This image resolution is too high to process. Please upload an image no larger than '
+            . 'about 35 megapixels (for example 7000x5000 pixels).'
         );
     }
 
@@ -368,7 +369,8 @@ function deleteCarImageFile(string $imagePath): void
             continue;
         }
 
-        $derivativeDiskPath = dirname(__DIR__) . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $derivativePath);
+        $derivativeDiskPath = dirname(__DIR__) . DIRECTORY_SEPARATOR
+            . str_replace('/', DIRECTORY_SEPARATOR, $derivativePath);
         if (is_file($derivativeDiskPath)) {
             unlink($derivativeDiskPath);
         }

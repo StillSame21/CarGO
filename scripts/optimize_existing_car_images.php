@@ -1,5 +1,7 @@
 <?php
 
+// phpcs:disable PSR1.Files.SideEffects -- CLI/browser backfill script, not a declarations-only file.
+
 // One-time backfill: resize/recompress car images already in car/ and generate their derivatives.
 // Run: php scripts/optimize_existing_car_images.php (or via browser with ?confirm=1). Safe to re-run.
 
@@ -103,7 +105,8 @@ foreach ($files as $filePath) {
     cleanupTempDerivativeJunk($tempDestination);
 
     if (!$saved || !is_file($tempDestination)) {
-        echo "SKIP  " . basename($filePath) . " (too large to safely resize on this host, or GD couldn't decode it - left untouched)" . $nl;
+        echo "SKIP  " . basename($filePath)
+            . " (too large to safely resize on this host, or GD couldn't decode it - left untouched)" . $nl;
         $totalAfter += $beforeSize;
         if (is_file($tempDestination)) {
             unlink($tempDestination);
