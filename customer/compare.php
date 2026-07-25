@@ -74,7 +74,12 @@ include 'header.php';
                         <?php foreach ($cars as $car): ?>
                             <th style="background: #fff; vertical-align: top;">
                                 <div class="compare-car-media">
-                                    <img src="<?php echo htmlspecialchars(carImageUrl($car['image'], 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=700&q=80')); ?>" alt="<?php echo htmlspecialchars($car['brand'] . ' ' . $car['model']); ?>">
+                                    <?php echo carImageTag(
+                                        $car['image'],
+                                        $car['brand'] . ' ' . $car['model'],
+                                        '(max-width: 900px) 50vw, 300px',
+                                        ['loading' => 'lazy']
+                                    ); ?>
                                 </div>
                                 <div style="font-size: 20px; color: #131722; font-weight: 800; margin-bottom: 16px; line-height: 1.2; text-transform:none; letter-spacing:normal;"><?php echo htmlspecialchars($car['brand'] . ' ' . $car['model']); ?></div>
                                 <a href="car_detail.php?id=<?php echo $car['id']; ?>" class="dc-btn-primary" style="justify-content:center; padding:10px; text-decoration:none;">View Details</a>
