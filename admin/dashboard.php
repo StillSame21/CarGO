@@ -63,7 +63,7 @@ function bookingStatusValues(mysqli $conn): array
     preg_match_all("/'((?:[^'\\\\]|\\\\.)*)'/", $matches[1], $enumMatches);
     $statuses = array_map(
         static fn($value) => stripcslashes($value),
-        $enumMatches[1] ?? []
+        $enumMatches[1]
     );
 
     return $statuses ?: ['pending', 'approved', 'rejected', 'ongoing'];

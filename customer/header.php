@@ -3,7 +3,6 @@ $customerDisplayName = $_SESSION['customer_name'] ?? $_SESSION['user_email'] ?? 
 // Extract first two letters for avatar
 $avatarLetters = strtoupper(substr(preg_replace('/[^a-zA-Z]/', '', $customerDisplayName) . 'AA', 0, 2));
 $currentPage = basename($_SERVER['PHP_SELF']);
-$isProfilePage = $currentPage === 'profile.php';
 ?>
 <header class="dc-header">
     <div class="dc-header-inner">

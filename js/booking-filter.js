@@ -8,7 +8,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!grid) return;
 
     const cards = Array.from(grid.querySelectorAll('.booking-list-card'));
-    const initialOrder = [...cards];
 
     function updateGrid() {
         const query = searchInput.value.toLowerCase().trim();

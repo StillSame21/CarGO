@@ -1,12 +1,6 @@
 <?php
 $pageTitle = $pageTitle ?? 'CarGo';
-$basePath = '/';
-// Find the level of nesting to properly link CSS if absolute path doesn't work.
-// Since we don't know the exact domain setup, let's just use absolute path assuming DocumentRoot is CarGO,
-// or we can use a relative path based on a variable.
-// But mostly CarGo is running locally where it might be in a subfolder like /CarGO/.
-// Let's use a function to get the base URL or just rely on a config if it exists.
-// A simpler way is to use `../` for pages in `admin/` and `customer/`, and `./` for root pages.
+// CSS path prefix: `../` for pages under admin/ or customer/, `./` for root pages.
 $isAdmin = strpos($_SERVER['PHP_SELF'], '/admin/') !== false;
 $isCustomer = strpos($_SERVER['PHP_SELF'], '/customer/') !== false;
 $cssPrefix = ($isAdmin || $isCustomer) ? '../' : './';
