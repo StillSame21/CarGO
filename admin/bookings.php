@@ -23,6 +23,7 @@ function formatAdminDate(?string $date): string
     return date('d M Y', strtotime($date));
 }
 
+// bind_param() takes args by reference, so build a by-reference array before splatting it.
 function bindStatementParams(mysqli_stmt $stmt, string $types, array $params): void
 {
     if ($types === '') {
@@ -77,7 +78,7 @@ function adminBookingStatusValues(mysqli $conn): array
     preg_match_all("/'((?:[^'\\\\]|\\\\.)*)'/", $matches[1], $enumMatches);
     $statuses = array_map(
         static fn($value) => stripcslashes($value),
-        $enumMatches[1] ?? []
+        $enumMatches[1]
     );
 
     return $statuses ?: ['pending', 'approved', 'rejected', 'ongoing'];
@@ -372,6 +373,8 @@ try {
         $bookingOffset = ($bookingPage - 1) * $bookingsPerPage;
         $bookings = loadAdminBookings($conn, $bookingFilters, $bookingSort, $bookingsPerPage, $bookingOffset);
     }
+} catch (mysqli_sql_exception $e) {
+    $error = 'Could not load or update bookings. Please confirm the database schema is ready.';
 } catch (InvalidArgumentException | RuntimeException $e) {
     $error = $e->getMessage();
 
@@ -382,8 +385,6 @@ try {
             $booking = null;
         }
     }
-} catch (mysqli_sql_exception $e) {
-    $error = 'Could not load or update bookings. Please confirm the database schema is ready.';
 }
 ?>
 <?php
@@ -436,7 +437,12 @@ include 'header.php';
                             <?php echo h($bStatus); ?>
                         </span>
                         <div style="width:120px; height:80px; border-radius:8px; overflow:hidden; background:var(--surface-2);">
-                            <img src="<?php echo h(carImageUrl($booking['image'], 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=700&q=80')); ?>" alt="Car" style="width:100%; height:100%; object-fit:cover;">
+                            <?php echo carImageTag(
+                                $booking['image'],
+                                'Car',
+                                '120px',
+                                ['loading' => 'lazy', 'style' => 'width:100%; height:100%; object-fit:cover;']
+                            ); ?>
                         </div>
                     </div>
                 </div>

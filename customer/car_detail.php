@@ -32,7 +32,6 @@ if (!$carId) {
 } else {
     try {
         $conn = getDbConnection();
-        ensureCarArchiveColumn($conn);
 
         $hasUnpaidLateFees = $customerId > 0 && customerHasUnpaidLateFees($conn, $customerId);
 
@@ -94,10 +93,10 @@ if (!$carId) {
                     exit;
                 } catch (InvalidArgumentException $e) {
                     $checkoutError = $e->getMessage();
-                } catch (RuntimeException $e) {
-                    $checkoutError = $e->getMessage();
                 } catch (mysqli_sql_exception $e) {
                     $checkoutError = 'Could not complete this booking. Please try again.';
+                } catch (RuntimeException $e) {
+                    $checkoutError = $e->getMessage();
                 }
             }
         }
@@ -126,11 +125,16 @@ include 'header.php';
             <!-- Left Column: Details & Images -->
             <div style="display:flex; flex-direction:column; gap:24px;">
                 <div class="dc-card" style="overflow:hidden;">
-                    <img
-                        src="<?php echo h(carImageUrl($car['image'], 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=1100&q=80')); ?>"
-                        alt="<?php echo h($car['brand'] . ' ' . $car['model']); ?>"
-                        style="width:100%; aspect-ratio:16/9; object-fit:cover; display:block;"
-                    >
+                    <?php echo carImageTag(
+                        $car['image'],
+                        $car['brand'] . ' ' . $car['model'],
+                        '(max-width: 1000px) 100vw, 800px',
+                        [
+                            'loading' => 'eager',
+                            'fetchpriority' => 'high',
+                            'style' => 'width:100%; aspect-ratio:16/9; object-fit:cover; display:block;',
+                        ]
+                    ); ?>
                 </div>
                 
                 <div class="dc-card padded">
