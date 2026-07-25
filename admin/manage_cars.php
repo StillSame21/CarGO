@@ -107,7 +107,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $error === '') {
         } else {
             try {
                 $conn = getDbConnection();
-                ensureCarArchiveColumn($conn);
 
                 $archivedStatus = 'unavailable';
                 $stmt = $conn->prepare(
@@ -136,7 +135,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $error === '') {
         } else {
             try {
                 $conn = getDbConnection();
-                ensureCarArchiveColumn($conn);
 
                 // Status stays as the admin last set it; only the archive flag lifts.
                 $stmt = $conn->prepare(
@@ -176,8 +174,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $error === '') {
         // Both were handled above.
     } elseif ($formAction !== 'add_car' && $formAction !== 'update_car') {
         $error = 'Please choose a valid car action.';
-    } elseif ($isEditMode && $editCarId <= 0) {
-        $error = 'Please choose a valid car to update.';
     } elseif (
         $brand === '' ||
         $model === '' ||
@@ -201,7 +197,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $error === '') {
     } else {
         try {
             $conn = getDbConnection();
-            ensureCarArchiveColumn($conn);
             $adminId = (int) $_SESSION['admin_id'];
             $seatsValue = (int) $seats;
             $dailyRateValue = (float) $dailyRate;
@@ -310,7 +305,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $error === '') {
 
 try {
     $conn = getDbConnection();
-    ensureCarArchiveColumn($conn);
 
     if ($editCarId > 0 && $_SERVER['REQUEST_METHOD'] !== 'POST') {
         $stmt = $conn->prepare(
@@ -500,11 +494,12 @@ $panelOpen = $isEditMode || isset($_GET['add']) || ($error !== '' && $_SERVER['R
                             <tr>
                                 <td>
                                     <div class="mc-vehicle">
-                                        <img
-                                            class="mc-thumb"
-                                            src="<?php echo h(carImageUrl($car['image'], 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=200&q=70')); ?>"
-                                            alt=""
-                                        >
+                                        <?php echo carImageTag(
+                                            $car['image'],
+                                            '',
+                                            '64px',
+                                            ['loading' => 'lazy', 'class' => 'mc-thumb']
+                                        ); ?>
                                         <div style="min-width:0;">
                                             <strong class="mc-vehicle-name"><?php echo h($car['brand'] . ' ' . $car['model']); ?></strong>
                                             <div class="mc-vehicle-spec"><?php echo h($car['transmission'] . ' · ' . $car['fuel_type'] . ' · ' . $car['seats'] . ' seats'); ?></div>

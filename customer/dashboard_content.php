@@ -39,7 +39,6 @@ $paymentAttention = [
 
 try {
     $conn = getDbConnection();
-    ensureCarArchiveColumn($conn);
 
     $result = $conn->query(
         'SELECT COUNT(*) AS available_cars
@@ -199,11 +198,18 @@ $pendingCount = $bookingCounts['pending'];
         <?php if (count($availableCars) === 0): ?>
             <p class="cd-empty" style="grid-column:1/-1;">No cars are available right now. Please check again later.</p>
         <?php else: ?>
-            <?php foreach ($availableCars as $car): ?>
+            <?php foreach ($availableCars as $carIndex => $car): ?>
                 <a href="car_detail.php?id=<?php echo h($car['id']); ?>" class="dc-car-card">
                     <div class="dc-car-img-wrap">
                         <span class="dc-car-tag"><?php echo h($car['car_type']); ?></span>
-                        <img src="<?php echo h(carImageUrl($car['image'], 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=700&q=80')); ?>" alt="<?php echo h($car['brand'] . ' ' . $car['model']); ?>">
+                        <?php echo carImageTag(
+                            $car['image'],
+                            $car['brand'] . ' ' . $car['model'],
+                            '(max-width: 700px) 100vw, 400px',
+                            $carIndex < 4
+                                ? ['loading' => 'eager', 'fetchpriority' => 'high']
+                                : ['loading' => 'lazy']
+                        ); ?>
                     </div>
                     <div class="dc-car-details">
                         <span class="dc-car-title"><?php echo h($car['brand'] . ' ' . $car['model']); ?></span>

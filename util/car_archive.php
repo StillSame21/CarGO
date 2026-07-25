@@ -1,22 +1,9 @@
 <?php
 
-function ensureCarArchiveColumn(mysqli $conn): void
-{
-    // DDL now handled by database/migrate.php
-}
-
 const CAR_TYPE_FALLBACK = ['Compact', 'Sedan', 'SUV', 'MPV', 'Luxury', 'Sports', 'Hatchback', 'Truck'];
 
 /**
- * Car types straight from the cars.car_type enum.
- *
- * The admin form and the customer filter used to each carry their own
- * hardcoded list, and both had drifted from the schema — editing a car whose
- * type was missing from the list silently rewrote it to the first option.
- * Reading the enum keeps every caller in step with the database.
- *
- * Mirrors bookingStatusValues() in admin/dashboard.php.
- *
+ * Car types straight from the cars.car_type enum, so admin form and customer filter never drift from the schema.
  * @return array<int, string>
  */
 function carTypeValues(mysqli $conn): array
@@ -55,10 +42,7 @@ function carTypeValues(mysqli $conn): array
 }
 
 /**
- * Options for a car-type select, keeping the car's own value selectable even
- * when it is no longer offered — otherwise the browser falls back to the first
- * option and a silent save corrupts the row.
- *
+ * Options for a car-type select, keeping the car's own value selectable even when no longer offered.
  * @param array<int, string> $types
  * @return array<int, string>
  */

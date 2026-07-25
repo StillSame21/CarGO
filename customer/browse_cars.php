@@ -18,7 +18,6 @@ $carTypes = CAR_TYPE_FALLBACK;
 
 try {
     $conn = getDbConnection();
-    ensureCarArchiveColumn($conn);
     // Same source as the admin form, so a type can never be creatable but unfilterable.
     $carTypes = carTypeValues($conn);
     $result = $conn->query(
@@ -118,7 +117,7 @@ include 'header.php';
 
         <form action="compare.php" method="get" id="compare-form">
             <section class="dc-grid-3" id="car-grid">
-            <?php foreach ($cars as $car): ?>
+            <?php foreach ($cars as $carIndex => $car): ?>
                 <article class="car-card" style="position: relative;"
                     data-brand="<?php echo h(strtolower($car['brand'])); ?>"
                     data-model="<?php echo h(strtolower($car['model'])); ?>"
@@ -130,11 +129,18 @@ include 'header.php';
                     <div style="position: absolute; top: 12px; right: 12px; z-index: 10;">
                         <input type="checkbox" name="ids[]" value="<?php echo h($car['id']); ?>" class="compare-checkbox" style="width: 20px; height: 20px; cursor:pointer;">
                     </div>
-                    
+
                     <a href="car_detail.php?id=<?php echo h($car['id']); ?>" class="dc-car-card" style="text-decoration:none; color:inherit;">
                         <div class="dc-car-img-wrap">
                             <span class="dc-car-tag"><?php echo h($car['car_type']); ?></span>
-                            <img src="<?php echo h(carImageUrl($car['image'], 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=700&q=80')); ?>" alt="<?php echo h($car['brand'] . ' ' . $car['model']); ?>">
+                            <?php echo carImageTag(
+                                $car['image'],
+                                $car['brand'] . ' ' . $car['model'],
+                                '(max-width: 700px) 100vw, 400px',
+                                $carIndex < 4
+                                    ? ['loading' => 'eager', 'fetchpriority' => 'high']
+                                    : ['loading' => 'lazy']
+                            ); ?>
                         </div>
                         <div class="dc-car-details">
                             <span class="dc-car-title"><?php echo h($car['brand'] . ' ' . $car['model']); ?></span>
