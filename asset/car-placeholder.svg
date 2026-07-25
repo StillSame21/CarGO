@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 250" role="img" aria-label="No car photo available">
+    <rect width="400" height="250" fill="#f0f2f8"/>
+    <g fill="none" stroke="#c7cde0" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M70 165 L90 120 Q100 105 120 105 L280 105 Q300 105 310 120 L330 165" />
+        <path d="M55 165 H345 Q350 165 350 172 V190 Q350 197 343 197 H57 Q50 197 50 190 V172 Q50 165 55 165 Z" />
+        <path d="M120 105 L135 135 H265 L280 105" />
+    </g>
+    <circle cx="115" cy="197" r="18" fill="#e7eaf2" stroke="#c7cde0" stroke-width="6"/>
+    <circle cx="285" cy="197" r="18" fill="#e7eaf2" stroke="#c7cde0" stroke-width="6"/>
+</svg>
