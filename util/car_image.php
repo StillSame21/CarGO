@@ -5,7 +5,7 @@ const CAR_IMAGE_MAX_DIMENSION = 1600;
 const CAR_IMAGE_JPEG_QUALITY = 82;
 const CAR_IMAGE_WEBP_QUALITY = 82;
 
-// Small-width siblings (e.g. car/<id>-civic-400.jpg) so grid/thumb views skip the 1600px original.
+// Small-width siblings (e.g. car/400/<id>-civic.jpg) so grid/thumb views skip the 1600px original.
 const CAR_IMAGE_DERIVATIVE_WIDTHS = [400, 800];
 
 // Conservative ceiling for shared hosting; above this, skip GD and reject the upload outright.
@@ -292,6 +292,15 @@ function writeCarImageDerivativeFile(string $imagePath, $image, ?int $targetWidt
     $relativePath = carImageDerivativePath($imagePath, $targetWidth, $extension);
     $diskPath = dirname(__DIR__) . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $relativePath);
 
+    $diskDir = dirname($diskPath);
+    if (!is_dir($diskDir) && !mkdir($diskDir, 0775, true) && !is_dir($diskDir)) {
+        if ($ownsDerivative) {
+            imagedestroy($derivative);
+        }
+
+        return;
+    }
+
     if ($extension === 'webp') {
         @imagewebp($derivative, $diskPath, CAR_IMAGE_WEBP_QUALITY);
     } else {
@@ -320,8 +329,10 @@ function flattenCarImageForJpeg($image)
 }
 
 /**
- * Naming scheme for derivative siblings, e.g. 'car/abcd-civic.jpg' + 400 + 'webp' -> 'car/abcd-civic-400.webp'.
- * Single source of truth, shared by the writer here and the reader in car_display.php.
+ * Naming scheme for derivative siblings, e.g. 'car/abcd-civic.jpg' + 400 + 'webp' -> 'car/400/abcd-civic.webp'.
+ * Width-suffixed derivatives live in a width subfolder; the full-size webp (width === null) is a
+ * same-directory sibling of the original. Single source of truth, shared by the writer here and
+ * the reader in car_display.php.
  */
 function carImageDerivativePath(string $imagePath, ?int $width, string $extension): string
 {
@@ -331,9 +342,12 @@ function carImageDerivativePath(string $imagePath, ?int $width, string $extensio
 
     $directory = dirname($imagePath);
     $baseName = pathinfo($imagePath, PATHINFO_FILENAME);
-    $suffix = $width !== null ? '-' . $width : '';
 
-    return $directory . '/' . $baseName . $suffix . '.' . $extension;
+    if ($width !== null) {
+        return $directory . '/' . $width . '/' . $baseName . '.' . $extension;
+    }
+
+    return $directory . '/' . $baseName . '.' . $extension;
 }
 
 /**

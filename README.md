@@ -116,9 +116,11 @@ The live site runs on [InfinityFree](https://infinityfree.net) shared hosting.
 
 - Run `php test.php` (or `vendor/bin/phpunit`, `vendor/bin/phpstan analyze --level=4`,
   `vendor/bin/phpcs --standard=PSR12`) before committing changes to `util/` or `includes/`.
-- `car/` holds both the uploaded originals and their generated `-400`/`-800` JPEG+WebP
-  derivatives; `scripts/optimize_existing_car_images.php` is a one-time CLI backfill for
-  images that predate the derivative pipeline — safe to re-run.
+- `car/` holds the uploaded originals (plus a full-size WebP sibling); their generated JPEG+WebP
+  derivatives live in `car/400/` and `car/800/` width subfolders. `scripts/optimize_existing_car_images.php`
+  is a one-time CLI backfill for images that predate the derivative pipeline — safe to re-run.
+  `scripts/reorganize_car_image_folders.php` was a one-time migration that moved pre-existing
+  `car/<name>-400.*`/`car/<name>-800.*` files into those subfolders.
 - `database/migrate.php` is idempotent and tracks what's already applied in `migrations_log`;
   run it again after pulling changes that add a new `.sql` file under `database/`.
 - Add screenshots or database diagrams to the Preview section when preparing the final report.

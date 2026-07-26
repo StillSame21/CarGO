@@ -22,9 +22,15 @@ class CarImageTest extends TestCase
         $this->createdFiles = [];
     }
 
+    // $relativePath is 'car/...' - resolved relative to CAR_DIR (e.g. 'car/400/x.jpg' creates
+    // the real car/400/ subfolder, which already exists on disk so nothing is cleaned up).
     private function touchFixture(string $relativePath): void
     {
-        $diskPath = self::CAR_DIR . '/' . basename($relativePath);
+        $diskPath = self::CAR_DIR . '/' . substr($relativePath, strlen('car/'));
+        $dir = dirname($diskPath);
+        if (!is_dir($dir)) {
+            mkdir($dir, 0775, true);
+        }
         file_put_contents($diskPath, 'fixture');
         $this->createdFiles[] = $diskPath;
     }
@@ -34,7 +40,7 @@ class CarImageTest extends TestCase
     public function testDerivativePathWithWidth(): void
     {
         $this->assertSame(
-            'car/abc123-civic-400.webp',
+            'car/400/abc123-civic.webp',
             carImageDerivativePath('car/abc123-civic.jpg', 400, 'webp')
         );
     }
@@ -70,8 +76,8 @@ class CarImageTest extends TestCase
             $this->touchFixture("car/{$base}.{$ext}");
         }
         foreach (CAR_IMAGE_DERIVATIVE_WIDTHS as $width) {
-            $this->touchFixture("car/{$base}-{$width}.jpg");
-            $this->touchFixture("car/{$base}-{$width}.webp");
+            $this->touchFixture("car/{$width}/{$base}.jpg");
+            $this->touchFixture("car/{$width}/{$base}.webp");
         }
 
         deleteCarImageFile($imagePath);
@@ -122,18 +128,34 @@ class CarImageTest extends TestCase
     {
         $base = 'hasderiv-' . uniqid();
         $this->touchFixture("car/{$base}.jpg");
-        $this->touchFixture("car/{$base}-400.jpg");
-        $this->touchFixture("car/{$base}-400.webp");
+        $this->touchFixture("car/400/{$base}.jpg");
+        $this->touchFixture("car/400/{$base}.webp");
 
         $html = carImageTag("car/{$base}.jpg", 'Test Car', '(max-width: 700px) 100vw, 400px');
 
         $this->assertStringContainsString('<picture>', $html);
         $this->assertStringContainsString('type="image/webp"', $html);
-        $this->assertStringContainsString("{$base}-400.webp 400w", $html);
+        $this->assertStringContainsString("400/{$base}.webp 400w", $html);
         $this->assertStringContainsString('type="image/jpeg"', $html);
-        $this->assertStringContainsString("{$base}-400.jpg 400w", $html);
+        $this->assertStringContainsString("400/{$base}.jpg 400w", $html);
         // Full-size original is always the <img> fallback, srcset or not.
         $this->assertStringContainsString("{$base}.jpg", $html);
+    }
+
+    public function testTagIncludesFullSizeWebpSourceFromCarRoot(): void
+    {
+        $base = 'fullwebp-' . uniqid();
+        $this->touchFixture("car/{$base}.jpg");
+        $this->touchFixture("car/{$base}.webp");
+
+        $html = carImageTag("car/{$base}.jpg", 'Test Car', '800px');
+
+        $this->assertStringContainsString('<picture>', $html);
+        $this->assertStringContainsString('type="image/webp"', $html);
+        $this->assertStringContainsString("{$base}.webp " . CAR_IMAGE_MAX_DIMENSION . 'w', $html);
+        // Full-size webp is a car/ root sibling, not inside a width subfolder.
+        $this->assertStringNotContainsString("400/{$base}.webp", $html);
+        $this->assertStringNotContainsString("800/{$base}.webp", $html);
     }
 
     public function testTagEscapesAltAndPath(): void
