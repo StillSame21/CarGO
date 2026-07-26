@@ -115,6 +115,8 @@ if (!$bookingId || $customerId <= 0) {
 
                 // Charge the stored payments.amount (exactly what's outstanding), never a
                 // recomputed rental+fee total — that would re-bill the already-paid rental.
+                // markBookingPaymentPaid() itself records the cumulative settled total, not
+                // this charge amount, so a late-fee-only charge still settles the booking.
                 $amountToCharge = isset($existingPayment['amount'])
                     ? (float) $existingPayment['amount']
                     : (float) $booking['total_amount'];

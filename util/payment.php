@@ -63,7 +63,34 @@ function loadPaymentByBookingId(mysqli $conn, int $bookingId): ?array
     return $payment ?: null;
 }
 
-function markBookingPaymentPaid(mysqli $conn, int $bookingId, float $amount, string $paymentMethod): void
+/**
+ * The cumulative figure a fully-settled booking must record: rental plus every late fee.
+ * Settlement checks and revenue reporting both compare payments.amount against this, so a
+ * paid row has to store it rather than whichever slice of it the final payment charged.
+ */
+function bookingSettlementTotal(mysqli $conn, int $bookingId): float
+{
+    $stmt = $conn->prepare('SELECT total_amount FROM bookings WHERE id = ?');
+    $stmt->bind_param('i', $bookingId);
+    $stmt->execute();
+    $booking = $stmt->get_result()->fetch_assoc();
+
+    if (!$booking) {
+        throw new InvalidArgumentException('Booking not found.');
+    }
+
+    $lateFees = loadLateFeeSummary($conn, $bookingId);
+
+    return buildPaymentBreakdown((float) $booking['total_amount'], $lateFees['total_late_fee'])['payable_total'];
+}
+
+/**
+ * Charges $chargeAmount (whatever is currently outstanding - the full rental at checkout, or
+ * just a late fee on a later settlement) but always stores the cumulative settlement total in
+ * payments.amount, per the contract above. Storing the raw charge instead would leave a
+ * late-fee-only payment looking, to every other query, like the rental was never paid.
+ */
+function markBookingPaymentPaid(mysqli $conn, int $bookingId, float $chargeAmount, string $paymentMethod): void
 {
     if (!in_array($paymentMethod, PAYMENT_METHODS, true)) {
         throw new InvalidArgumentException('Please choose a valid payment method.');
@@ -72,13 +99,14 @@ function markBookingPaymentPaid(mysqli $conn, int $bookingId, float $amount, str
     if (in_array($paymentMethod, PAYMENT_GATEWAY_METHODS, true)) {
         require_once __DIR__ . '/../includes/stripe_stub.php';
         $stripe = new StripeClientStub();
-        $charge = $stripe->createCharge($amount, 'usd', 'tok_visa', "Payment for booking $bookingId");
+        $charge = $stripe->createCharge($chargeAmount, 'usd', 'tok_visa', "Payment for booking $bookingId");
         if ($charge['status'] !== 'succeeded') {
             throw new RuntimeException('Online payment failed.');
         }
     }
 
     $paidStatus = PAYMENT_STATUS_PAID;
+    $settledAmount = bookingSettlementTotal($conn, $bookingId);
 
     $stmt = $conn->prepare(
         'INSERT INTO payments (booking_id, amount, payment_method, payment_status, payment_date)
@@ -89,7 +117,7 @@ function markBookingPaymentPaid(mysqli $conn, int $bookingId, float $amount, str
             payment_status = VALUES(payment_status),
             payment_date = VALUES(payment_date)'
     );
-    $stmt->bind_param('idss', $bookingId, $amount, $paymentMethod, $paidStatus);
+    $stmt->bind_param('idss', $bookingId, $settledAmount, $paymentMethod, $paidStatus);
     $stmt->execute();
 }
 

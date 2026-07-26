@@ -24,7 +24,8 @@ try {
         'addons.sql',
         'maintenance.sql',
         'ensure_payment_methods.sql',
-        'ensure_booking_addons.sql'
+        'ensure_booking_addons.sql',
+        'ensure_payment_settlement_amount.sql'
     ];
 
     foreach ($migrations as $migration) {
