@@ -27,7 +27,8 @@ $nl = $isCli ? "\n" : "<br>\n";
 $moved = 0;
 $skipped = 0;
 
-$candidates = glob($carDir . DIRECTORY_SEPARATOR . '*-{' . implode(',', CAR_IMAGE_DERIVATIVE_WIDTHS) . '}.{jpg,webp}', GLOB_BRACE);
+$widthGlob = implode(',', CAR_IMAGE_DERIVATIVE_WIDTHS);
+$candidates = glob($carDir . DIRECTORY_SEPARATOR . "*-{{$widthGlob}}.{jpg,webp}", GLOB_BRACE);
 
 foreach ($candidates as $filePath) {
     $filename = basename($filePath);
