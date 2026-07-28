@@ -28,7 +28,14 @@ Before you start, make sure you have the following installed on your computer:
    docker-compose exec app php database/migrate.php
    ```
 
-5. **Open the App:**
+5. **Optional: Load Demo Data:**
+   To browse a full demo fleet and booking history instead of the 2 starter cars, run:
+   ```bash
+   docker-compose exec app sh -c 'mysql -h db -u cargo_user -pcargo_secure_password cargo_rental < database/seed_cars.sql'
+   docker-compose exec app sh -c 'mysql -h db -u cargo_user -pcargo_secure_password cargo_rental < database/seed_bookings.sql'
+   ```
+
+6. **Open the App:**
    Open your favorite web browser (Chrome, Firefox, Safari) and go to:
    **[http://localhost:8888](http://localhost:8888)**
 

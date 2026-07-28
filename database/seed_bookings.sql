@@ -1,16 +1,12 @@
 -- database/seed_bookings.sql
 --
 -- Seeds 20 demo bookings (ids 3-22) spread across customers 2-6, covering every
--- booking_status / late-fee / add-on / payment shape the app renders.
+-- booking_status / late-fee / add-on / payment shape the app renders. Car ids
+-- referenced go up to 16, so apply database/seed_cars.sql first.
 -- Not part of migrate.php's auto-run list (that list is schema-only) -- apply by hand:
 --   mysql -u <user> -p <db> < database/seed_bookings.sql
 -- Safe to re-run: the cleanup block below removes ids 3-22 (and their child rows)
 -- before re-inserting, so row counts stay stable across repeat runs.
-
--- ensure_cancelled_booking_status.sql / ensure_completed_booking_status.sql both drop
--- 'ongoing' from this enum; re-widen it so the ongoing rows below can insert.
-ALTER TABLE bookings MODIFY booking_status
-  ENUM('pending','approved','rejected','ongoing','cancelled','completed') NOT NULL DEFAULT 'pending';
 
 -- --------------------------------------------------------
 -- Idempotent cleanup (children first: late_fees/payments only cascade on UPDATE, not DELETE)

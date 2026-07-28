@@ -8,14 +8,6 @@ requireAdminLogin();
 
 $conn = getDbConnection();
 
-// Ensure damage_reports table exists
-$conn->query("CREATE TABLE IF NOT EXISTS damage_reports (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    car_id INT NOT NULL,
-    description TEXT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-)");
-
 $message = "";
 $error = "";
 

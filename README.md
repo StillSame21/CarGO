@@ -48,7 +48,7 @@ CarGO/
 ├── car/                # Uploaded car images and generated WebP/JPEG derivatives
 ├── css/                # Admin and customer page styles
 ├── customer/           # Customer pages and customer auth helpers
-├── database/           # migrate.php runner and its .sql migration files
+├── database/           # schema.sql (full schema, idempotent), migrate.php runner, seed files
 ├── includes/           # Shared security, session, and layout helpers
 ├── js/                 # Browse/booking filter UI scripts
 ├── scripts/            # One-time CLI maintenance scripts (image backfill)
@@ -77,7 +77,12 @@ CarGO/
    ```bash
    docker-compose exec app php database/migrate.php
    ```
-5. Open your browser and navigate to `http://localhost:8888`.
+5. Optional: load demo cars and bookings:
+   ```bash
+   docker-compose exec app sh -c 'mysql -h db -u cargo_user -pcargo_secure_password cargo_rental < database/seed_cars.sql'
+   docker-compose exec app sh -c 'mysql -h db -u cargo_user -pcargo_secure_password cargo_rental < database/seed_bookings.sql'
+   ```
+6. Open your browser and navigate to `http://localhost:8888`.
 
 For more details, see [RUN_GUIDE.md](RUN_GUIDE.md).
 
@@ -86,8 +91,8 @@ For more details, see [RUN_GUIDE.md](RUN_GUIDE.md).
 The live site runs on [InfinityFree](https://infinityfree.net) shared hosting.
 
 1. Upload the project files to the account's `htdocs/` via FTP.
-2. Create the MySQL database from the InfinityFree control panel and run the migrations in
-   `database/` against it (`database/migrate.php` or the individual `.sql` files).
+2. Create the MySQL database from the InfinityFree control panel and run `database/schema.sql`
+   against it (via `database/migrate.php` or by importing the file directly through phpMyAdmin).
 3. Set DB credentials via `config.local.php` (see `db_connect.php`) rather than committing them.
 4. GD's WebP support and `.htaccess`'s `mod_expires`/`mod_headers`/`mod_deflate` rules depend on
    what the host has enabled; `util/car_image.php` falls back to a plain copy/no derivatives when
@@ -121,6 +126,7 @@ The live site runs on [InfinityFree](https://infinityfree.net) shared hosting.
   is a one-time CLI backfill for images that predate the derivative pipeline — safe to re-run.
   `scripts/reorganize_car_image_folders.php` was a one-time migration that moved pre-existing
   `car/<name>-400.*`/`car/<name>-800.*` files into those subfolders.
-- `database/migrate.php` is idempotent and tracks what's already applied in `migrations_log`;
-  run it again after pulling changes that add a new `.sql` file under `database/`.
+- `database/schema.sql` is the whole schema in one idempotent file; `database/migrate.php` just
+  applies it, so re-run it any time after pulling changes that touch `schema.sql`.
+  `database/seed_cars.sql` and `database/seed_bookings.sql` are demo data, applied by hand.
 - Add screenshots or database diagrams to the Preview section when preparing the final report.
