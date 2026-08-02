@@ -4,14 +4,7 @@ require_once __DIR__ . '/../util/car_archive.php';
 require_once __DIR__ . '/../util/car_display.php';
 require_once __DIR__ . '/../util/payment.php';
 require_once __DIR__ . '/../util/recommendation.php';
-
-if (!function_exists('h')) {
-    // HTML-escapes a value for safe output.
-    function h($value): string
-    {
-        return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
-    }
-}
+require_once __DIR__ . '/../util/html.php';
 
 $customerId = (int) ($_SESSION['customer_id'] ?? 0);
 $customerName = $_SESSION['customer_name'] ?? $_SESSION['user_email'] ?? 'Customer';
@@ -123,7 +116,7 @@ try {
 $activeTripCount = $bookingCounts['approved'] + $bookingCounts['ongoing'];
 $pendingCount = $bookingCounts['pending'];
 ?>
-<?php if ($dashboardError !== ''): ?>
+<?php if ($dashboardError !== '') : ?>
     <p class="cd-alert"><?php echo h($dashboardError); ?></p>
 <?php endif; ?>
 
@@ -153,9 +146,9 @@ $pendingCount = $bookingCounts['pending'];
     <div class="dc-card<?php echo $paymentDue ? ' cd-card-attention' : ''; ?>">
         <span class="dc-mono-subtitle small">Payment due</span>
         <span class="dc-stat-number">RM <?php echo h(number_format($paymentAttention['amount_due'], 2)); ?></span>
-        <?php if ($paymentDue): ?>
+        <?php if ($paymentDue) : ?>
             <a class="dc-stat-label cd-stat-action" href="my_payments.php">Settle <?php echo h($paymentAttention['count']); ?> booking<?php echo $paymentAttention['count'] === 1 ? '' : 's'; ?> &rarr;</a>
-        <?php else: ?>
+        <?php else : ?>
             <span class="dc-stat-label">You're all settled</span>
         <?php endif; ?>
     </div>
@@ -170,10 +163,10 @@ $pendingCount = $bookingCounts['pending'];
         <a href="my_bookings.php" class="cd-link">View all</a>
     </div>
     <div class="dc-list-container">
-        <?php if (count($recentBookings) === 0): ?>
+        <?php if (count($recentBookings) === 0) : ?>
             <p class="cd-empty">You don't have any recent bookings.</p>
-        <?php else: ?>
-            <?php foreach ($recentBookings as $rb): ?>
+        <?php else : ?>
+            <?php foreach ($recentBookings as $rb) : ?>
                 <a class="dc-list-item cd-booking-row" href="booking.php?id=<?php echo h($rb['id']); ?>">
                     <span class="cd-booking-car"><?php echo h($rb['brand'] . ' ' . $rb['model']); ?></span>
                     <span class="cd-booking-date"><?php echo h(date('M d, Y', strtotime($rb['pickup_date']))); ?></span>
@@ -196,10 +189,10 @@ $pendingCount = $bookingCounts['pending'];
         <a href="browse_cars.php" class="cd-link">View all</a>
     </div>
     <div class="dc-grid-3">
-        <?php if (count($availableCars) === 0): ?>
+        <?php if (count($availableCars) === 0) : ?>
             <p class="cd-empty" style="grid-column:1/-1;">No cars are available right now. Please check again later.</p>
-        <?php else: ?>
-            <?php foreach ($availableCars as $carIndex => $car): ?>
+        <?php else : ?>
+            <?php foreach ($availableCars as $carIndex => $car) : ?>
                 <a href="car_detail.php?id=<?php echo h($car['id']); ?>" class="dc-car-card">
                     <div class="dc-car-img-wrap">
                         <span class="dc-car-tag"><?php echo h($car['car_type']); ?></span>

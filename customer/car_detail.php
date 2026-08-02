@@ -6,12 +6,7 @@ require_once __DIR__ . '/../util/car_archive.php';
 require_once __DIR__ . '/../util/payment.php';
 require_once __DIR__ . '/../util/booking.php';
 require_once __DIR__ . '/../util/addon.php';
-
-// HTML-escapes a value for safe output.
-function h($value): string
-{
-    return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
-}
+require_once __DIR__ . '/../util/html.php';
 
 startSecureSession();
 requireCustomerLogin();
@@ -119,9 +114,9 @@ include 'header.php';
         </a>
     </div>
 
-    <?php if ($error !== ''): ?>
+    <?php if ($error !== '') : ?>
         <p class="message error" style="color: #c23a52; background: #fbeaed; padding: 12px; border-radius: 8px; font-weight: 600;"><?php echo h($error); ?></p>
-    <?php else: ?>
+    <?php else : ?>
         <section class="dc-grid-2-sidebar">
             <!-- Left Column: Details & Images -->
             <div style="display:flex; flex-direction:column; gap:24px;">
@@ -186,19 +181,19 @@ include 'header.php';
                         </div>
                     </div>
                     
-                    <?php if ($hasUnpaidLateFees): ?>
+                    <?php if ($hasUnpaidLateFees) : ?>
                         <p class="message error" style="color:#c23a52; background:#fbeaed; padding:12px 16px; border-radius:8px; font-weight:600; font-size:14px; margin-bottom:16px;">
                             Please settle your unpaid late fees in <a href="my_bookings.php" style="color:#c23a52; text-decoration:underline;">My Bookings</a> before booking another car.
                         </p>
                         <button type="button" class="dc-btn-primary" style="width:100%; justify-content:center; padding:14px; opacity:0.5; cursor:not-allowed;" disabled>Book Now</button>
-                    <?php else: ?>
+                    <?php else : ?>
                         <button type="button" id="book-now-toggle" class="dc-btn-primary" style="width:100%; justify-content:center; padding:14px;" aria-expanded="<?php echo $openBookingPanel ? 'true' : 'false'; ?>" aria-controls="booking-panel">
                             Book Now
                         </button>
                     <?php endif; ?>
                 </div>
 
-                <?php if (!$hasUnpaidLateFees): ?>
+                <?php if (!$hasUnpaidLateFees) : ?>
                 <div class="dc-card padded booking-panel<?php echo $openBookingPanel ? ' is-open' : ''; ?>" id="booking-panel">
                     <div class="dc-h2-title">
                         <div>
@@ -207,7 +202,7 @@ include 'header.php';
                         </div>
                     </div>
 
-                    <?php if ($checkoutError !== ''): ?>
+                    <?php if ($checkoutError !== '') : ?>
                         <p class="message error" style="color: #c23a52; background: #fbeaed; padding: 12px 16px; border-radius: 8px; font-weight: 600; margin-bottom:24px;"><?php echo h($checkoutError); ?></p>
                     <?php endif; ?>
 
@@ -242,10 +237,10 @@ include 'header.php';
                         <div class="checkout-section" id="step2" style="display:none;">
                             <h2 class="dc-h2" style="font-size:20px; margin-bottom:20px;">Enhance your trip</h2>
                             <div style="display:flex; flex-direction:column; gap:12px;">
-                                <?php if (count($checkoutAddons) === 0): ?>
+                                <?php if (count($checkoutAddons) === 0) : ?>
                                     <p style="font-size:14px; color:#9097a8;">No extras are available right now.</p>
-                                <?php else: ?>
-                                    <?php foreach ($checkoutAddons as $addon): ?>
+                                <?php else : ?>
+                                    <?php foreach ($checkoutAddons as $addon) : ?>
                                         <label style="display:flex; align-items:center; gap:12px; padding:16px; border:1px solid #e4e8f1; border-radius:8px; cursor:pointer;">
                                             <input
                                                 type="checkbox"
@@ -284,7 +279,7 @@ include 'header.php';
                             <label style="display:block; margin-bottom:24px;">
                                 <span style="display:block; margin-bottom:6px; font-size:13px; font-weight:600;">Payment Method</span>
                                 <select name="payment_method" class="dc-select" required style="width:100%;">
-                                    <?php foreach (PAYMENT_METHODS as $method): ?>
+                                    <?php foreach (PAYMENT_METHODS as $method) : ?>
                                         <option value="<?php echo h($method); ?>"><?php echo h($method); ?></option>
                                     <?php endforeach; ?>
                                 </select>
@@ -315,7 +310,7 @@ include 'header.php';
                         }
                     });
 
-                    <?php if ($openBookingPanel): ?>
+                    <?php if ($openBookingPanel) : ?>
                     panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
                     <?php endif; ?>
                 }

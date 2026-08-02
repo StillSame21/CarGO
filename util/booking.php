@@ -7,6 +7,16 @@ const BOOKING_NON_PAYABLE_STATUSES = ['cancelled', 'rejected'];
 const BOOKING_STATUS_ONGOING = 'ongoing';
 const BOOKING_STATUS_COMPLETED = 'completed';
 
+// Booking date as 'd M Y', or 'Not set' when empty.
+function formatBookingDate(?string $date): string
+{
+    if ($date === null || $date === '') {
+        return 'Not set';
+    }
+
+    return date('d M Y', strtotime($date));
+}
+
 // Error message for an invalid pickup/return pair, or null when the dates are bookable.
 function validateBookingDates(string $pickupDate, string $returnDate, ?string $today = null): ?string
 {
@@ -54,6 +64,47 @@ function bookingTotalDays(string $pickupDate, string $returnDate): int
 function bookingTotalAmount(int $totalDays, float $dailyRate): float
 {
     return round($totalDays * $dailyRate, 2);
+}
+
+// Full booking detail scoped to this customer, or null if it doesn't exist/belong to them.
+function loadCustomerBooking(mysqli $conn, int $bookingId, int $customerId): ?array
+{
+    $stmt = $conn->prepare(
+        'SELECT
+            b.id,
+            b.pickup_date,
+            b.return_date,
+            b.actual_return_date,
+            b.pickup_location,
+            b.total_days,
+            b.total_amount,
+            b.booking_status,
+            b.created_at,
+            c.name AS customer_name,
+            c.email AS customer_email,
+            c.phone AS customer_phone,
+            c.address AS customer_address,
+            car.brand,
+            car.model,
+            car.plate_number,
+            car.car_type,
+            car.transmission,
+            car.fuel_type,
+            car.seats,
+            car.daily_rate,
+            car.image
+         FROM bookings b
+         INNER JOIN customers c ON c.id = b.customer_id
+         INNER JOIN cars car ON car.id = b.car_id
+         WHERE b.id = ? AND b.customer_id = ?
+         LIMIT 1'
+    );
+    $stmt->bind_param('ii', $bookingId, $customerId);
+    $stmt->execute();
+
+    $booking = $stmt->get_result()->fetch_assoc();
+
+    return $booking ?: null;
 }
 
 // True if any blocking booking's date range overlaps [$pickupDate, $returnDate] for this car.

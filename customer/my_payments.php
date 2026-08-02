@@ -2,21 +2,7 @@
 require_once __DIR__ . '/includes/auth.php';
 require_once '../db_connect.php';
 require_once __DIR__ . '/../util/payment.php';
-
-// HTML-escapes a value for safe output.
-function h($value): string
-{
-    return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
-}
-
-// Human-readable date+time, or "N/A" when empty.
-function formatPaymentDate(?string $date): string
-{
-    if ($date === null || $date === '') {
-        return 'N/A';
-    }
-    return date('d M Y, h:i A', strtotime($date));
-}
+require_once __DIR__ . '/../util/html.php';
 
 startSecureSession();
 requireCustomerLogin();
@@ -66,14 +52,14 @@ include 'header.php';
         </div>
     </header>
 
-    <?php if ($error !== ''): ?>
+    <?php if ($error !== '') : ?>
         <p class="message error" style="color: #c23a52; background: #fbeaed; padding: 12px; border-radius: 8px; font-weight: 600;"><?php echo h($error); ?></p>
-    <?php elseif (count($payments) === 0): ?>
+    <?php elseif (count($payments) === 0) : ?>
         <div class="dc-card padded" style="text-align:center; padding: 60px 20px;">
             <h2 class="dc-h2">No payments found.</h2>
             <p class="dc-p" style="margin-top:12px;">You haven't made any payments yet.</p>
         </div>
-    <?php else: ?>
+    <?php else : ?>
         <div class="dc-card" style="overflow-x: auto;">
             <table style="width: 100%; border-collapse: collapse; text-align: left; min-width: 800px;">
                 <thead>
@@ -86,7 +72,7 @@ include 'header.php';
                     </tr>
                 </thead>
                 <tbody>
-                    <?php foreach ($payments as $payment): ?>
+                    <?php foreach ($payments as $payment) : ?>
                         <tr style="border-bottom: 1px solid #f1f3f9;">
                             <td style="padding: 16px 24px; color: #5b6273; font-size: 15px;">
                                 <?php echo h(formatPaymentDate($payment['payment_date'])); ?>
@@ -101,9 +87,9 @@ include 'header.php';
                                 <?php echo h(strtoupper($payment['payment_method'] ?? 'N/A')); ?>
                             </td>
                             <td style="padding: 16px 24px;">
-                                <?php if ($payment['payment_status'] === 'paid'): ?>
+                                <?php if ($payment['payment_status'] === 'paid') : ?>
                                     <span style="background: #e6f6f1; color: #0b7a5a; padding: 4px 10px; border-radius: 100px; font-size: 12px; font-weight: 600;">Paid</span>
-                                <?php else: ?>
+                                <?php else : ?>
                                     <span style="background: #fbeaed; color: #c23a52; padding: 4px 10px; border-radius: 100px; font-size: 12px; font-weight: 600;">Pending</span>
                                 <?php endif; ?>
                             </td>

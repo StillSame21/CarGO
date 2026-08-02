@@ -18,7 +18,9 @@
             "util/car_archive.php",
             "util/car_display.php",
             "util/booking.php",
-            "util/payment.php"
+            "util/payment.php",
+            "util/html.php",
+            "util/customer_profile.php"
         ]
     },
     "autoload-dev": {

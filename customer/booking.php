@@ -5,63 +5,7 @@ require_once __DIR__ . '/../util/booking.php';
 require_once __DIR__ . '/../util/car_display.php';
 require_once __DIR__ . '/../util/payment.php';
 require_once __DIR__ . '/../util/addon.php';
-
-// HTML-escapes a value for safe output.
-function h($value): string
-{
-    return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
-}
-
-// Human-readable date, or "Not set" when empty.
-function formatBookingDate(?string $date): string
-{
-    if ($date === null || $date === '') {
-        return 'Not set';
-    }
-
-    return date('d M Y', strtotime($date));
-}
-
-// Full booking detail scoped to this customer, or null if it doesn't exist/belong to them.
-function loadCustomerBooking(mysqli $conn, int $bookingId, int $customerId): ?array
-{
-    $stmt = $conn->prepare(
-        'SELECT
-            b.id,
-            b.pickup_date,
-            b.return_date,
-            b.actual_return_date,
-            b.pickup_location,
-            b.total_days,
-            b.total_amount,
-            b.booking_status,
-            b.created_at,
-            c.name AS customer_name,
-            c.email AS customer_email,
-            c.phone AS customer_phone,
-            c.address AS customer_address,
-            car.brand,
-            car.model,
-            car.plate_number,
-            car.car_type,
-            car.transmission,
-            car.fuel_type,
-            car.seats,
-            car.daily_rate,
-            car.image
-         FROM bookings b
-         INNER JOIN customers c ON c.id = b.customer_id
-         INNER JOIN cars car ON car.id = b.car_id
-         WHERE b.id = ? AND b.customer_id = ?
-         LIMIT 1'
-    );
-    $stmt->bind_param('ii', $bookingId, $customerId);
-    $stmt->execute();
-
-    $booking = $stmt->get_result()->fetch_assoc();
-
-    return $booking ?: null;
-}
+require_once __DIR__ . '/../util/html.php';
 
 startSecureSession();
 requireCustomerLogin();
@@ -186,9 +130,9 @@ include 'header.php';
         </a>
     </div>
 
-    <?php if ($error !== '' && !$booking): ?>
+    <?php if ($error !== '' && !$booking) : ?>
         <p class="message error" style="color: #c23a52; background: #fbeaed; padding: 12px; border-radius: 8px; font-weight: 600;"><?php echo h($error); ?></p>
-    <?php elseif ($booking): ?>
+    <?php elseif ($booking) : ?>
         <?php $bookingStatus = (string) $booking['booking_status']; ?>
         <?php $paymentStatus = $payment['payment_status'] ?? null; ?>
         <?php $displayStatus = bookingDisplayStatus($bookingStatus, $paymentStatus, $lateFeeSummary['total_late_fee']); ?>
@@ -198,10 +142,10 @@ include 'header.php';
         <?php $amountDue = calculatePaymentAmountDue($paymentStatus, isset($payment['amount']) ? (float) $payment['amount'] : null); ?>
         <?php $amountDue = $canPay ? $amountDue : 0.0; ?>
 
-        <?php if ($error !== ''): ?>
+        <?php if ($error !== '') : ?>
             <p class="message error" style="color: #c23a52; background: #fbeaed; padding: 12px; border-radius: 8px; font-weight: 600; margin-bottom:24px;"><?php echo h($error); ?></p>
         <?php endif; ?>
-        <?php if ($success !== ''): ?>
+        <?php if ($success !== '') : ?>
             <p class="message success" style="color: #0b7a5a; background: #e6f6f1; padding: 12px; border-radius: 8px; font-weight: 600; margin-bottom:24px;"><?php echo h($success); ?></p>
         <?php endif; ?>
 
@@ -306,7 +250,7 @@ include 'header.php';
                             <span style="color:#5b6273;">Rental Subtotal</span>
                             <span style="font-weight:600;">RM <?php echo h(number_format((float) $booking['daily_rate'] * (int) $booking['total_days'], 2)); ?></span>
                         </div>
-                        <?php foreach ($bookingAddons as $bookingAddon): ?>
+                        <?php foreach ($bookingAddons as $bookingAddon) : ?>
                             <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px;">
                                 <span style="color:#5b6273; min-width:0;">
                                     <?php echo h($bookingAddon['name']); ?>
@@ -319,7 +263,7 @@ include 'header.php';
                             <span style="color:#5b6273;">Payment Status</span>
                             <span style="font-weight:600;"><?php echo h($isPaid ? 'Paid' : 'Unpaid'); ?></span>
                         </div>
-                        <?php if ($isPaid): ?>
+                        <?php if ($isPaid) : ?>
                             <div style="display:flex; justify-content:space-between;">
                                 <span style="color:#5b6273;">Method</span>
                                 <span style="font-weight:600;"><?php echo h($payment['payment_method']); ?></span>
@@ -329,7 +273,7 @@ include 'header.php';
                                 <span style="font-weight:600;"><?php echo h(formatBookingDate($payment['payment_date'])); ?></span>
                             </div>
                         <?php endif; ?>
-                        <?php if ($lateFeeSummary['total_late_fee'] > 0): ?>
+                        <?php if ($lateFeeSummary['total_late_fee'] > 0) : ?>
                             <div style="display:flex; justify-content:space-between;">
                                 <span style="color:#5b6273;">Late Days</span>
                                 <span style="font-weight:600;"><?php echo h($lateFeeSummary['total_late_days']); ?></span>
@@ -342,7 +286,7 @@ include 'header.php';
                             <span style="font-weight:600;">Total Amount</span>
                             <strong style="font-size:20px; color:#131722;">RM <?php echo h(number_format($paymentBreakdown['payable_total'], 2)); ?></strong>
                         </div>
-                        <?php if ($amountDue > 0): ?>
+                        <?php if ($amountDue > 0) : ?>
                             <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px; padding-top:8px; border-top:1px solid #e4e8f1;">
                                 <span style="font-weight:600; color:#c23a52;">Amount Due</span>
                                 <strong style="font-size:18px; color:#c23a52;">RM <?php echo h(number_format($amountDue, 2)); ?></strong>
@@ -355,14 +299,14 @@ include 'header.php';
                             <?php echo $isPaid || !$canPay ? 'View Payment' : 'Pay Now'; ?>
                         </a>
 
-                        <?php if (canCancelBooking($bookingStatus) && !$isPaid): ?>
+                        <?php if (canCancelBooking($bookingStatus) && !$isPaid) : ?>
                             <form method="post" action="booking.php?id=<?php echo h($booking['id']); ?>" onsubmit="return confirm('Are you sure you want to cancel this booking? This action cannot be undone.');">
                                 <?php echo csrfInput(); ?>
                                 <input type="hidden" name="action" value="cancel">
                                 <input type="hidden" name="booking_id" value="<?php echo h($booking['id']); ?>">
                                 <button type="submit" class="dc-btn-secondary" style="width:100%; justify-content:center; color:#c23a52; border-color:#fbeaed; background:#fff;">Cancel Booking</button>
                             </form>
-                        <?php else: ?>
+                        <?php else : ?>
                             <button type="button" class="dc-btn-secondary" style="width:100%; justify-content:center; opacity:0.5; cursor:not-allowed;" disabled>Cancel Booking</button>
                         <?php endif; ?>
                     </div>
@@ -371,7 +315,7 @@ include 'header.php';
         </section>
 
 
-        <?php if ($showPaymentModal): ?>
+        <?php if ($showPaymentModal) : ?>
             <div style="position:fixed; inset:0; background:rgba(10,13,20,0.6); backdrop-filter:blur(4px); z-index:100; display:flex; align-items:center; justify-content:center; padding:20px;">
                 <div class="dc-card padded" style="width:100%; max-width:480px; position:relative; box-shadow:0 24px 48px rgba(0,0,0,0.2);">
                     <a href="booking.php?id=<?php echo h($booking['id']); ?>" style="position:absolute; top:20px; right:20px; color:#9097a8; text-decoration:none;">
@@ -399,7 +343,7 @@ include 'header.php';
                             <span style="color:#5b6273;">Rental subtotal</span>
                             <span style="font-weight:600;">RM <?php echo h(number_format($carSubtotal, 2)); ?></span>
                         </div>
-                        <?php foreach ($bookingAddons as $bookingAddon): ?>
+                        <?php foreach ($bookingAddons as $bookingAddon) : ?>
                             <div style="display:flex; justify-content:space-between;">
                                 <span style="color:#5b6273;"><?php echo h($bookingAddon['name']); ?></span>
                                 <span style="font-weight:600;">RM <?php echo h(number_format((float) $bookingAddon['unit_price'] * (int) $bookingAddon['days'], 2)); ?></span>
@@ -415,7 +359,7 @@ include 'header.php';
                         </div>
                     </div>
                     
-                    <?php if (!$isPaid && $canPay): ?>
+                    <?php if (!$isPaid && $canPay) : ?>
                         <form method="post" action="booking.php?id=<?php echo h($booking['id']); ?>&payment=1" style="background:#f9fafc; padding:20px; border-radius:12px; border:1px solid #e4e8f1;">
                             <?php echo csrfInput(); ?>
                             <input type="hidden" name="action" value="pay">
@@ -424,7 +368,7 @@ include 'header.php';
                             <label style="display:block; margin-bottom:16px;">
                                 <span style="display:block; margin-bottom:6px; font-size:13px; font-weight:600;">Payment Method</span>
                                 <select name="payment_method" class="dc-select" required style="width:100%; background:#fff;">
-                                    <?php foreach (PAYMENT_METHODS as $method): ?>
+                                    <?php foreach (PAYMENT_METHODS as $method) : ?>
                                         <option value="<?php echo h($method); ?>"><?php echo h($method); ?></option>
                                     <?php endforeach; ?>
                                 </select>
@@ -432,11 +376,11 @@ include 'header.php';
 
                             <button type="submit" class="dc-btn-primary" style="width:100%; justify-content:center; padding:12px;">Confirm Payment</button>
                         </form>
-                    <?php elseif (!$canPay): ?>
+                    <?php elseif (!$canPay) : ?>
                         <div style="padding:16px; background:#f9fafc; border-radius:8px; text-align:center; color:#5b6273; font-size:14px;">
                             Payment is not available for this booking.
                         </div>
-                    <?php else: ?>
+                    <?php else : ?>
                         <div style="padding:16px; background:#e6f6f1; border-radius:8px; text-align:center; color:#0b7a5a; font-size:14px; font-weight:600;">
                             This booking has already been paid.
                         </div>

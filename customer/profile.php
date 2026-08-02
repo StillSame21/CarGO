@@ -1,39 +1,8 @@
 <?php
 require_once __DIR__ . '/includes/auth.php';
 require_once '../db_connect.php';
-
-// HTML-escapes a value for safe output.
-function h($value): string
-{
-    return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
-}
-
-// Customer row for the profile form, or null when the id doesn't resolve.
-function loadCustomerProfile(mysqli $conn, int $customerId): ?array
-{
-    $stmt = $conn->prepare(
-        'SELECT id, name, email, phone, address, password
-         FROM customers
-         WHERE id = ?
-         LIMIT 1'
-    );
-    $stmt->bind_param('i', $customerId);
-    $stmt->execute();
-
-    $customer = $stmt->get_result()->fetch_assoc();
-
-    return $customer ?: null;
-}
-
-// True if another customer already uses this email.
-function customerProfileEmailExists(mysqli $conn, string $email, int $customerId): bool
-{
-    $stmt = $conn->prepare('SELECT id FROM customers WHERE email = ? AND id <> ? LIMIT 1');
-    $stmt->bind_param('si', $email, $customerId);
-    $stmt->execute();
-
-    return $stmt->get_result()->num_rows > 0;
-}
+require_once __DIR__ . '/../util/html.php';
+require_once __DIR__ . '/../util/customer_profile.php';
 
 startSecureSession();
 requireCustomerLogin();
@@ -179,11 +148,11 @@ include 'header.php';
         <h2 class="dc-h2" style="font-size:20px; margin-bottom:8px;">Personal information</h2>
         <p class="dc-p" style="margin-bottom:24px; font-size:14px;">Update your account details and password.</p>
 
-        <?php if ($error !== ''): ?>
+        <?php if ($error !== '') : ?>
             <p class="message error" style="color: #c23a52; background: #fbeaed; padding: 12px; border-radius: 8px; font-weight: 600; margin-bottom:24px;"><?php echo h($error); ?></p>
         <?php endif; ?>
 
-        <?php if ($success !== ''): ?>
+        <?php if ($success !== '') : ?>
             <p class="message success" style="color: #0b7a5a; background: #e6f6f1; padding: 12px; border-radius: 8px; font-weight: 600; margin-bottom:24px;"><?php echo h($success); ?></p>
         <?php endif; ?>
 

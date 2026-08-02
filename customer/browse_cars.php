@@ -3,12 +3,7 @@ require_once __DIR__ . '/includes/auth.php';
 require_once '../db_connect.php';
 require_once __DIR__ . '/../util/car_display.php';
 require_once __DIR__ . '/../util/car_archive.php';
-
-// HTML-escapes a value for safe output.
-function h($value): string
-{
-    return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
-}
+require_once __DIR__ . '/../util/html.php';
 
 startSecureSession();
 requireCustomerLogin();
@@ -43,14 +38,14 @@ include 'header.php';
         </div>
     </header>
 
-    <?php if ($error !== ''): ?>
+    <?php if ($error !== '') : ?>
         <p class="message error" style="color: #c23a52; background: #fbeaed; padding: 12px; border-radius: 8px; font-weight: 600;"><?php echo h($error); ?></p>
-    <?php elseif (count($cars) === 0): ?>
+    <?php elseif (count($cars) === 0) : ?>
         <div class="dc-card padded" style="text-align:center; padding: 60px 20px;">
             <h2 class="dc-h2">No cars available right now.</h2>
             <p class="dc-p" style="margin-top:12px;">Please check again later for newly listed rental cars.</p>
         </div>
-    <?php else: ?>
+    <?php else : ?>
         <div class="browse-layout">
 
             <button type="button" class="browse-filter-toggle dc-btn-secondary" aria-expanded="false" aria-controls="browse-filters">Filter &amp; Sort</button>
@@ -70,7 +65,7 @@ include 'header.php';
                     <label style="display: block; font-size: 11px; font-weight: 700; margin-bottom: 8px; color: #5b6273; text-transform: uppercase; letter-spacing: 0.05em;">Vehicle Type</label>
                     <select id="filter-type" class="dc-select" style="width: 100%;">
                         <option value="">All Types</option>
-                        <?php foreach ($carTypes as $type): ?>
+                        <?php foreach ($carTypes as $type) : ?>
                             <option value="<?php echo h($type); ?>"><?php echo h($type); ?></option>
                         <?php endforeach; ?>
                     </select>
@@ -118,7 +113,7 @@ include 'header.php';
 
         <form action="compare.php" method="get" id="compare-form">
             <section class="dc-grid-3" id="car-grid">
-            <?php foreach ($cars as $carIndex => $car): ?>
+            <?php foreach ($cars as $carIndex => $car) : ?>
                 <article class="car-card" style="position: relative;"
                     data-brand="<?php echo h(strtolower($car['brand'])); ?>"
                     data-model="<?php echo h(strtolower($car['model'])); ?>"

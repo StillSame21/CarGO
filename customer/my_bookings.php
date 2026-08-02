@@ -3,22 +3,8 @@ require_once __DIR__ . '/includes/auth.php';
 require_once '../db_connect.php';
 require_once __DIR__ . '/../util/payment.php';
 require_once __DIR__ . '/../util/car_display.php';
-
-// HTML-escapes a value for safe output.
-function h($value): string
-{
-    return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
-}
-
-// Human-readable date, or "Not set" when empty.
-function formatBookingDate(?string $date): string
-{
-    if ($date === null || $date === '') {
-        return 'Not set';
-    }
-
-    return date('d M Y', strtotime($date));
-}
+require_once __DIR__ . '/../util/booking.php';
+require_once __DIR__ . '/../util/html.php';
 
 startSecureSession();
 requireCustomerLogin();
@@ -80,14 +66,14 @@ include 'header.php';
         </div>
     </header>
 
-    <?php if ($error !== ''): ?>
+    <?php if ($error !== '') : ?>
         <p class="message error" style="color: #c23a52; background: #fbeaed; padding: 12px; border-radius: 8px; font-weight: 600;"><?php echo h($error); ?></p>
-    <?php elseif (count($bookings) === 0): ?>
+    <?php elseif (count($bookings) === 0) : ?>
         <div class="dc-card padded" style="text-align:center; padding: 60px 20px;">
             <h2 class="dc-h2">No bookings yet.</h2>
             <p class="dc-p" style="margin-top:12px;">Check availability on a car to create your first booking.</p>
         </div>
-    <?php else: ?>
+    <?php else : ?>
         <div class="dc-card" style="padding: 16px;">
             <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
                 <input type="text" id="booking-search" class="dc-input" placeholder="Search car or booking ID..." style="flex:1; min-width:200px;">
@@ -113,7 +99,7 @@ include 'header.php';
         </div>
 
         <section id="booking-list" style="display: flex; flex-direction: column; gap: 16px; margin-top: 24px;">
-            <?php foreach ($bookings as $booking): ?>
+            <?php foreach ($bookings as $booking) : ?>
                 <?php $displayStatus = bookingDisplayStatus((string) $booking['booking_status'], $booking['payment_status'] ?? null, (float) $booking['total_late_fee']); ?>
                 <?php $paymentBreakdown = buildPaymentBreakdown((float) $booking['total_amount'], (float) $booking['total_late_fee']); ?>
                 <article class="dc-card booking-list-card" style="display: flex; flex-direction: row; align-items: center; justify-content: space-between; padding: 24px; border-radius: 8px; flex-wrap: wrap; gap: 24px;"

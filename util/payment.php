@@ -48,6 +48,16 @@ function calculatePaymentAmountDue(?string $paymentStatus, ?float $paidAmount): 
     return round(max(0, (float) $paidAmount), 2);
 }
 
+// Payment timestamp as 'd M Y, h:i A', or 'N/A' when empty.
+function formatPaymentDate(?string $date): string
+{
+    if ($date === null || $date === '') {
+        return 'N/A';
+    }
+
+    return date('d M Y, h:i A', strtotime($date));
+}
+
 // This booking's payment row, or null if none exists yet.
 function loadPaymentByBookingId(mysqli $conn, int $bookingId): ?array
 {
