@@ -16,11 +16,8 @@ RewriteRule ^(.*)$ https://%{HTTP_HOST}/$1 [R=301,L]
     </FilesMatch>
 </IfModule>
 
-# Car image filenames carry a random 16-hex prefix (see
-# util/car_image.php: buildCarImageFilename) and derivative widths are
-# baked into the filename, so a given URL's content never changes -
-# "immutable" lets the browser skip the revalidation request entirely,
-# not just shorten its TTL.
+# Car image filenames carry a random hex prefix (buildCarImageFilename), so a URL's content
+# never changes - "immutable" lets the browser skip revalidation, not just shorten its TTL.
 <IfModule mod_headers.c>
     <FilesMatch "\.(jpg|jpeg|png|gif|webp|svg)$">
         Header set Cache-Control "public, max-age=2592000, immutable"

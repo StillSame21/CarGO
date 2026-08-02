@@ -22,6 +22,7 @@ function carImageDecodeCeilingBytes(): int
     return CAR_IMAGE_DECODE_CEILING_BYTES;
 }
 
+// Validates an uploaded car photo, resizes/saves it, and returns its stored 'car/...' path.
 function processCarImageUpload(?array $file): string
 {
     if ($file === null || !isset($file['error']) || $file['error'] === UPLOAD_ERR_NO_FILE) {
@@ -193,6 +194,7 @@ function parsePhpIniBytes(string $value): int
 }
 
 /**
+ * Decodes an image file into a GD resource, picking the right imagecreatefrom* by mime type.
  * @return \GdImage|false
  */
 function loadCarImageResource(string $sourcePath, string $mimeType)
@@ -212,6 +214,7 @@ function loadCarImageResource(string $sourcePath, string $mimeType)
 }
 
 /**
+ * Encodes a GD resource to disk in its own format, picking the right imagejpeg/png/gif/webp call.
  * @param \GdImage $image
  */
 function writeCarImageResource($image, string $mimeType, string $destination): bool
@@ -258,6 +261,7 @@ function generateCarImageDerivatives(string $imagePath, $image, string $mimeType
 }
 
 /**
+ * Scales (if needed), flattens (if JPEG), and writes one derivative sibling file.
  * @param \GdImage $image
  */
 function writeCarImageDerivativeFile(string $imagePath, $image, ?int $targetWidth, string $extension): void
@@ -330,9 +334,7 @@ function flattenCarImageForJpeg($image)
 
 /**
  * Naming scheme for derivative siblings, e.g. 'car/abcd-civic.jpg' + 400 + 'webp' -> 'car/400/abcd-civic.webp'.
- * Width-suffixed derivatives live in a width subfolder; the full-size webp (width === null) is a
- * same-directory sibling of the original. Single source of truth, shared by the writer here and
- * the reader in car_display.php.
+ * Single source of truth, shared by the writer here and the reader in car_display.php.
  */
 function carImageDerivativePath(string $imagePath, ?int $width, string $extension): string
 {
@@ -367,6 +369,7 @@ function carImageAllDerivativeCandidates(string $imagePath): array
     return $candidates;
 }
 
+// Removes a car's original image and every derivative sibling from disk.
 function deleteCarImageFile(string $imagePath): void
 {
     if ($imagePath === '' || str_contains($imagePath, '..') || !str_starts_with($imagePath, 'car/')) {
@@ -391,6 +394,7 @@ function deleteCarImageFile(string $imagePath): void
     }
 }
 
+// Unique on-disk filename: random 8-byte prefix plus a slugified version of the original name.
 function buildCarImageFilename(string $originalName, string $extension): string
 {
     $baseName = pathinfo($originalName, PATHINFO_FILENAME);
@@ -408,6 +412,7 @@ function buildCarImageFilename(string $originalName, string $extension): string
     return $uniqueId . '-' . $baseName . '.' . $extension;
 }
 
+// User-facing message for a PHP upload error code.
 function getCarImageUploadErrorMessage(int $errorCode): string
 {
     if ($errorCode === UPLOAD_ERR_INI_SIZE || $errorCode === UPLOAD_ERR_FORM_SIZE) {

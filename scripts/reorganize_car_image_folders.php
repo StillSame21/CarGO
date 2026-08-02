@@ -2,10 +2,8 @@
 
 // phpcs:disable PSR1.Files.SideEffects -- CLI/browser one-shot script, not a declarations-only file.
 
-// One-time migration: move existing car/*-400.* and car/*-800.* derivative siblings into
-// car/400/ and car/800/ subfolders, matching the width-subfolder scheme carImageDerivativePath()
-// now writes going forward. Run: php scripts/reorganize_car_image_folders.php (or via browser
-// with ?confirm=1). Idempotent - safe to re-run.
+// One-time migration: move existing car/*-400.* / *-800.* derivative siblings into car/400/,
+// car/800/ subfolders. Run: php scripts/reorganize_car_image_folders.php. Idempotent.
 
 require_once __DIR__ . '/../util/car_image.php';
 
@@ -39,9 +37,8 @@ foreach ($candidates as $filePath) {
 
     [, $base, $width, $extension] = $m;
 
-    // Only relocate files that are genuinely <original>-<width>.<ext> derivatives - i.e. the
-    // stripped-suffix original actually exists. Guards against an uploaded slug that legitimately
-    // ends in "-400" (buildCarImageFilename() permits that) being mistaken for a derivative.
+    // Only relocate genuine <original>-<width>.<ext> derivatives - guards against an
+    // uploaded slug that legitimately ends in "-400" being mistaken for one.
     $originalExists = false;
     foreach (['jpg', 'jpeg', 'png', 'gif', 'webp'] as $originalExt) {
         if (is_file($carDir . DIRECTORY_SEPARATOR . $base . '.' . $originalExt)) {

@@ -3,6 +3,7 @@
 require_once __DIR__ . '/../../includes/security.php';
 require_once __DIR__ . '/../../db_connect.php';
 
+// Gate for every admin page: re-checks role/status against the DB and exits to login.php on failure.
 function requireAdminLogin(): void
 {
     if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
@@ -49,21 +50,25 @@ function requireAdminLogin(): void
     $_SESSION['admin_status'] = (string) $admin['status'];
 }
 
+// Role of the currently logged-in admin, or '' if none.
 function currentAdminRole(): string
 {
     return (string) ($_SESSION['admin_role'] ?? '');
 }
 
+// Status of the currently logged-in admin, or '' if none.
 function currentAdminStatus(): string
 {
     return (string) ($_SESSION['admin_status'] ?? '');
 }
 
+// True if the current session is an active super_admin.
 function isSuperAdmin(): bool
 {
     return currentAdminRole() === 'super_admin' && currentAdminStatus() === 'active';
 }
 
+// Gate for super-admin-only pages: renders an access-denied screen and exits for non-super-admins.
 function requireSuperAdmin(): void
 {
     requireAdminLogin();

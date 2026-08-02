@@ -3,11 +3,13 @@ require_once __DIR__ . '/includes/auth.php';
 require_once '../db_connect.php';
 require_once __DIR__ . '/../util/payment.php';
 
+// HTML-escapes a value for safe output.
 function h($value): string
 {
     return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
 }
 
+// Human-readable date+time, or "N/A" when empty.
 function formatPaymentDate(?string $date): string
 {
     if ($date === null || $date === '') {

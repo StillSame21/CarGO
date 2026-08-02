@@ -4,11 +4,13 @@ require_once '../db_connect.php';
 require_once __DIR__ . '/../util/payment.php';
 require_once __DIR__ . '/../util/car_display.php';
 
+// HTML-escapes a value for safe output.
 function h($value): string
 {
     return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
 }
 
+// Human-readable date, or "Not set" when empty.
 function formatBookingDate(?string $date): string
 {
     if ($date === null || $date === '') {

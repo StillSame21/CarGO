@@ -6,6 +6,7 @@ require_once __DIR__ . '/../util/payment.php';
 require_once __DIR__ . '/../util/recommendation.php';
 
 if (!function_exists('h')) {
+    // HTML-escapes a value for safe output.
     function h($value): string
     {
         return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');

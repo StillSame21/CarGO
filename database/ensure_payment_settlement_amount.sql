@@ -1,8 +1,5 @@
--- Backfills payments rows that were marked 'paid' while markBookingPaymentPaid() still stored
--- the raw charge amount instead of the cumulative settlement total (rental + late fees). Only
--- 'paid' rows that under-record are touched; 'unpaid' rows correctly keep outstanding-balance
--- semantics, and already-correct rows are left untouched since the app has no discount feature
--- that could legitimately put a paid row below its settled total.
+-- Backfills 'paid' rows that stored a raw charge amount instead of the cumulative
+-- settlement total (rental + late fees); 'unpaid' and already-correct rows are untouched.
 UPDATE payments p
 JOIN bookings b ON b.id = p.booking_id
 LEFT JOIN (
