@@ -7,6 +7,7 @@ const BOOKING_NON_PAYABLE_STATUSES = ['cancelled', 'rejected'];
 const BOOKING_STATUS_ONGOING = 'ongoing';
 const BOOKING_STATUS_COMPLETED = 'completed';
 
+// Error message for an invalid pickup/return pair, or null when the dates are bookable.
 function validateBookingDates(string $pickupDate, string $returnDate, ?string $today = null): ?string
 {
     $pickupDate = trim($pickupDate);
@@ -32,6 +33,7 @@ function validateBookingDates(string $pickupDate, string $returnDate, ?string $t
     return null;
 }
 
+// True if $date is a real calendar date in Y-m-d form.
 function isValidBookingDate(string $date): bool
 {
     $dateTime = DateTime::createFromFormat('Y-m-d', $date);
@@ -39,6 +41,7 @@ function isValidBookingDate(string $date): bool
     return $dateTime instanceof DateTime && $dateTime->format('Y-m-d') === $date;
 }
 
+// Inclusive day count between pickup and return (same day = 1 day).
 function bookingTotalDays(string $pickupDate, string $returnDate): int
 {
     $pickup = new DateTime($pickupDate);
@@ -47,6 +50,7 @@ function bookingTotalDays(string $pickupDate, string $returnDate): int
     return $pickup->diff($return)->days + 1;
 }
 
+// Rental subtotal before add-ons: days times the car's daily rate.
 function bookingTotalAmount(int $totalDays, float $dailyRate): float
 {
     return round($totalDays * $dailyRate, 2);
@@ -160,16 +164,19 @@ function createBookingWithPayment(
     return $newBookingId;
 }
 
+// True if a booking in this status can still be cancelled by the customer.
 function canCancelBooking(string $bookingStatus): bool
 {
     return in_array($bookingStatus, BOOKING_CANCELLABLE_STATUSES, true);
 }
 
+// True unless the booking was cancelled or rejected.
 function canPayBooking(string $bookingStatus): bool
 {
     return !in_array($bookingStatus, BOOKING_NON_PAYABLE_STATUSES, true);
 }
 
+// Days between expected and actual return; 0 if returned on time or the dates are invalid.
 function bookingLateDays(string $expectedReturnDate, string $actualReturnDate): int
 {
     if (!isValidBookingDate($expectedReturnDate) || !isValidBookingDate($actualReturnDate)) {
@@ -227,6 +234,7 @@ function confirmBookingPickup(mysqli $conn, int $bookingId, int $adminId): void
     }
 }
 
+// Marks an ongoing booking returned, frees the car, and records a late fee if overdue.
 function confirmBookingReturn(mysqli $conn, array $booking, int $adminId, string $actualReturnDate): array
 {
     if (!isValidBookingDate($actualReturnDate)) {

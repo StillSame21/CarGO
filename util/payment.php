@@ -22,6 +22,7 @@ const PAYMENT_GATEWAY_METHODS = [
 const PAYMENT_STATUS_UNPAID = 'unpaid';
 const PAYMENT_STATUS_PAID = 'paid';
 
+// Rental + late fees, each clamped to zero, plus the combined payable total.
 function buildPaymentBreakdown(float $rentalSubtotal, float $lateFeeTotal): array
 {
     $rentalSubtotal = round(max(0, $rentalSubtotal), 2);
@@ -47,6 +48,7 @@ function calculatePaymentAmountDue(?string $paymentStatus, ?float $paidAmount): 
     return round(max(0, (float) $paidAmount), 2);
 }
 
+// This booking's payment row, or null if none exists yet.
 function loadPaymentByBookingId(mysqli $conn, int $bookingId): ?array
 {
     $stmt = $conn->prepare(
@@ -65,8 +67,7 @@ function loadPaymentByBookingId(mysqli $conn, int $bookingId): ?array
 
 /**
  * The cumulative figure a fully-settled booking must record: rental plus every late fee.
- * Settlement checks and revenue reporting both compare payments.amount against this, so a
- * paid row has to store it rather than whichever slice of it the final payment charged.
+ * Settlement checks and revenue reporting both compare payments.amount against this.
  */
 function bookingSettlementTotal(mysqli $conn, int $bookingId): float
 {
@@ -85,10 +86,8 @@ function bookingSettlementTotal(mysqli $conn, int $bookingId): float
 }
 
 /**
- * Charges $chargeAmount (whatever is currently outstanding - the full rental at checkout, or
- * just a late fee on a later settlement) but always stores the cumulative settlement total in
- * payments.amount, per the contract above. Storing the raw charge instead would leave a
- * late-fee-only payment looking, to every other query, like the rental was never paid.
+ * Charges $chargeAmount (whatever is currently outstanding) but always stores the cumulative
+ * settlement total in payments.amount, per the contract on bookingSettlementTotal() above.
  */
 function markBookingPaymentPaid(mysqli $conn, int $bookingId, float $chargeAmount, string $paymentMethod): void
 {
@@ -121,6 +120,7 @@ function markBookingPaymentPaid(mysqli $conn, int $bookingId, float $chargeAmoun
     $stmt->execute();
 }
 
+// Records a newly-owed amount (a late fee) against a booking as unpaid.
 function markBookingPaymentUnpaid(mysqli $conn, int $bookingId, float $amount): void
 {
     $unpaidStatus = PAYMENT_STATUS_UNPAID;
@@ -138,6 +138,7 @@ function markBookingPaymentUnpaid(mysqli $conn, int $bookingId, float $amount): 
     $stmt->execute();
 }
 
+// Totals across every late fee charged on this booking.
 function loadLateFeeSummary(mysqli $conn, int $bookingId): array
 {
     $stmt = $conn->prepare(
@@ -160,6 +161,7 @@ function loadLateFeeSummary(mysqli $conn, int $bookingId): array
     ];
 }
 
+// Late fee for a given overrun: days late times the car's daily rate.
 function calculateLateFeeAmount(int $lateDays, float $dailyRate): float
 {
     return round(max(0, $lateDays) * $dailyRate, 2);

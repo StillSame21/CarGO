@@ -3,6 +3,7 @@
 // db_connect.php
 
 if (!function_exists('getDbConnection')) {
+    // Shared mysqli connection, credentials from config.local.php (if present) or env vars.
     function getDbConnection(): mysqli
     {
         static $conn = null;

@@ -7,6 +7,7 @@ require_once __DIR__ . '/../util/payment.php';
 require_once __DIR__ . '/../util/booking.php';
 require_once __DIR__ . '/../util/addon.php';
 
+// HTML-escapes a value for safe output.
 function h($value): string
 {
     return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');

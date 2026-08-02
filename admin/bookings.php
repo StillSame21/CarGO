@@ -9,11 +9,13 @@ require_once __DIR__ . '/includes/auth.php';
 
 startSecureSession();
 
+// HTML-escapes a value for safe output.
 function h($value): string
 {
     return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
 }
 
+// Human-readable date, or "Not set" when empty.
 function formatAdminDate(?string $date): string
 {
     if ($date === null || $date === '') {
@@ -43,6 +45,7 @@ function bindStatementParams(mysqli_stmt $stmt, string $types, array $params): v
     call_user_func_array([$stmt, 'bind_param'], $bindValues);
 }
 
+// True if $value is a real calendar date in Y-m-d form, for validating a date filter param.
 function isAdminDateFilter(string $value): bool
 {
     if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $value)) {
@@ -54,6 +57,7 @@ function isAdminDateFilter(string $value): bool
     return checkdate((int) $parts[1], (int) $parts[2], (int) $parts[0]);
 }
 
+// Valid booking_status values straight from the enum, so filters never drift from the schema.
 function adminBookingStatusValues(mysqli $conn): array
 {
     $stmt = $conn->prepare(
@@ -84,6 +88,7 @@ function adminBookingStatusValues(mysqli $conn): array
     return $statuses ?: ['pending', 'approved', 'rejected', 'ongoing'];
 }
 
+// Rebuild the list URL keeping search, filters and page intact.
 function bookingListUrl(array $state, array $overrides = []): string
 {
     $params = array_merge($state, $overrides);
@@ -99,6 +104,7 @@ function bookingListUrl(array $state, array $overrides = []): string
     return 'bookings.php' . ($query !== '' ? '?' . $query : '');
 }
 
+// Turns the submitted filter values into a WHERE clause plus its bound types/params.
 function buildAdminBookingFilters(array $filters): array
 {
     $where = [];
@@ -148,6 +154,7 @@ function buildAdminBookingFilters(array $filters): array
     ];
 }
 
+// One page of the filtered, sorted booking list with customer/car/payment details joined in.
 function loadAdminBookings(mysqli $conn, array $filters, string $sort, int $limit, int $offset): array
 {
     $sortOptions = [
@@ -195,6 +202,7 @@ function loadAdminBookings(mysqli $conn, array $filters, string $sort, int $limi
     return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 }
 
+// Total bookings matching the filters, for pagination.
 function countAdminBookings(mysqli $conn, array $filters): int
 {
     $filterSql = buildAdminBookingFilters($filters);
@@ -212,6 +220,7 @@ function countAdminBookings(mysqli $conn, array $filters): int
     return (int) ($row['total'] ?? 0);
 }
 
+// Full booking detail (customer, car, payment, late fees) for the detail view, or null if not found.
 function loadAdminBooking(mysqli $conn, int $bookingId): ?array
 {
     $stmt = $conn->prepare(
@@ -335,6 +344,7 @@ try {
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && $bookingId && $adminId > 0) {
         requireValidCsrfToken();
+        blockDemoWrite('bookings.php?id=' . $bookingId);
 
         $action = $_POST['action'] ?? '';
 

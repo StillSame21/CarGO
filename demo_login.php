@@ -3,13 +3,17 @@
 require_once __DIR__ . '/includes/security.php';
 require_once __DIR__ . '/db_connect.php';
 
+// Fixed, reserved accounts seeded by database/ensure_demo_accounts.sql --
+// never "first row in the table", which would leak a real account.
+const DEMO_CUSTOMER_EMAIL = 'demo.customer@cargo.demo';
+const DEMO_ADMIN_EMAIL = 'demo.admin@cargo.demo';
+
 startSecureSession();
 
 $type = ($_POST['type'] ?? '') === 'admin' ? 'admin' : 'customer';
 $redirect = $type === 'admin' ? 'admin/login.php' : 'customer/login.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
     header('Location: ' . $redirect);
     exit;
 }
@@ -17,7 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 try {
     requireValidCsrfToken();
 } catch (InvalidArgumentException $e) {
-    http_response_code(403);
+    $_SESSION['demo_error'] = 'Security token expired. Please refresh and try again.';
     header('Location: ' . $redirect);
     exit;
 }
@@ -26,14 +30,17 @@ try {
     $conn = getDbConnection();
 
     if ($type === 'admin') {
-        $result = $conn->query(
+        $stmt = $conn->prepare(
             "SELECT id, name, email, role, status FROM admins
-             WHERE role = 'super_admin' AND status = 'active'
-             ORDER BY id ASC LIMIT 1"
+             WHERE email = ? AND status = 'active' LIMIT 1"
         );
-        $admin = $result->fetch_assoc();
+        $email = DEMO_ADMIN_EMAIL;
+        $stmt->bind_param('s', $email);
+        $stmt->execute();
+        $admin = $stmt->get_result()->fetch_assoc();
 
         if (!$admin) {
+            $_SESSION['demo_error'] = 'Demo admin account is unavailable right now. Please try again later.';
             header('Location: ' . $redirect);
             exit;
         }
@@ -48,19 +55,23 @@ try {
         $_SESSION['admin_email'] = (string) $admin['email'];
         $_SESSION['admin_role'] = (string) $admin['role'];
         $_SESSION['admin_status'] = (string) $admin['status'];
+        $_SESSION['is_demo'] = true;
 
         header('Location: admin/dashboard.php');
         exit;
     }
 
-    $result = $conn->query(
+    $stmt = $conn->prepare(
         "SELECT id, name, email, status FROM customers
-         WHERE status = 'active'
-         ORDER BY id ASC LIMIT 1"
+         WHERE email = ? AND status = 'active' LIMIT 1"
     );
-    $customer = $result->fetch_assoc();
+    $email = DEMO_CUSTOMER_EMAIL;
+    $stmt->bind_param('s', $email);
+    $stmt->execute();
+    $customer = $stmt->get_result()->fetch_assoc();
 
     if (!$customer) {
+        $_SESSION['demo_error'] = 'Demo customer account is unavailable right now. Please try again later.';
         header('Location: ' . $redirect);
         exit;
     }
@@ -73,10 +84,12 @@ try {
     $_SESSION['customer_id'] = (int) $customer['id'];
     $_SESSION['customer_name'] = (string) $customer['name'];
     $_SESSION['user_email'] = (string) $customer['email'];
+    $_SESSION['is_demo'] = true;
 
     header('Location: customer/dashboard.php');
     exit;
 } catch (mysqli_sql_exception $e) {
+    $_SESSION['demo_error'] = 'Demo login failed. Please check the database connection and try again.';
     header('Location: ' . $redirect);
     exit;
 }

@@ -3,6 +3,7 @@
 // Optional extras a customer can attach to a booking. Prices are copied onto booking_addons
 // at purchase time, so a later addon price change never rewrites an existing booking's charge.
 
+// Every add-on offered at checkout, cheapest/oldest first.
 function loadAvailableAddons(mysqli $conn): array
 {
     $result = $conn->query('SELECT id, name, price, description FROM addons ORDER BY id ASC');
@@ -62,6 +63,7 @@ function saveBookingAddons(mysqli $conn, int $bookingId, array $selectedAddons, 
     }
 }
 
+// Add-ons attached to a booking, with each one's name for display.
 function loadBookingAddons(mysqli $conn, int $bookingId): array
 {
     $stmt = $conn->prepare(

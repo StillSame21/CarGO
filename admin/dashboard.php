@@ -5,11 +5,13 @@ require_once __DIR__ . '/includes/auth.php';
 
 startSecureSession();
 
+// HTML-escapes a value for safe output.
 function h($value): string
 {
     return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
 }
 
+// Human-readable date, or "Not set" when empty.
 function formatDashboardDate(?string $date): string
 {
     if ($date === null || $date === '') {
@@ -19,11 +21,13 @@ function formatDashboardDate(?string $date): string
     return date('d M Y', strtotime($date));
 }
 
+// CSS status-pill class for a status string.
 function dashboardStatusClass(string $status): string
 {
     return 'status-' . preg_replace('/[^a-z0-9-]/', '-', strtolower($status));
 }
 
+// True if $tableName exists in the current database.
 function tableExists(mysqli $conn, string $tableName): bool
 {
     $stmt = $conn->prepare(
@@ -39,6 +43,7 @@ function tableExists(mysqli $conn, string $tableName): bool
     return (bool) $stmt->get_result()->fetch_assoc();
 }
 
+// Valid booking_status values straight from the enum, so the dashboard never drifts from the schema.
 function bookingStatusValues(mysqli $conn): array
 {
     $stmt = $conn->prepare(
@@ -69,6 +74,7 @@ function bookingStatusValues(mysqli $conn): array
     return $statuses ?: ['pending', 'approved', 'rejected', 'ongoing'];
 }
 
+// Runs $sql and returns it as a [keyColumn => valueColumn] map.
 function fetchCountMap(mysqli $conn, string $sql, string $keyColumn, string $valueColumn): array
 {
     $result = $conn->query($sql);
@@ -81,6 +87,7 @@ function fetchCountMap(mysqli $conn, string $sql, string $keyColumn, string $val
     return $map;
 }
 
+// Fleet counts by status, split by archived/active.
 function loadDashboardCarStats(mysqli $conn): array
 {
     $result = $conn->query(
@@ -105,6 +112,7 @@ function loadDashboardCarStats(mysqli $conn): array
     ];
 }
 
+// Booking counts per status plus a total, zero-filled for statuses with no bookings.
 function loadDashboardBookingStats(mysqli $conn, array $bookingStatuses): array
 {
     $bookingStats = array_fill_keys($bookingStatuses, 0);
@@ -124,6 +132,7 @@ function loadDashboardBookingStats(mysqli $conn, array $bookingStatuses): array
     return $bookingStats;
 }
 
+// All-time paid revenue split into rental vs late-fee portions.
 function loadDashboardRevenue(mysqli $conn): array
 {
     if (!tableExists($conn, 'payments')) {
@@ -315,6 +324,7 @@ function sparklinePoints(array $series, float $width = 320.0, float $height = 56
     return implode(' ', $points);
 }
 
+// 5 most recently created bookings, with customer/car details joined in.
 function loadRecentDashboardBookings(mysqli $conn): array
 {
     $result = $conn->query(
@@ -340,6 +350,7 @@ function loadRecentDashboardBookings(mysqli $conn): array
     return $result->fetch_all(MYSQLI_ASSOC);
 }
 
+// 5 most recently registered customers.
 function loadRecentDashboardCustomers(mysqli $conn): array
 {
     $result = $conn->query(
@@ -352,6 +363,7 @@ function loadRecentDashboardCustomers(mysqli $conn): array
     return $result->fetch_all(MYSQLI_ASSOC);
 }
 
+// 5 most recently added, non-archived cars.
 function loadRecentDashboardCars(mysqli $conn): array
 {
     $result = $conn->query(

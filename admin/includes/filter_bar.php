@@ -1,10 +1,12 @@
 <?php
 
+// HTML-attribute-safe escape shared by every field this filter bar renders.
 function adminFilterBarEscape($value): string
 {
     return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
 }
 
+// Renders one labeled filter input or select from a field config array.
 function renderAdminFilterField(array $field): void
 {
     $type = (string) ($field['type'] ?? 'text');
@@ -38,6 +40,7 @@ function renderAdminFilterField(array $field): void
     <?php
 }
 
+// Renders a full search/filter form (inline fields, optional modal, optional search box) from config.
 function renderAdminFilterBar(array $config): void
 {
     $action = (string) ($config['action'] ?? '');

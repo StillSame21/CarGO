@@ -6,11 +6,13 @@ require_once __DIR__ . '/../util/car_display.php';
 require_once __DIR__ . '/../util/payment.php';
 require_once __DIR__ . '/../util/addon.php';
 
+// HTML-escapes a value for safe output.
 function h($value): string
 {
     return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
 }
 
+// Human-readable date, or "Not set" when empty.
 function formatBookingDate(?string $date): string
 {
     if ($date === null || $date === '') {
@@ -20,6 +22,7 @@ function formatBookingDate(?string $date): string
     return date('d M Y', strtotime($date));
 }
 
+// Full booking detail scoped to this customer, or null if it doesn't exist/belong to them.
 function loadCustomerBooking(mysqli $conn, int $bookingId, int $customerId): ?array
 {
     $stmt = $conn->prepare(
@@ -105,9 +108,8 @@ if (!$bookingId || $customerId <= 0) {
                     throw new InvalidArgumentException('This booking cannot be paid.');
                 }
 
-                // The UI hides "Pay Now" once a booking is paid, but that's client-only —
-                // without this, a replayed/duplicated POST (double-click, back+resubmit)
-                // would charge an already-paid booking again.
+                // Guards against a replayed/duplicated POST (double-click, back+resubmit)
+                // charging an already-paid booking again.
                 $existingPayment = loadPaymentByBookingId($conn, $bookingId);
                 if (($existingPayment['payment_status'] ?? null) === PAYMENT_STATUS_PAID) {
                     throw new InvalidArgumentException('This booking has already been paid.');
@@ -115,8 +117,6 @@ if (!$bookingId || $customerId <= 0) {
 
                 // Charge the stored payments.amount (exactly what's outstanding), never a
                 // recomputed rental+fee total — that would re-bill the already-paid rental.
-                // markBookingPaymentPaid() itself records the cumulative settled total, not
-                // this charge amount, so a late-fee-only charge still settles the booking.
                 $amountToCharge = isset($existingPayment['amount'])
                     ? (float) $existingPayment['amount']
                     : (float) $booking['total_amount'];

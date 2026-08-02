@@ -3,6 +3,7 @@
 require_once __DIR__ . '/../../includes/security.php';
 require_once __DIR__ . '/../../db_connect.php';
 
+// Gate for every customer page: re-checks account status against the DB and exits to login.php on failure.
 function requireCustomerLogin(): void
 {
     if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {

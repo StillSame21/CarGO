@@ -1,12 +1,7 @@
 -- database/seed_bookings.sql
 --
--- Seeds 20 demo bookings (ids 3-22) spread across customers 2-6, covering every
--- booking_status / late-fee / add-on / payment shape the app renders. Car ids
--- referenced go up to 16, so apply database/seed_cars.sql first.
--- Not part of migrate.php's auto-run list (that list is schema-only) -- apply by hand:
---   mysql -u <user> -p <db> < database/seed_bookings.sql
--- Safe to re-run: the cleanup block below removes ids 3-22 (and their child rows)
--- before re-inserting, so row counts stay stable across repeat runs.
+-- Seeds 20 demo bookings (ids 3-22) covering every status/fee/add-on/payment shape.
+-- Not auto-run by migrate.php -- apply by hand: mysql -u <user> -p <db> < this file.
 
 -- --------------------------------------------------------
 -- Idempotent cleanup (children first: late_fees/payments only cascade on UPDATE, not DELETE)
@@ -72,11 +67,7 @@ INSERT INTO `late_fees` (`booking_id`, `created_by_admin_id`, `late_days`, `late
 (21, 2, 2, 280.00,  '2026-07-12 17:00:00');  -- car 8 @ 140/day
 
 -- --------------------------------------------------------
--- payments
---   clean completed / approved -> amount = total_amount, paid
---   late fee unsettled         -> amount = late_fee_amount only, unpaid, payment_date NULL
---   late fee settled           -> amount = total_amount + late_fee_amount, paid
---   cancelled / rejected       -> no payment row
+-- payments (unsettled late fee -> amount = fee only, unpaid; settled -> total + fee, paid)
 -- --------------------------------------------------------
 INSERT INTO `payments` (`booking_id`, `updated_by_admin_id`, `amount`, `payment_method`, `payment_status`, `payment_date`, `created_at`) VALUES
 (3,  1,    600.00,  'Cash',           'paid',   '2026-05-04 09:15:00', '2026-05-02 09:10:05'),

@@ -2,11 +2,13 @@
 require_once __DIR__ . '/includes/auth.php';
 require_once '../db_connect.php';
 
+// HTML-escapes a value for safe output.
 function h($value): string
 {
     return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
 }
 
+// Customer row for the profile form, or null when the id doesn't resolve.
 function loadCustomerProfile(mysqli $conn, int $customerId): ?array
 {
     $stmt = $conn->prepare(
@@ -23,6 +25,7 @@ function loadCustomerProfile(mysqli $conn, int $customerId): ?array
     return $customer ?: null;
 }
 
+// True if another customer already uses this email.
 function customerProfileEmailExists(mysqli $conn, string $email, int $customerId): bool
 {
     $stmt = $conn->prepare('SELECT id FROM customers WHERE email = ? AND id <> ? LIMIT 1');
@@ -64,6 +67,7 @@ try {
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         requireValidCsrfToken();
+        blockDemoWrite('profile.php');
 
         $name = trim($_POST['name'] ?? '');
         $email = trim($_POST['email'] ?? '');

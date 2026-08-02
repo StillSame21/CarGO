@@ -7,6 +7,7 @@ require_once __DIR__ . '/car_image.php';
 // Placeholder for cars with no photo, relative to the project root.
 const CAR_IMAGE_PLACEHOLDER = 'asset/car-placeholder.svg';
 
+// Browser-facing URL for a car image: passes through external URLs, resolves local paths, falls back when empty.
 function carImageUrl(?string $imagePath, string $fallbackUrl): string
 {
     $imagePath = trim((string) $imagePath);
@@ -22,11 +23,13 @@ function carImageUrl(?string $imagePath, string $fallbackUrl): string
     return carImageRelativeUrl($imagePath);
 }
 
+// Project-root-relative image path rewritten for a page served one directory deep.
 function carImageRelativeUrl(string $imagePath): string
 {
     return '../' . ltrim($imagePath, '/');
 }
 
+// URL of the generic placeholder shown when a car has no photo.
 function carImagePlaceholderUrl(): string
 {
     return carImageRelativeUrl(CAR_IMAGE_PLACEHOLDER);
@@ -96,6 +99,7 @@ function carImageTag(?string $imagePath, string $alt, string $sizes, array $opts
     return '<picture>' . $sources . $imgTag . '</picture>';
 }
 
+// Builds the plain <img> fallback used when no derivative srcset is available.
 function carImageImgTag(
     string $src,
     string $alt,
@@ -130,6 +134,7 @@ function carImageImgTag(
     return $html . '>';
 }
 
+// True if a derivative file actually exists on disk for this relative path.
 function carImageDerivativeExists(string $relativePath): bool
 {
     $diskPath = dirname(__DIR__) . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $relativePath);
@@ -137,6 +142,7 @@ function carImageDerivativeExists(string $relativePath): bool
     return is_file($diskPath);
 }
 
+// HTML-attribute-safe escape shared by every tag built in this file.
 function carImageEscape(string $value): string
 {
     return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');

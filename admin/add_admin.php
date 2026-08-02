@@ -6,6 +6,7 @@ require_once __DIR__ . '/includes/filter_bar.php';
 
 startSecureSession();
 
+// HTML-escapes a value for safe output.
 function h($value): string
 {
     return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
@@ -32,21 +33,25 @@ function adminRoleLabel(string $role): string
     return ucwords(str_replace('_', ' ', $role));
 }
 
+// CSS role-badge class for an admin role.
 function adminRoleClass(string $role): string
 {
     return 'role-' . preg_replace('/[^a-z0-9_-]/', '-', strtolower($role));
 }
 
+// ' selected' attribute string when the two values match, else ''.
 function selectedIf($currentValue, $optionValue): string
 {
     return $currentValue === $optionValue ? ' selected' : '';
 }
 
+// CSS status-pill class for an admin status.
 function adminStatusClass(string $status): string
 {
     return 'status-' . preg_replace('/[^a-z0-9-]/', '-', strtolower($status));
 }
 
+// Human-readable date+time, or "Not set" when empty. Currently unused - see dead code report.
 function formatAdminManagementDate(?string $date): string
 {
     if ($date === null || $date === '') {
@@ -114,6 +119,7 @@ function loadAdmins(mysqli $conn, string $search, string $roleFilter, string $st
     ];
 }
 
+// Admin row for the edit form, or null when the id doesn't resolve.
 function loadAdminAccount(mysqli $conn, int $adminId): ?array
 {
     $stmt = $conn->prepare(
@@ -129,6 +135,7 @@ function loadAdminAccount(mysqli $conn, int $adminId): ?array
     return $admin ?: null;
 }
 
+// True if another admin already uses this email.
 function adminEmailExists(mysqli $conn, string $email, int $adminId = 0): bool
 {
     $stmt = $conn->prepare('SELECT id FROM admins WHERE email = ? AND id <> ? LIMIT 1');
@@ -138,6 +145,7 @@ function adminEmailExists(mysqli $conn, string $email, int $adminId = 0): bool
     return (bool) $stmt->get_result()->fetch_assoc();
 }
 
+// How many active super_admin accounts currently exist.
 function activeSuperAdminCount(mysqli $conn): int
 {
     $role = 'super_admin';
@@ -150,6 +158,7 @@ function activeSuperAdminCount(mysqli $conn): int
     return (int) ($row['total'] ?? 0);
 }
 
+// True if this edit would demote/deactivate the last active super_admin, locking everyone out.
 function wouldRemoveLastActiveSuperAdmin(mysqli $conn, array $admin, string $newRole, string $newStatus): bool
 {
     if (($admin['role'] ?? '') !== 'super_admin' || ($admin['status'] ?? '') !== 'active') {

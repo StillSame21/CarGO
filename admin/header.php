@@ -6,6 +6,7 @@ $adminDisplayName = $_SESSION['admin_name'] ?? $_SESSION['admin_email'] ?? 'Admi
 $avatarLetters = strtoupper(substr(preg_replace('/[^a-zA-Z]/', '', $adminDisplayName) . 'AA', 0, 2));
 $currentPage = basename($_SERVER['PHP_SELF']);
 ?>
+<?php include __DIR__ . '/../includes/demo_banner.php'; ?>
 <header class="dc-header">
     <div class="dc-header-inner">
         <a href="dashboard.php" class="dc-logo">
