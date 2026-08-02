@@ -6,281 +6,13 @@ require_once __DIR__ . '/../util/booking.php';
 require_once __DIR__ . '/../util/car_display.php';
 require_once __DIR__ . '/includes/filter_bar.php';
 require_once __DIR__ . '/includes/auth.php';
+// Query + view helpers live in declaration-only includes so this page stays side-effect-only (PSR-1 §2.3).
+require_once __DIR__ . '/../util/html.php';
+require_once __DIR__ . '/includes/format.php';
+require_once __DIR__ . '/includes/query.php';
+require_once __DIR__ . '/includes/booking_data.php';
 
 startSecureSession();
-
-// HTML-escapes a value for safe output.
-function h($value): string
-{
-    return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
-}
-
-// Human-readable date, or "Not set" when empty.
-function formatAdminDate(?string $date): string
-{
-    if ($date === null || $date === '') {
-        return 'Not set';
-    }
-
-    return date('d M Y', strtotime($date));
-}
-
-// bind_param() takes args by reference, so build a by-reference array before splatting it.
-function bindStatementParams(mysqli_stmt $stmt, string $types, array $params): void
-{
-    if ($types === '') {
-        return;
-    }
-
-    $refs = [];
-    foreach ($params as $key => $value) {
-        $refs[$key] = $value;
-    }
-
-    $bindValues = [$types];
-    foreach ($refs as $key => &$value) {
-        $bindValues[] = &$value;
-    }
-
-    call_user_func_array([$stmt, 'bind_param'], $bindValues);
-}
-
-// True if $value is a real calendar date in Y-m-d form, for validating a date filter param.
-function isAdminDateFilter(string $value): bool
-{
-    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $value)) {
-        return false;
-    }
-
-    $parts = explode('-', $value);
-
-    return checkdate((int) $parts[1], (int) $parts[2], (int) $parts[0]);
-}
-
-// Valid booking_status values straight from the enum, so filters never drift from the schema.
-function adminBookingStatusValues(mysqli $conn): array
-{
-    $stmt = $conn->prepare(
-        'SELECT COLUMN_TYPE
-         FROM INFORMATION_SCHEMA.COLUMNS
-         WHERE TABLE_SCHEMA = DATABASE()
-           AND TABLE_NAME = ?
-           AND COLUMN_NAME = ?
-         LIMIT 1'
-    );
-    $table = 'bookings';
-    $column = 'booking_status';
-    $stmt->bind_param('ss', $table, $column);
-    $stmt->execute();
-    $row = $stmt->get_result()->fetch_assoc();
-    $columnType = (string) ($row['COLUMN_TYPE'] ?? '');
-
-    if (!preg_match("/^enum\((.*)\)$/", $columnType, $matches)) {
-        return ['pending', 'approved', 'rejected', 'ongoing'];
-    }
-
-    preg_match_all("/'((?:[^'\\\\]|\\\\.)*)'/", $matches[1], $enumMatches);
-    $statuses = array_map(
-        static fn($value) => stripcslashes($value),
-        $enumMatches[1]
-    );
-
-    return $statuses ?: ['pending', 'approved', 'rejected', 'ongoing'];
-}
-
-// Rebuild the list URL keeping search, filters and page intact.
-function bookingListUrl(array $state, array $overrides = []): string
-{
-    $params = array_merge($state, $overrides);
-
-    foreach ($params as $key => $value) {
-        if ($value === '' || $value === null || ($key === 'page' && (int) $value <= 1)) {
-            unset($params[$key]);
-        }
-    }
-
-    $query = http_build_query($params);
-
-    return 'bookings.php' . ($query !== '' ? '?' . $query : '');
-}
-
-// Turns the submitted filter values into a WHERE clause plus its bound types/params.
-function buildAdminBookingFilters(array $filters): array
-{
-    $where = [];
-    $types = '';
-    $params = [];
-
-    if ($filters['q'] !== '') {
-        $searchTerm = '%' . $filters['q'] . '%';
-        $where[] = '(
-            CAST(b.id AS CHAR) LIKE ?
-            OR c.name LIKE ?
-            OR c.email LIKE ?
-            OR car.brand LIKE ?
-            OR car.model LIKE ?
-            OR car.plate_number LIKE ?
-            OR b.pickup_location LIKE ?
-        )';
-        $types .= 'sssssss';
-        array_push($params, $searchTerm, $searchTerm, $searchTerm, $searchTerm, $searchTerm, $searchTerm, $searchTerm);
-    }
-
-    if ($filters['status'] !== 'all') {
-        $where[] = 'b.booking_status = ?';
-        $types .= 's';
-        $params[] = $filters['status'];
-    }
-
-    foreach (
-        [
-        'pickup_from' => ['b.pickup_date >= ?', 's'],
-        'pickup_to' => ['b.pickup_date <= ?', 's'],
-        'return_from' => ['b.return_date >= ?', 's'],
-        'return_to' => ['b.return_date <= ?', 's'],
-        'min_amount' => ['b.total_amount >= ?', 'd'],
-        'max_amount' => ['b.total_amount <= ?', 'd'],
-        ] as $key => [$condition, $type]
-    ) {
-        if ($filters[$key] !== '') {
-            $where[] = $condition;
-            $types .= $type;
-            $params[] = $type === 'd' ? (float) $filters[$key] : $filters[$key];
-        }
-    }
-
-    return [
-        'where_sql' => $where ? ' WHERE ' . implode(' AND ', $where) : '',
-        'types' => $types,
-        'params' => $params,
-    ];
-}
-
-// One page of the filtered, sorted booking list with customer/car/payment details joined in.
-function loadAdminBookings(mysqli $conn, array $filters, string $sort, int $limit, int $offset): array
-{
-    $sortOptions = [
-        'newest' => 'b.created_at DESC, b.id DESC',
-        'oldest' => 'b.created_at ASC, b.id ASC',
-        'pickup_asc' => 'b.pickup_date ASC, b.id ASC',
-        'pickup_desc' => 'b.pickup_date DESC, b.id DESC',
-        'amount_asc' => 'b.total_amount ASC, b.id ASC',
-        'amount_desc' => 'b.total_amount DESC, b.id DESC',
-    ];
-    $filterSql = buildAdminBookingFilters($filters);
-    $orderBy = $sortOptions[$sort] ?? $sortOptions['newest'];
-    $types = $filterSql['types'] . 'ii';
-    $params = array_merge($filterSql['params'], [$limit, $offset]);
-    $stmt = $conn->prepare(
-        'SELECT
-            b.id,
-            b.pickup_date,
-            b.return_date,
-            b.total_amount,
-            b.booking_status,
-            c.name AS customer_name,
-            c.email AS customer_email,
-            car.brand,
-            car.model,
-            car.plate_number,
-            p.payment_status,
-            COALESCE(fees.total_late_fee, 0) AS total_late_fee
-         FROM bookings b
-         LEFT JOIN customers c ON c.id = b.customer_id
-         LEFT JOIN cars car ON car.id = b.car_id
-         LEFT JOIN payments p ON p.booking_id = b.id
-         LEFT JOIN (
-            SELECT booking_id, SUM(late_fee_amount) AS total_late_fee
-            FROM late_fees
-            GROUP BY booking_id
-         ) fees ON fees.booking_id = b.id
-         ' . $filterSql['where_sql'] . '
-         ORDER BY ' . $orderBy . '
-         LIMIT ? OFFSET ?'
-    );
-    bindStatementParams($stmt, $types, $params);
-    $stmt->execute();
-
-    return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-}
-
-// Total bookings matching the filters, for pagination.
-function countAdminBookings(mysqli $conn, array $filters): int
-{
-    $filterSql = buildAdminBookingFilters($filters);
-    $stmt = $conn->prepare(
-        'SELECT COUNT(*) AS total
-         FROM bookings b
-         LEFT JOIN customers c ON c.id = b.customer_id
-         LEFT JOIN cars car ON car.id = b.car_id
-         ' . $filterSql['where_sql']
-    );
-    bindStatementParams($stmt, $filterSql['types'], $filterSql['params']);
-    $stmt->execute();
-    $row = $stmt->get_result()->fetch_assoc();
-
-    return (int) ($row['total'] ?? 0);
-}
-
-// Full booking detail (customer, car, payment, late fees) for the detail view, or null if not found.
-function loadAdminBooking(mysqli $conn, int $bookingId): ?array
-{
-    $stmt = $conn->prepare(
-        'SELECT
-            b.id,
-            b.customer_id,
-            b.car_id,
-            b.handled_by_admin_id,
-            b.pickup_date,
-            b.return_date,
-            b.actual_return_date,
-            b.pickup_location,
-            b.total_days,
-            b.total_amount,
-            b.booking_status,
-            b.created_at,
-            c.name AS customer_name,
-            c.email AS customer_email,
-            c.phone AS customer_phone,
-            c.address AS customer_address,
-            car.brand,
-            car.model,
-            car.plate_number,
-            car.car_type,
-            car.transmission,
-            car.fuel_type,
-            car.seats,
-            car.daily_rate,
-            car.image,
-            car.status AS car_status,
-            p.amount AS payment_amount,
-            p.payment_method,
-            p.payment_status,
-            p.payment_date,
-            COALESCE(fees.total_late_days, 0) AS total_late_days,
-            COALESCE(fees.total_late_fee, 0) AS total_late_fee
-         FROM bookings b
-         INNER JOIN customers c ON c.id = b.customer_id
-         INNER JOIN cars car ON car.id = b.car_id
-         LEFT JOIN payments p ON p.booking_id = b.id
-         LEFT JOIN (
-            SELECT
-                booking_id,
-                SUM(late_days) AS total_late_days,
-                SUM(late_fee_amount) AS total_late_fee
-            FROM late_fees
-            GROUP BY booking_id
-         ) fees ON fees.booking_id = b.id
-         WHERE b.id = ?
-         LIMIT 1'
-    );
-    $stmt->bind_param('i', $bookingId);
-    $stmt->execute();
-
-    $booking = $stmt->get_result()->fetch_assoc();
-
-    return $booking ?: null;
-}
 
 requireAdminLogin();
 
@@ -432,7 +164,7 @@ include 'header.php';
                     <div>
                         <p class="dc-mono-subtitle small" style="margin-bottom:8px">Booking #<?php echo h($booking['id']); ?></p>
                         <h1 class="dc-h1" style="font-size:24px; margin-bottom:8px;"><?php echo h($booking['brand'] . ' ' . $booking['model']); ?></h1>
-                        <p style="color:var(--ink-2); font-size:14px; font-weight:600;"><?php echo h(formatAdminDate($booking['pickup_date']) . ' to ' . formatAdminDate($booking['return_date'])); ?></p>
+                        <p style="color:var(--ink-2); font-size:14px; font-weight:600;"><?php echo h(formatBookingDate($booking['pickup_date']) . ' to ' . formatBookingDate($booking['return_date'])); ?></p>
                         <div style="display:flex; gap:16px; margin-top:16px; font-size:13px; color:var(--ink-2);">
                             <span><strong><?php echo h($booking['total_days']); ?></strong> Rental days</span>
                             <span><strong>RM <?php echo h(number_format($paymentBreakdown['payable_total'], 2)); ?></strong> Est. total</span>
@@ -469,20 +201,20 @@ include 'header.php';
                             <div style="position:relative;">
                                 <div style="position:absolute; left:-25px; top:4px; width:16px; height:16px; background:var(--surface); border:4px solid var(--accent); border-radius:50%;"></div>
                                 <p style="font-size:12px; font-weight:700; color:var(--ink-3); text-transform:uppercase; margin-bottom:4px;">Pickup</p>
-                                <div style="font-size:16px; color:var(--ink); font-weight:600; margin-bottom:2px;"><?php echo h(formatAdminDate($booking['pickup_date'])); ?></div>
+                                <div style="font-size:16px; color:var(--ink); font-weight:600; margin-bottom:2px;"><?php echo h(formatBookingDate($booking['pickup_date'])); ?></div>
                                 <div style="font-size:13px; color:var(--ink-2);"><?php echo h($booking['pickup_location']); ?></div>
                             </div>
                             <div style="position:relative;">
                                 <div style="position:absolute; left:-25px; top:4px; width:16px; height:16px; background:var(--surface); border:4px solid var(--ink-3); border-radius:50%;"></div>
                                 <p style="font-size:12px; font-weight:700; color:var(--ink-3); text-transform:uppercase; margin-bottom:4px;">Expected Return</p>
-                                <div style="font-size:16px; color:var(--ink); font-weight:600; margin-bottom:2px;"><?php echo h(formatAdminDate($booking['return_date'])); ?></div>
+                                <div style="font-size:16px; color:var(--ink); font-weight:600; margin-bottom:2px;"><?php echo h(formatBookingDate($booking['return_date'])); ?></div>
                                 <div style="font-size:13px; color:var(--ink-2);"><?php echo h($booking['pickup_location']); ?></div>
                             </div>
                             <?php if ($booking['actual_return_date']) : ?>
                                 <div style="position:relative;">
                                     <div style="position:absolute; left:-25px; top:4px; width:16px; height:16px; background:var(--surface); border:4px solid <?php echo $booking['total_late_days'] > 0 ? 'var(--stop)' : 'var(--go)'; ?>; border-radius:50%;"></div>
                                     <p style="font-size:12px; font-weight:700; color:var(--ink-3); text-transform:uppercase; margin-bottom:4px;">Actual Return</p>
-                                    <div style="font-size:16px; color:var(--ink); font-weight:600; margin-bottom:2px;"><?php echo h(formatAdminDate($booking['actual_return_date'])); ?></div>
+                                    <div style="font-size:16px; color:var(--ink); font-weight:600; margin-bottom:2px;"><?php echo h(formatBookingDate($booking['actual_return_date'])); ?></div>
                                     <div style="font-size:13px; color:<?php echo $booking['total_late_days'] > 0 ? 'var(--stop)' : 'var(--go)'; ?>; font-weight:600;"><?php echo h($booking['total_late_days'] > 0 ? $booking['total_late_days'] . ' late day(s)' : 'Returned on time'); ?></div>
                                 </div>
                             <?php endif; ?>
@@ -529,7 +261,7 @@ include 'header.php';
                         <div style="display:flex; justify-content:space-between; font-size:14px;"><span style="color:var(--ink-2);">Total Days</span><span style="color:var(--ink); font-weight:600;"><?php echo h($booking['total_days']); ?></span></div>
                         <div style="display:flex; justify-content:space-between; font-size:14px;"><span style="color:var(--ink-2);">Payment Status</span><span style="color:var(--ink); font-weight:600;"><?php echo h(ucfirst($booking['payment_status'] ?: 'unpaid')); ?></span></div>
                         <div style="display:flex; justify-content:space-between; font-size:14px;"><span style="color:var(--ink-2);">Method</span><span style="color:var(--ink); font-weight:600;"><?php echo h($booking['payment_method'] ?: 'Not paid'); ?></span></div>
-                        <div style="display:flex; justify-content:space-between; font-size:14px;"><span style="color:var(--ink-2);">Payment Date</span><span style="color:var(--ink); font-weight:600;"><?php echo h(formatAdminDate($booking['payment_date'])); ?></span></div>
+                        <div style="display:flex; justify-content:space-between; font-size:14px;"><span style="color:var(--ink-2);">Payment Date</span><span style="color:var(--ink); font-weight:600;"><?php echo h(formatBookingDate($booking['payment_date'])); ?></span></div>
                         <?php if ((float) $booking['total_late_fee'] > 0) : ?>
                             <div style="display:flex; justify-content:space-between; font-size:14px; color:var(--stop);"><span style="font-weight:600;">Late Days</span><span style="font-weight:600;"><?php echo h($booking['total_late_days']); ?></span></div>
                         <?php endif; ?>
@@ -670,7 +402,7 @@ include 'header.php';
                                         <div style="color: var(--ink-2); font-size:13px;"><?php echo h($row['plate_number'] ?: 'No plate'); ?></div>
                                     </td>
                                     <td style="padding: 16px 24px; color:var(--ink); font-size:14px;">
-                                        <?php echo h(formatAdminDate($row['pickup_date']) . ' - ' . formatAdminDate($row['return_date'])); ?>
+                                        <?php echo h(formatBookingDate($row['pickup_date']) . ' - ' . formatBookingDate($row['return_date'])); ?>
                                     </td>
                                     <td style="padding: 16px 24px; color:var(--ink); font-size:14px; font-weight:600;">
                                         RM <?php echo h(number_format($rowBreakdown['payable_total'], 2)); ?>

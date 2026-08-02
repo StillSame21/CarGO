@@ -3,174 +3,12 @@ require_once __DIR__ . '/../includes/security.php';
 require_once '../db_connect.php';
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/filter_bar.php';
+// Query + view helpers live in declaration-only includes so this page stays side-effect-only (PSR-1 §2.3).
+require_once __DIR__ . '/../util/html.php';
+require_once __DIR__ . '/includes/format.php';
+require_once __DIR__ . '/includes/admin_account_data.php';
 
 startSecureSession();
-
-// HTML-escapes a value for safe output.
-function h($value): string
-{
-    return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
-}
-
-/**
- * Rebuild the list URL keeping search, filters and page intact.
- * Same contract as carPageUrl() in manage_cars.php.
- */
-function adminPageUrl(array $state, array $overrides = []): string
-{
-    $params = array_merge($state, $overrides);
-    $params = array_filter(
-        $params,
-        static fn($value) => $value !== null && $value !== '' && $value !== 'all'
-    );
-
-    return $params ? 'add_admin.php?' . http_build_query($params) : 'add_admin.php';
-}
-
-/** "super_admin" reads as "Super Admin" for a person; the value stays raw. */
-function adminRoleLabel(string $role): string
-{
-    return ucwords(str_replace('_', ' ', $role));
-}
-
-// CSS role-badge class for an admin role.
-function adminRoleClass(string $role): string
-{
-    return 'role-' . preg_replace('/[^a-z0-9_-]/', '-', strtolower($role));
-}
-
-// ' selected' attribute string when the two values match, else ''.
-function selectedIf($currentValue, $optionValue): string
-{
-    return $currentValue === $optionValue ? ' selected' : '';
-}
-
-// CSS status-pill class for an admin status.
-function adminStatusClass(string $status): string
-{
-    return 'status-' . preg_replace('/[^a-z0-9-]/', '-', strtolower($status));
-}
-
-// Human-readable date+time, or "Not set" when empty. Currently unused - see dead code report.
-function formatAdminManagementDate(?string $date): string
-{
-    if ($date === null || $date === '') {
-        return 'Not set';
-    }
-
-    return date('d M Y, h:i A', strtotime($date));
-}
-
-/**
- * Filtered, paginated admin list plus the matching total.
- *
- * @return array{rows: array<int, array>, total: int}
- */
-function loadAdmins(mysqli $conn, string $search, string $roleFilter, string $statusFilter, int $perPage, int $offset): array
-{
-    $where = ['1=1'];
-    $params = [];
-    $types = '';
-
-    if ($search !== '') {
-        $where[] = '(name LIKE ? OR email LIKE ? OR phone LIKE ?)';
-        $like = '%' . $search . '%';
-        $params[] = $like;
-        $params[] = $like;
-        $params[] = $like;
-        $types .= 'sss';
-    }
-
-    if ($roleFilter !== '' && $roleFilter !== 'all') {
-        $where[] = 'role = ?';
-        $params[] = $roleFilter;
-        $types .= 's';
-    }
-
-    if ($statusFilter !== '' && $statusFilter !== 'all') {
-        $where[] = 'status = ?';
-        $params[] = $statusFilter;
-        $types .= 's';
-    }
-
-    $whereSql = 'WHERE ' . implode(' AND ', $where);
-
-    $countStmt = $conn->prepare("SELECT COUNT(*) AS total FROM admins $whereSql");
-    if ($types !== '') {
-        $countStmt->bind_param($types, ...$params);
-    }
-    $countStmt->execute();
-    $total = (int) (($countStmt->get_result()->fetch_assoc())['total'] ?? 0);
-
-    $listStmt = $conn->prepare(
-        "SELECT id, name, email, phone, role, status, created_at, updated_at
-         FROM admins
-         $whereSql
-         ORDER BY created_at DESC, id DESC
-         LIMIT ? OFFSET ?"
-    );
-    $listParams = array_merge($params, [$perPage, $offset]);
-    $listStmt->bind_param($types . 'ii', ...$listParams);
-    $listStmt->execute();
-
-    return [
-        'rows' => $listStmt->get_result()->fetch_all(MYSQLI_ASSOC),
-        'total' => $total,
-    ];
-}
-
-// Admin row for the edit form, or null when the id doesn't resolve.
-function loadAdminAccount(mysqli $conn, int $adminId): ?array
-{
-    $stmt = $conn->prepare(
-        'SELECT id, name, email, phone, role, status, created_at, updated_at
-         FROM admins
-         WHERE id = ?
-         LIMIT 1'
-    );
-    $stmt->bind_param('i', $adminId);
-    $stmt->execute();
-    $admin = $stmt->get_result()->fetch_assoc();
-
-    return $admin ?: null;
-}
-
-// True if another admin already uses this email.
-function adminEmailExists(mysqli $conn, string $email, int $adminId = 0): bool
-{
-    $stmt = $conn->prepare('SELECT id FROM admins WHERE email = ? AND id <> ? LIMIT 1');
-    $stmt->bind_param('si', $email, $adminId);
-    $stmt->execute();
-
-    return (bool) $stmt->get_result()->fetch_assoc();
-}
-
-// How many active super_admin accounts currently exist.
-function activeSuperAdminCount(mysqli $conn): int
-{
-    $role = 'super_admin';
-    $status = 'active';
-    $stmt = $conn->prepare('SELECT COUNT(*) AS total FROM admins WHERE role = ? AND status = ?');
-    $stmt->bind_param('ss', $role, $status);
-    $stmt->execute();
-    $row = $stmt->get_result()->fetch_assoc();
-
-    return (int) ($row['total'] ?? 0);
-}
-
-// True if this edit would demote/deactivate the last active super_admin, locking everyone out.
-function wouldRemoveLastActiveSuperAdmin(mysqli $conn, array $admin, string $newRole, string $newStatus): bool
-{
-    if (($admin['role'] ?? '') !== 'super_admin' || ($admin['status'] ?? '') !== 'active') {
-        return false;
-    }
-
-    if ($newRole === 'super_admin' && $newStatus === 'active') {
-        return false;
-    }
-
-    return activeSuperAdminCount($conn) <= 1;
-}
 
 requireSuperAdmin();
 
@@ -557,7 +395,7 @@ $panelOpen = $panelMode !== '';
                                     <span class="role-pill <?php echo h(adminRoleClass((string) $admin['role'])); ?>"><?php echo h(adminRoleLabel((string) $admin['role'])); ?></span>
                                 </td>
                                 <td>
-                                    <span class="dc-badge <?php echo h(adminStatusClass((string) $admin['status'])); ?>"><?php echo h(ucfirst($admin['status'])); ?></span>
+                                    <span class="dc-badge <?php echo h(statusPillClass((string) $admin['status'])); ?>"><?php echo h(ucfirst($admin['status'])); ?></span>
                                 </td>
                                 <td>
                                     <div class="adm-actions">

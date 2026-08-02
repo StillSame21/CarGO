@@ -2,380 +2,14 @@
 require_once __DIR__ . '/../includes/security.php';
 require_once '../db_connect.php';
 require_once __DIR__ . '/includes/auth.php';
+// Query + view helpers live in declaration-only includes so this page stays side-effect-only (PSR-1 §2.3).
+require_once __DIR__ . '/../util/html.php';
+require_once __DIR__ . '/../util/booking.php';
+require_once __DIR__ . '/includes/format.php';
+require_once __DIR__ . '/includes/query.php';
+require_once __DIR__ . '/includes/dashboard_data.php';
 
 startSecureSession();
-
-// HTML-escapes a value for safe output.
-function h($value): string
-{
-    return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
-}
-
-// Human-readable date, or "Not set" when empty.
-function formatDashboardDate(?string $date): string
-{
-    if ($date === null || $date === '') {
-        return 'Not set';
-    }
-
-    return date('d M Y', strtotime($date));
-}
-
-// CSS status-pill class for a status string.
-function dashboardStatusClass(string $status): string
-{
-    return 'status-' . preg_replace('/[^a-z0-9-]/', '-', strtolower($status));
-}
-
-// True if $tableName exists in the current database.
-function tableExists(mysqli $conn, string $tableName): bool
-{
-    $stmt = $conn->prepare(
-        'SELECT TABLE_NAME
-         FROM INFORMATION_SCHEMA.TABLES
-         WHERE TABLE_SCHEMA = DATABASE()
-           AND TABLE_NAME = ?
-         LIMIT 1'
-    );
-    $stmt->bind_param('s', $tableName);
-    $stmt->execute();
-
-    return (bool) $stmt->get_result()->fetch_assoc();
-}
-
-// Valid booking_status values straight from the enum, so the dashboard never drifts from the schema.
-function bookingStatusValues(mysqli $conn): array
-{
-    $stmt = $conn->prepare(
-        'SELECT COLUMN_TYPE
-         FROM INFORMATION_SCHEMA.COLUMNS
-         WHERE TABLE_SCHEMA = DATABASE()
-           AND TABLE_NAME = ?
-           AND COLUMN_NAME = ?
-         LIMIT 1'
-    );
-    $table = 'bookings';
-    $column = 'booking_status';
-    $stmt->bind_param('ss', $table, $column);
-    $stmt->execute();
-    $row = $stmt->get_result()->fetch_assoc();
-    $columnType = (string) ($row['COLUMN_TYPE'] ?? '');
-
-    if (!preg_match("/^enum\((.*)\)$/", $columnType, $matches)) {
-        return ['pending', 'approved', 'rejected', 'ongoing'];
-    }
-
-    preg_match_all("/'((?:[^'\\\\]|\\\\.)*)'/", $matches[1], $enumMatches);
-    $statuses = array_map(
-        static fn($value) => stripcslashes($value),
-        $enumMatches[1]
-    );
-
-    return $statuses ?: ['pending', 'approved', 'rejected', 'ongoing'];
-}
-
-// Runs $sql and returns it as a [keyColumn => valueColumn] map.
-function fetchCountMap(mysqli $conn, string $sql, string $keyColumn, string $valueColumn): array
-{
-    $result = $conn->query($sql);
-    $map = [];
-
-    while ($row = $result->fetch_assoc()) {
-        $map[(string) $row[$keyColumn]] = (int) $row[$valueColumn];
-    }
-
-    return $map;
-}
-
-// Fleet counts by status, split by archived/active.
-function loadDashboardCarStats(mysqli $conn): array
-{
-    $result = $conn->query(
-        'SELECT
-            COUNT(*) AS total,
-            SUM(CASE WHEN archived_at IS NULL THEN 1 ELSE 0 END) AS active_cars,
-            SUM(CASE WHEN archived_at IS NOT NULL THEN 1 ELSE 0 END) AS archived_cars,
-            SUM(CASE WHEN archived_at IS NULL AND status = \'available\' THEN 1 ELSE 0 END) AS available_cars,
-            SUM(CASE WHEN archived_at IS NULL AND status = \'unavailable\' THEN 1 ELSE 0 END) AS unavailable_cars,
-            SUM(CASE WHEN archived_at IS NULL AND status = \'maintenance\' THEN 1 ELSE 0 END) AS maintenance_cars
-         FROM cars'
-    );
-    $row = $result->fetch_assoc() ?: [];
-
-    return [
-        'total' => (int) ($row['total'] ?? 0),
-        'available' => (int) ($row['available_cars'] ?? 0),
-        'unavailable' => (int) ($row['unavailable_cars'] ?? 0),
-        'maintenance' => (int) ($row['maintenance_cars'] ?? 0),
-        'archived' => (int) ($row['archived_cars'] ?? 0),
-        'active' => (int) ($row['active_cars'] ?? 0),
-    ];
-}
-
-// Booking counts per status plus a total, zero-filled for statuses with no bookings.
-function loadDashboardBookingStats(mysqli $conn, array $bookingStatuses): array
-{
-    $bookingStats = array_fill_keys($bookingStatuses, 0);
-    $bookingStats['total'] = 0;
-    $statusCounts = fetchCountMap(
-        $conn,
-        'SELECT booking_status, COUNT(*) AS total FROM bookings GROUP BY booking_status',
-        'booking_status',
-        'total'
-    );
-
-    foreach ($statusCounts as $status => $count) {
-        $bookingStats[$status] = $count;
-        $bookingStats['total'] += $count;
-    }
-
-    return $bookingStats;
-}
-
-// All-time paid revenue split into rental vs late-fee portions.
-function loadDashboardRevenue(mysqli $conn): array
-{
-    if (!tableExists($conn, 'payments')) {
-        return [
-            'booking' => 0.0,
-            'late_fee' => 0.0,
-        ];
-    }
-
-    $lateFeeJoin = tableExists($conn, 'late_fees')
-        ? 'LEFT JOIN (
-                SELECT booking_id, SUM(late_fee_amount) AS late_fee_total
-                FROM late_fees
-                GROUP BY booking_id
-           ) fees ON fees.booking_id = b.id'
-        : 'LEFT JOIN (
-                SELECT NULL AS booking_id, 0 AS late_fee_total
-           ) fees ON fees.booking_id = b.id';
-
-    $result = $conn->query(
-        'SELECT
-            COALESCE(SUM(LEAST(p.amount, b.total_amount)), 0) AS booking_revenue,
-            COALESCE(SUM(
-                LEAST(
-                    GREATEST(p.amount - b.total_amount, 0),
-                    COALESCE(fees.late_fee_total, 0)
-                )
-            ), 0) AS late_fee_revenue
-         FROM payments p
-         INNER JOIN bookings b ON b.id = p.booking_id
-         ' . $lateFeeJoin . '
-         WHERE p.payment_status = \'paid\'
-           AND b.booking_status NOT IN (\'cancelled\', \'rejected\')'
-    );
-    $row = $result->fetch_assoc() ?: [];
-
-    return [
-        'booking' => (float) ($row['booking_revenue'] ?? 0),
-        'late_fee' => (float) ($row['late_fee_revenue'] ?? 0),
-    ];
-}
-
-/**
- * Counts of work waiting on an admin. Each maps to a filtered view,
- * so the dashboard points at the job rather than just reporting a number.
- */
-function loadDashboardQueues(mysqli $conn, int $maintenanceCars): array
-{
-    // Paid and approved, but nobody has handed the car over yet.
-    $result = $conn->query(
-        "SELECT COUNT(*) AS total
-         FROM bookings b
-         INNER JOIN payments p ON p.booking_id = b.id
-         WHERE b.booking_status = 'approved'
-           AND p.payment_status = 'paid'"
-    );
-    $awaitingPickup = (int) (($result->fetch_assoc())['total'] ?? 0);
-
-    // Out on rent and already past the agreed return date.
-    $result = $conn->query(
-        "SELECT COUNT(*) AS total
-         FROM bookings
-         WHERE booking_status = 'ongoing'
-           AND return_date < CURDATE()"
-    );
-    $overdueReturn = (int) (($result->fetch_assoc())['total'] ?? 0);
-
-    $unpaidLateFees = 0;
-
-    if (tableExists($conn, 'late_fees')) {
-        $result = $conn->query(
-            "SELECT COUNT(*) AS total
-             FROM bookings b
-             INNER JOIN (
-                SELECT booking_id, SUM(late_fee_amount) AS total_late_fee
-                FROM late_fees
-                GROUP BY booking_id
-             ) fees ON fees.booking_id = b.id
-             LEFT JOIN payments p ON p.booking_id = b.id
-             WHERE fees.total_late_fee > 0
-               AND (
-                    p.id IS NULL
-                    OR p.payment_status <> 'paid'
-                    OR p.amount < (b.total_amount + fees.total_late_fee)
-               )"
-        );
-        $unpaidLateFees = (int) (($result->fetch_assoc())['total'] ?? 0);
-    }
-
-    return [
-        'awaiting_pickup' => $awaitingPickup,
-        'overdue_return' => $overdueReturn,
-        'unpaid_late_fees' => $unpaidLateFees,
-        'maintenance' => $maintenanceCars,
-    ];
-}
-
-/**
- * Paid revenue per day for the trailing $days window, zero-filled so the
- * sparkline has one point per day even when nothing was collected.
- *
- * @return array{series: array<int, float>, current: float, previous: float}
- */
-function loadDashboardRevenueSeries(mysqli $conn, int $days = 14): array
-{
-    $series = [];
-    $today = new DateTimeImmutable('today');
-
-    for ($i = $days - 1; $i >= 0; $i--) {
-        $series[$today->modify("-{$i} days")->format('Y-m-d')] = 0.0;
-    }
-
-    if (!tableExists($conn, 'payments')) {
-        return ['series' => array_values($series), 'current' => 0.0, 'previous' => 0.0];
-    }
-
-    $windowStart = $today->modify('-' . ($days * 2 - 1) . ' days')->format('Y-m-d');
-
-    $stmt = $conn->prepare(
-        "SELECT DATE(p.payment_date) AS paid_on, SUM(p.amount) AS total
-         FROM payments p
-         INNER JOIN bookings b ON b.id = p.booking_id
-         WHERE p.payment_status = 'paid'
-           AND p.payment_date IS NOT NULL
-           AND DATE(p.payment_date) >= ?
-           AND b.booking_status NOT IN ('cancelled', 'rejected')
-         GROUP BY DATE(p.payment_date)"
-    );
-    $stmt->bind_param('s', $windowStart);
-    $stmt->execute();
-
-    $priorStart = $today->modify('-' . ($days * 2 - 1) . ' days');
-    $currentStart = $today->modify('-' . ($days - 1) . ' days');
-    $current = 0.0;
-    $previous = 0.0;
-
-    foreach ($stmt->get_result()->fetch_all(MYSQLI_ASSOC) as $row) {
-        $day = (string) $row['paid_on'];
-        $amount = (float) $row['total'];
-
-        if (array_key_exists($day, $series)) {
-            $series[$day] = $amount;
-        }
-
-        if ($day >= $currentStart->format('Y-m-d')) {
-            $current += $amount;
-        } elseif ($day >= $priorStart->format('Y-m-d')) {
-            $previous += $amount;
-        }
-    }
-
-    return [
-        'series' => array_values($series),
-        'current' => $current,
-        'previous' => $previous,
-    ];
-}
-
-/**
- * Build an SVG polyline path for the revenue sparkline.
- *
- * @param array<int, float> $series
- */
-function sparklinePoints(array $series, float $width = 320.0, float $height = 56.0): string
-{
-    $count = count($series);
-
-    if ($count === 0) {
-        return '';
-    }
-
-    if ($count === 1) {
-        $series = [$series[0], $series[0]];
-        $count = 2;
-    }
-
-    $max = max($series);
-    $step = $width / ($count - 1);
-    $points = [];
-
-    foreach ($series as $index => $value) {
-        $x = round($index * $step, 2);
-        // Flat line sits near the base when nothing was collected.
-        $ratio = $max > 0 ? $value / $max : 0.0;
-        $y = round($height - ($ratio * ($height - 6)) - 3, 2);
-        $points[] = $x . ',' . $y;
-    }
-
-    return implode(' ', $points);
-}
-
-// 5 most recently created bookings, with customer/car details joined in.
-function loadRecentDashboardBookings(mysqli $conn): array
-{
-    $result = $conn->query(
-        'SELECT
-            b.id,
-            b.pickup_date,
-            b.return_date,
-            b.total_days,
-            b.total_amount,
-            b.booking_status,
-            b.created_at,
-            c.name AS customer_name,
-            car.brand,
-            car.model,
-            car.plate_number
-         FROM bookings b
-         LEFT JOIN customers c ON c.id = b.customer_id
-         LEFT JOIN cars car ON car.id = b.car_id
-         ORDER BY b.created_at DESC, b.id DESC
-         LIMIT 5'
-    );
-
-    return $result->fetch_all(MYSQLI_ASSOC);
-}
-
-// 5 most recently registered customers.
-function loadRecentDashboardCustomers(mysqli $conn): array
-{
-    $result = $conn->query(
-        'SELECT id, name, email, phone, status, created_at
-         FROM customers
-         ORDER BY created_at DESC, id DESC
-         LIMIT 5'
-    );
-
-    return $result->fetch_all(MYSQLI_ASSOC);
-}
-
-// 5 most recently added, non-archived cars.
-function loadRecentDashboardCars(mysqli $conn): array
-{
-    $result = $conn->query(
-        'SELECT id, brand, model, plate_number, car_type, daily_rate, status, created_at
-         FROM cars
-         WHERE archived_at IS NULL
-         ORDER BY created_at DESC, id DESC
-         LIMIT 5'
-    );
-
-    return $result->fetch_all(MYSQLI_ASSOC);
-}
 
 requireAdminLogin();
 
@@ -406,7 +40,7 @@ $revenueSeries = ['series' => [], 'current' => 0.0, 'previous' => 0.0];
 
 try {
     $conn = getDbConnection();
-    $bookingStatuses = bookingStatusValues($conn);
+    $bookingStatuses = adminBookingStatusValues($conn);
     $carStats = loadDashboardCarStats($conn);
     $bookingStats = loadDashboardBookingStats($conn, $bookingStatuses);
     $revenue = loadDashboardRevenue($conn);
@@ -613,13 +247,13 @@ include 'header.php';
                                         <div class="ov-sub"><?php echo h($booking['plate_number'] ?: 'No plate'); ?></div>
                                     </td>
                                     <td>
-                                        <?php echo h(formatDashboardDate($booking['pickup_date']) . ' – ' . formatDashboardDate($booking['return_date'])); ?>
+                                        <?php echo h(formatBookingDate($booking['pickup_date']) . ' – ' . formatBookingDate($booking['return_date'])); ?>
                                         <?php if ($datesReversed) : ?>
                                             <div class="ov-flag">▲ Return before pickup</div>
                                         <?php endif; ?>
                                     </td>
                                     <td class="ov-amt">RM <?php echo h(number_format((float) $booking['total_amount'], 2)); ?></td>
-                                    <td><span class="status-pill <?php echo h(dashboardStatusClass($status)); ?>"><?php echo h($label); ?></span></td>
+                                    <td><span class="status-pill <?php echo h(statusPillClass($status)); ?>"><?php echo h($label); ?></span></td>
                                 </tr>
                             <?php endforeach; ?>
                         </tbody>
@@ -644,7 +278,7 @@ include 'header.php';
                                     <span style="font-size:14.5px; font-weight:700;"><?php echo h($customer['name']); ?></span>
                                     <span class="ov-sub" style="font-family:'IBM Plex Mono',monospace;"><?php echo h($customer['email']); ?></span>
                                 </div>
-                                <span class="status-pill <?php echo h(dashboardStatusClass((string) $customer['status'])); ?>"><?php echo h(ucfirst($customer['status'])); ?></span>
+                                <span class="status-pill <?php echo h(statusPillClass((string) $customer['status'])); ?>"><?php echo h(ucfirst($customer['status'])); ?></span>
                             </div>
                         <?php endforeach; ?>
                     <?php endif; ?>
@@ -678,7 +312,7 @@ include 'header.php';
                                         </td>
                                         <td><?php echo h($car['plate_number']); ?></td>
                                         <td class="ov-amt">RM <?php echo h(number_format((float) $car['daily_rate'], 2)); ?></td>
-                                        <td><span class="status-pill <?php echo h(dashboardStatusClass((string) $car['status'])); ?>"><?php echo h(ucfirst($car['status'])); ?></span></td>
+                                        <td><span class="status-pill <?php echo h(statusPillClass((string) $car['status'])); ?>"><?php echo h(ucfirst($car['status'])); ?></span></td>
                                     </tr>
                                 <?php endforeach; ?>
                             </tbody>

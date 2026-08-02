@@ -17,3 +17,6 @@ docker-compose.override.yml
 # OS Generated
 .DS_Store
 Thumbs.db
+
+# Local-only reports
+DEAD_CODE_REPORT.md

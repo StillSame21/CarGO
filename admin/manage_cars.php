@@ -6,35 +6,12 @@ require_once __DIR__ . '/../util/car_archive.php';
 require_once __DIR__ . '/../util/car_display.php';
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/filter_bar.php';
+// Query + view helpers live in declaration-only includes so this page stays side-effect-only (PSR-1 §2.3).
+require_once __DIR__ . '/../util/html.php';
+require_once __DIR__ . '/includes/format.php';
+require_once __DIR__ . '/includes/car_data.php';
 
 startSecureSession();
-
-// HTML-escapes a value for safe output.
-function h($value): string
-{
-    return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
-}
-
-// ' selected' attribute string when the two values match, else ''.
-function selectedIf($currentValue, $optionValue): string
-{
-    return $currentValue === $optionValue ? ' selected' : '';
-}
-
-/**
- * Rebuild the list URL keeping search, filters and page intact.
- * Same contract as customerPageUrl() in customers.php.
- */
-function carPageUrl(array $state, array $overrides = []): string
-{
-    $params = array_merge($state, $overrides);
-    $params = array_filter(
-        $params,
-        static fn($value) => $value !== null && $value !== '' && $value !== 'all'
-    );
-
-    return $params ? 'manage_cars.php?' . http_build_query($params) : 'manage_cars.php';
-}
 
 requireAdminLogin();
 

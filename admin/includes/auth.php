@@ -1,5 +1,6 @@
 <?php
 
+// phpcs:disable PSR1.Files.SideEffects -- declaration file; the requires below keep auth.php self-contained for header.php.
 require_once __DIR__ . '/../../includes/security.php';
 require_once __DIR__ . '/../../db_connect.php';
 
