@@ -420,11 +420,11 @@ $panelOpen = $isEditMode || isset($_GET['add']) || ($error !== '' && $_SERVER['R
         </a>
     </header>
 
-    <?php if ($error !== ''): ?>
+    <?php if ($error !== '') : ?>
         <p class="message error" style="color: var(--stop); background: var(--stop-soft); padding: 12px; border-radius: 8px; font-weight: 600; margin-bottom:24px;"><?php echo h($error); ?></p>
     <?php endif; ?>
 
-    <?php if ($success !== ''): ?>
+    <?php if ($success !== '') : ?>
         <p class="message success" style="color: var(--go); background: var(--go-soft); padding: 12px; border-radius: 8px; font-weight: 600; margin-bottom:24px;"><?php echo h($success); ?></p>
     <?php endif; ?>
 
@@ -467,20 +467,20 @@ $panelOpen = $isEditMode || isset($_GET['add']) || ($error !== '' && $_SERVER['R
             ]); ?>
         </div>
 
-        <?php if (count($cars) === 0): ?>
+        <?php if (count($cars) === 0) : ?>
             <div class="adm-empty">
                 <p class="dc-p" style="margin-bottom:4px; font-weight:650; color:var(--ink);">
                     <?php echo $view === 'archived' ? 'No archived cars.' : 'No cars match these filters.'; ?>
                 </p>
                 <p class="dc-p" style="font-size:14px;">
-                    <?php if ($search !== '' || $statusFilter !== 'all' || $typeFilter !== 'all'): ?>
+                    <?php if ($search !== '' || $statusFilter !== 'all' || $typeFilter !== 'all') : ?>
                         <a class="adm-link" href="manage_cars.php">Clear the filters</a> to see the whole fleet.
-                    <?php elseif ($view !== 'archived'): ?>
+                    <?php elseif ($view !== 'archived') : ?>
                         Use <strong>Add car</strong> to put the first vehicle on the road.
                     <?php endif; ?>
                 </p>
             </div>
-        <?php else: ?>
+        <?php else : ?>
             <div class="adm-tbl-scroll">
                 <table class="adm-tbl">
                     <thead>
@@ -494,7 +494,7 @@ $panelOpen = $isEditMode || isset($_GET['add']) || ($error !== '' && $_SERVER['R
                         </tr>
                     </thead>
                     <tbody>
-                        <?php foreach ($cars as $car): ?>
+                        <?php foreach ($cars as $car) : ?>
                             <tr>
                                 <td>
                                     <div class="mc-vehicle">
@@ -518,14 +518,14 @@ $panelOpen = $isEditMode || isset($_GET['add']) || ($error !== '' && $_SERVER['R
                                 </td>
                                 <td>
                                     <div class="adm-actions">
-                                        <?php if ($view === 'archived'): ?>
+                                        <?php if ($view === 'archived') : ?>
                                             <form method="post" action="<?php echo h(carPageUrl($listState)); ?>" style="display:inline;">
                                                 <?php echo csrfInput(); ?>
                                                 <input type="hidden" name="form_action" value="restore_car">
                                                 <input type="hidden" name="car_id" value="<?php echo h($car['id']); ?>">
                                                 <button type="submit" class="adm-action">Restore</button>
                                             </form>
-                                        <?php else: ?>
+                                        <?php else : ?>
                                             <a class="adm-action" href="<?php echo h(carPageUrl($listState, ['edit' => $car['id'], 'add' => null])); ?>">Edit</a>
                                             <form method="post" action="<?php echo h(carPageUrl($listState)); ?>" onsubmit="return confirm('Archive this car? It moves to the Archived view and can be restored.');" style="display:inline;">
                                                 <?php echo csrfInput(); ?>
@@ -542,17 +542,17 @@ $panelOpen = $isEditMode || isset($_GET['add']) || ($error !== '' && $_SERVER['R
                 </table>
             </div>
 
-            <?php if ($totalPages > 1): ?>
+            <?php if ($totalPages > 1) : ?>
                 <div class="adm-pager">
-                    <?php if ($page > 1): ?>
+                    <?php if ($page > 1) : ?>
                         <a href="<?php echo h(carPageUrl($listState, ['page' => $page - 1])); ?>" class="dc-btn-secondary" style="background:var(--surface); text-decoration:none;">Previous</a>
-                    <?php else: ?>
+                    <?php else : ?>
                         <span></span>
                     <?php endif; ?>
                     <span style="font-size:14px; font-weight:600; color:var(--ink-2);">Page <?php echo h($page); ?> of <?php echo h($totalPages); ?></span>
-                    <?php if ($page < $totalPages): ?>
+                    <?php if ($page < $totalPages) : ?>
                         <a href="<?php echo h(carPageUrl($listState, ['page' => $page + 1])); ?>" class="dc-btn-secondary" style="background:var(--surface); text-decoration:none;">Next</a>
-                    <?php else: ?>
+                    <?php else : ?>
                         <span></span>
                     <?php endif; ?>
                 </div>
@@ -597,7 +597,7 @@ $panelOpen = $isEditMode || isset($_GET['add']) || ($error !== '' && $_SERVER['R
                     <label class="adm-field">
                         <span class="adm-field-label">Car Type</span>
                         <select name="car_type" required class="dc-input" style="width:100%;">
-                            <?php foreach (carTypeOptions($carTypes, $carType) as $type): ?>
+                            <?php foreach (carTypeOptions($carTypes, $carType) as $type) : ?>
                                 <option value="<?php echo h($type); ?>"<?php echo selectedIf($carType, $type); ?>><?php echo h($type); ?></option>
                             <?php endforeach; ?>
                         </select>
@@ -608,7 +608,7 @@ $panelOpen = $isEditMode || isset($_GET['add']) || ($error !== '' && $_SERVER['R
                     <label class="adm-field">
                         <span class="adm-field-label">Transmission</span>
                         <select name="transmission" required class="dc-input" style="width:100%;">
-                            <?php foreach ($transmissions as $option): ?>
+                            <?php foreach ($transmissions as $option) : ?>
                                 <option value="<?php echo h($option); ?>"<?php echo selectedIf($transmission, $option); ?>><?php echo h($option); ?></option>
                             <?php endforeach; ?>
                         </select>
@@ -616,7 +616,7 @@ $panelOpen = $isEditMode || isset($_GET['add']) || ($error !== '' && $_SERVER['R
                     <label class="adm-field">
                         <span class="adm-field-label">Fuel Type</span>
                         <select name="fuel_type" required class="dc-input" style="width:100%;">
-                            <?php foreach ($fuelTypes as $option): ?>
+                            <?php foreach ($fuelTypes as $option) : ?>
                                 <option value="<?php echo h($option); ?>"<?php echo selectedIf($fuelType, $option); ?>><?php echo h($option); ?></option>
                             <?php endforeach; ?>
                         </select>
@@ -638,7 +638,7 @@ $panelOpen = $isEditMode || isset($_GET['add']) || ($error !== '' && $_SERVER['R
                     <label class="adm-field">
                         <span class="adm-field-label">Status</span>
                         <select name="status" required class="dc-input" style="width:100%;">
-                            <?php foreach ($statuses as $option): ?>
+                            <?php foreach ($statuses as $option) : ?>
                                 <option value="<?php echo h($option); ?>"<?php echo selectedIf($status, $option); ?>><?php echo h(ucfirst($option)); ?></option>
                             <?php endforeach; ?>
                         </select>
@@ -648,7 +648,7 @@ $panelOpen = $isEditMode || isset($_GET['add']) || ($error !== '' && $_SERVER['R
                         <span class="adm-field-label">Car Image</span>
                         <input type="hidden" name="MAX_FILE_SIZE" value="<?php echo CAR_IMAGE_MAX_BYTES; ?>">
                         <input type="file" name="image" accept="image/*" class="dc-input" style="width:100%; padding:10px;">
-                        <?php if ($isEditMode && $image !== ''): ?>
+                        <?php if ($isEditMode && $image !== '') : ?>
                             <span style="display:block; font-size:12px; color:var(--ink-2); margin-top:4px;">Leave blank to keep the current image.</span>
                         <?php endif; ?>
                     </label>

@@ -80,7 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <h2>Admin Login</h2>
             <p>Login with your admin account.</p>
 
-            <?php if ($error !== ''): ?>
+            <?php if ($error !== '') : ?>
                 <div class="message error"><?php echo htmlspecialchars($error, ENT_QUOTES, 'UTF-8'); ?></div>
             <?php endif; ?>
 

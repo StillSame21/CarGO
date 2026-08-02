@@ -42,11 +42,11 @@ include 'header.php';
             <h2 class="dc-h2" style="font-size:20px;">Vehicles Needing Maintenance</h2>
         </div>
         
-        <?php if (empty($carsNeedingMaintenance)): ?>
+        <?php if (empty($carsNeedingMaintenance)) : ?>
             <div style="padding: 40px 24px; text-align: center; color: var(--ink-2);">
                 <p>No vehicles currently flagged for maintenance.</p>
             </div>
-        <?php else: ?>
+        <?php else : ?>
             <div style="overflow-x: auto;">
                 <table class="dc-table" style="width: 100%; border-collapse: collapse;">
                     <thead>
@@ -59,7 +59,7 @@ include 'header.php';
                         </tr>
                     </thead>
                     <tbody>
-                        <?php foreach ($carsNeedingMaintenance as $car): ?>
+                        <?php foreach ($carsNeedingMaintenance as $car) : ?>
                             <tr style="border-bottom: 1px solid var(--line);">
                                 <td style="padding: 16px 24px; color:var(--ink); font-weight:600;">
                                     #<?= htmlspecialchars($car['id']) ?>
@@ -71,7 +71,7 @@ include 'header.php';
                                     <?= htmlspecialchars($car['plate_number']) ?>
                                 </td>
                                 <td style="padding: 16px 24px;">
-                                    <?php 
+                                    <?php
                                         $statusLabel = htmlspecialchars(ucfirst($car['status']));
                                         $statusColor = $car['status'] === 'available' ? 'var(--go)' : ($car['status'] === 'maintenance' ? 'var(--stop)' : 'var(--wait)');
                                         $statusBg = $car['status'] === 'available' ? 'var(--go-soft)' : ($car['status'] === 'maintenance' ? 'var(--stop-soft)' : 'var(--wait-soft)');

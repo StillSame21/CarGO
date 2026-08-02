@@ -132,14 +132,16 @@ function buildAdminBookingFilters(array $filters): array
         $params[] = $filters['status'];
     }
 
-    foreach ([
+    foreach (
+        [
         'pickup_from' => ['b.pickup_date >= ?', 's'],
         'pickup_to' => ['b.pickup_date <= ?', 's'],
         'return_from' => ['b.return_date >= ?', 's'],
         'return_to' => ['b.return_date <= ?', 's'],
         'min_amount' => ['b.total_amount >= ?', 'd'],
         'max_amount' => ['b.total_amount <= ?', 'd'],
-    ] as $key => [$condition, $type]) {
+        ] as $key => [$condition, $type]
+    ) {
         if ($filters[$key] !== '') {
             $where[] = $condition;
             $types .= $type;
@@ -403,7 +405,7 @@ include '../includes/layout_top.php';
 include 'header.php';
 ?>
 <main class="dc-main">
-    <?php if ($booking): ?>
+    <?php if ($booking) : ?>
         <?php $displayStatus = bookingDisplayStatus((string) $booking['booking_status'], $booking['payment_status'] ?? null, (float) $booking['total_late_fee']); ?>
         <?php $isPaid = ($booking['payment_status'] ?? '') === PAYMENT_STATUS_PAID; ?>
         <?php $paymentBreakdown = buildPaymentBreakdown((float) $booking['total_amount'], (float) $booking['total_late_fee']); ?>
@@ -416,11 +418,11 @@ include 'header.php';
             </a>
         </div>
 
-        <?php if ($error !== ''): ?>
+        <?php if ($error !== '') : ?>
             <p class="message error" style="color: var(--stop); background: var(--stop-soft); padding: 12px; border-radius: 8px; font-weight: 600; margin-bottom:24px;"><?php echo h($error); ?></p>
         <?php endif; ?>
 
-        <?php if ($success !== ''): ?>
+        <?php if ($success !== '') : ?>
             <p class="message success" style="color: var(--go); background: var(--go-soft); padding: 12px; border-radius: 8px; font-weight: 600; margin-bottom:24px;"><?php echo h($success); ?></p>
         <?php endif; ?>
 
@@ -438,7 +440,7 @@ include 'header.php';
                         </div>
                     </div>
                     <div style="text-align:right;">
-                        <?php 
+                        <?php
                             $bStatus = $displayStatus['label'];
                             $bColor = $bStatus === 'Confirmed' || $bStatus === 'Completed' || $bStatus === 'Paid' ? 'var(--go)' : ($bStatus === 'Cancelled' ? 'var(--stop)' : 'var(--wait)');
                             $bBg = $bStatus === 'Confirmed' || $bStatus === 'Completed' || $bStatus === 'Paid' ? 'var(--go-soft)' : ($bStatus === 'Cancelled' ? 'var(--stop-soft)' : 'var(--wait-soft)');
@@ -476,7 +478,7 @@ include 'header.php';
                                 <div style="font-size:16px; color:var(--ink); font-weight:600; margin-bottom:2px;"><?php echo h(formatAdminDate($booking['return_date'])); ?></div>
                                 <div style="font-size:13px; color:var(--ink-2);"><?php echo h($booking['pickup_location']); ?></div>
                             </div>
-                            <?php if ($booking['actual_return_date']): ?>
+                            <?php if ($booking['actual_return_date']) : ?>
                                 <div style="position:relative;">
                                     <div style="position:absolute; left:-25px; top:4px; width:16px; height:16px; background:var(--surface); border:4px solid <?php echo $booking['total_late_days'] > 0 ? 'var(--stop)' : 'var(--go)'; ?>; border-radius:50%;"></div>
                                     <p style="font-size:12px; font-weight:700; color:var(--ink-3); text-transform:uppercase; margin-bottom:4px;">Actual Return</p>
@@ -528,13 +530,13 @@ include 'header.php';
                         <div style="display:flex; justify-content:space-between; font-size:14px;"><span style="color:var(--ink-2);">Payment Status</span><span style="color:var(--ink); font-weight:600;"><?php echo h(ucfirst($booking['payment_status'] ?: 'unpaid')); ?></span></div>
                         <div style="display:flex; justify-content:space-between; font-size:14px;"><span style="color:var(--ink-2);">Method</span><span style="color:var(--ink); font-weight:600;"><?php echo h($booking['payment_method'] ?: 'Not paid'); ?></span></div>
                         <div style="display:flex; justify-content:space-between; font-size:14px;"><span style="color:var(--ink-2);">Payment Date</span><span style="color:var(--ink); font-weight:600;"><?php echo h(formatAdminDate($booking['payment_date'])); ?></span></div>
-                        <?php if ((float) $booking['total_late_fee'] > 0): ?>
+                        <?php if ((float) $booking['total_late_fee'] > 0) : ?>
                             <div style="display:flex; justify-content:space-between; font-size:14px; color:var(--stop);"><span style="font-weight:600;">Late Days</span><span style="font-weight:600;"><?php echo h($booking['total_late_days']); ?></span></div>
                         <?php endif; ?>
                         
                         <div style="margin-top:8px; padding-top:16px; border-top:1px solid var(--line);">
                             <div style="display:flex; justify-content:space-between; font-size:16px; font-weight:700;"><span style="color:var(--ink);">Total Amount</span><span style="color:var(--ink);">RM <?php echo h(number_format($paymentBreakdown['payable_total'], 2)); ?></span></div>
-                            <?php if ($amountDue > 0): ?>
+                            <?php if ($amountDue > 0) : ?>
                                 <div style="display:flex; justify-content:space-between; font-size:14px; margin-top:8px; color:var(--stop);"><span style="font-weight:600;">Amount due</span><span style="font-weight:600;">RM <?php echo h(number_format($amountDue, 2)); ?></span></div>
                             <?php endif; ?>
                         </div>
@@ -547,7 +549,7 @@ include 'header.php';
                         <h2 class="dc-h2" style="font-size:20px;">Booking actions</h2>
                     </div>
                     <div style="padding:24px;">
-                        <?php if ($isPaid && !in_array($booking['booking_status'], [BOOKING_STATUS_ONGOING, BOOKING_STATUS_COMPLETED, 'cancelled', 'rejected'], true)): ?>
+                        <?php if ($isPaid && !in_array($booking['booking_status'], [BOOKING_STATUS_ONGOING, BOOKING_STATUS_COMPLETED, 'cancelled', 'rejected'], true)) : ?>
                             <form method="post" action="bookings.php?id=<?php echo h($booking['id']); ?>" style="margin-bottom:16px;">
                                 <?php echo csrfInput(); ?>
                                 <input type="hidden" name="action" value="confirm_pickup">
@@ -556,7 +558,7 @@ include 'header.php';
                             </form>
                         <?php endif; ?>
 
-                        <?php if ($booking['booking_status'] === BOOKING_STATUS_ONGOING): ?>
+                        <?php if ($booking['booking_status'] === BOOKING_STATUS_ONGOING) : ?>
                             <form method="post" action="bookings.php?id=<?php echo h($booking['id']); ?>" style="margin-bottom:16px; padding:16px; background:var(--surface-2); border:1px solid var(--line); border-radius:8px;">
                                 <?php echo csrfInput(); ?>
                                 <input type="hidden" name="action" value="confirm_return">
@@ -569,18 +571,18 @@ include 'header.php';
                             </form>
                         <?php endif; ?>
 
-                        <?php if (!$isPaid): ?>
+                        <?php if (!$isPaid) : ?>
                             <p style="font-size:13px; color:var(--ink-2); text-align:center; padding:12px; background:var(--surface-2); border-radius:8px;">Pickup can be confirmed only after payment is paid.</p>
-                        <?php elseif ($booking['booking_status'] === BOOKING_STATUS_COMPLETED): ?>
+                        <?php elseif ($booking['booking_status'] === BOOKING_STATUS_COMPLETED) : ?>
                             <p style="font-size:13px; color:var(--go); text-align:center; padding:12px; background:var(--go-soft); border-radius:8px; font-weight:600;">This booking has been returned and completed.</p>
-                        <?php elseif (in_array($booking['booking_status'], ['cancelled', 'rejected'], true)): ?>
+                        <?php elseif (in_array($booking['booking_status'], ['cancelled', 'rejected'], true)) : ?>
                             <p style="font-size:13px; color:var(--ink-2); text-align:center; padding:12px; background:var(--surface-2); border-radius:8px;">No pickup or return actions are available for this booking.</p>
                         <?php endif; ?>
                     </div>
                 </div>
             </div>
         </div>
-    <?php else: ?>
+    <?php else : ?>
         <header class="dc-h2-title" style="margin-bottom: 24px;">
             <div>
                 <div class="dc-mono-subtitle small" style="margin-bottom:8px">Bookings</div>
@@ -588,7 +590,7 @@ include 'header.php';
             </div>
         </header>
 
-        <?php if ($error !== ''): ?>
+        <?php if ($error !== '') : ?>
             <p class="message error" style="color: var(--stop); background: var(--stop-soft); padding: 12px; border-radius: 8px; font-weight: 600; margin-bottom:24px;"><?php echo h($error); ?></p>
         <?php endif; ?>
 
@@ -632,11 +634,11 @@ include 'header.php';
                 ]); ?>
             </div>
 
-            <?php if (count($bookings) === 0): ?>
+            <?php if (count($bookings) === 0) : ?>
                 <div style="padding: 40px 24px; text-align: center; color: var(--ink-2);">
                     <p>No bookings found.</p>
                 </div>
-            <?php else: ?>
+            <?php else : ?>
                 <div style="overflow-x: auto;">
                     <table class="dc-table" style="width: 100%; border-collapse: collapse;">
                         <thead>
@@ -651,7 +653,7 @@ include 'header.php';
                             </tr>
                         </thead>
                         <tbody>
-                            <?php foreach ($bookings as $row): ?>
+                            <?php foreach ($bookings as $row) : ?>
                                 <?php $rowStatus = bookingDisplayStatus((string) $row['booking_status'], $row['payment_status'] ?? null, (float) $row['total_late_fee']); ?>
                                 <?php $rowBreakdown = buildPaymentBreakdown((float) $row['total_amount'], (float) $row['total_late_fee']); ?>
                                 <tr style="border-bottom: 1px solid var(--line);">
@@ -674,7 +676,7 @@ include 'header.php';
                                         RM <?php echo h(number_format($rowBreakdown['payable_total'], 2)); ?>
                                     </td>
                                     <td style="padding: 16px 24px;">
-                                        <?php 
+                                        <?php
                                             $rsLabel = $rowStatus['label'];
                                             $rsColor = $rsLabel === 'Confirmed' || $rsLabel === 'Completed' || $rsLabel === 'Paid' ? 'var(--go)' : ($rsLabel === 'Cancelled' ? 'var(--stop)' : 'var(--wait)');
                                             $rsBg = $rsLabel === 'Confirmed' || $rsLabel === 'Completed' || $rsLabel === 'Paid' ? 'var(--go-soft)' : ($rsLabel === 'Cancelled' ? 'var(--stop-soft)' : 'var(--wait-soft)');
@@ -692,19 +694,19 @@ include 'header.php';
                     </table>
                 </div>
 
-                <?php if ($totalBookingPages > 1): ?>
+                <?php if ($totalBookingPages > 1) : ?>
                     <div style="padding:24px; border-top:1px solid var(--line); display:flex; justify-content:space-between; align-items:center;">
-                        <?php if ($bookingPage > 1): ?>
+                        <?php if ($bookingPage > 1) : ?>
                             <a href="<?php echo h(bookingListUrl($bookingListState, ['page' => $bookingPage - 1])); ?>" class="dc-btn-secondary" style="background:var(--surface); text-decoration:none;">Previous</a>
-                        <?php else: ?>
+                        <?php else : ?>
                             <div style="width:100px;"></div>
                         <?php endif; ?>
 
                         <span style="font-size:14px; font-weight:600; color:var(--ink-2);">Page <?php echo h($bookingPage); ?> of <?php echo h($totalBookingPages); ?></span>
 
-                        <?php if ($bookingPage < $totalBookingPages): ?>
+                        <?php if ($bookingPage < $totalBookingPages) : ?>
                             <a href="<?php echo h(bookingListUrl($bookingListState, ['page' => $bookingPage + 1])); ?>" class="dc-btn-secondary" style="background:var(--surface); text-decoration:none;">Next</a>
-                        <?php else: ?>
+                        <?php else : ?>
                             <div style="width:100px;"></div>
                         <?php endif; ?>
                     </div>

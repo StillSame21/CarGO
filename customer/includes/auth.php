@@ -1,5 +1,6 @@
 <?php
 
+// this file only declares requireCustomerLogin().
 require_once __DIR__ . '/../../includes/security.php';
 require_once __DIR__ . '/../../db_connect.php';
 

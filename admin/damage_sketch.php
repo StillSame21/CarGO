@@ -16,7 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     blockDemoWrite('damage_sketch.php');
     $car_id = filter_input(INPUT_POST, 'car_id', FILTER_VALIDATE_INT);
     $description = trim($_POST['description'] ?? '');
-    
+
     if ($car_id && $description) {
         $stmt = $conn->prepare("INSERT INTO damage_reports (car_id, description) VALUES (?, ?)");
         $stmt->bind_param("is", $car_id, $description);
@@ -51,10 +51,10 @@ include 'header.php';
         </div>
     </header>
 
-    <?php if ($message): ?>
+    <?php if ($message) : ?>
         <p class="message success" style="color: var(--go); background: var(--go-soft); padding: 12px; border-radius: 8px; font-weight: 600; margin-bottom:24px;"><?= htmlspecialchars($message) ?></p>
     <?php endif; ?>
-    <?php if ($error): ?>
+    <?php if ($error) : ?>
         <p class="message error" style="color: var(--stop); background: var(--stop-soft); padding: 12px; border-radius: 8px; font-weight: 600; margin-bottom:24px;"><?= htmlspecialchars($error) ?></p>
     <?php endif; ?>
 
@@ -69,7 +69,7 @@ include 'header.php';
                 <label for="car_id" style="display:block; margin-bottom:8px; font-size:13px; font-weight:600; color:var(--ink);">Select Car</label>
                 <select name="car_id" id="car_id" required class="dc-input" style="width:100%;">
                     <option value="">-- Select a Car --</option>
-                    <?php foreach ($cars as $car): ?>
+                    <?php foreach ($cars as $car) : ?>
                         <option value="<?= $car['id'] ?>"><?= htmlspecialchars($car['brand'] . ' ' . $car['model'] . ' (' . $car['plate_number'] . ')') ?></option>
                     <?php endforeach; ?>
                 </select>

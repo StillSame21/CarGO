@@ -78,7 +78,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <h2>Welcome back</h2>
             <p>Login to continue to your dashboard.</p>
 
-            <?php if ($error !== ''): ?>
+            <?php if ($error !== '') : ?>
                 <div class="message error"><?php echo htmlspecialchars($error, ENT_QUOTES, 'UTF-8'); ?></div>
             <?php endif; ?>
 

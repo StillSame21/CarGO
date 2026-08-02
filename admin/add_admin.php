@@ -477,11 +477,11 @@ $panelOpen = $panelMode !== '';
         </a>
     </header>
 
-    <?php if ($error !== ''): ?>
+    <?php if ($error !== '') : ?>
         <p class="message error" style="color: var(--stop); background: var(--stop-soft); padding: 12px; border-radius: 8px; font-weight: 600; margin-bottom:24px;"><?php echo h($error); ?></p>
     <?php endif; ?>
 
-    <?php if ($success !== ''): ?>
+    <?php if ($success !== '') : ?>
         <p class="message success" style="color: var(--go); background: var(--go-soft); padding: 12px; border-radius: 8px; font-weight: 600; margin-bottom:24px;"><?php echo h($success); ?></p>
     <?php endif; ?>
 
@@ -517,14 +517,14 @@ $panelOpen = $panelMode !== '';
             ]); ?>
         </div>
 
-        <?php if (count($admins) === 0): ?>
+        <?php if (count($admins) === 0) : ?>
             <div class="adm-empty">
                 <p class="dc-p" style="margin-bottom:4px; font-weight:650; color:var(--ink);">No admin accounts match these filters.</p>
                 <p class="dc-p" style="font-size:14px;">
                     <a class="adm-link" href="add_admin.php">Clear the filters</a> to see every account.
                 </p>
             </div>
-        <?php else: ?>
+        <?php else : ?>
             <div class="adm-tbl-scroll">
                 <table class="adm-tbl">
                     <thead>
@@ -537,17 +537,19 @@ $panelOpen = $panelMode !== '';
                         </tr>
                     </thead>
                     <tbody>
-                        <?php foreach ($admins as $admin): ?>
+                        <?php foreach ($admins as $admin) : ?>
                             <?php $isSelf = (int) $admin['id'] === $currentAdminId; ?>
                             <tr>
                                 <td class="adm-id">#<?php echo h($admin['id']); ?></td>
                                 <td>
                                     <strong style="display:block; color:var(--ink);">
                                         <?php echo h($admin['name']); ?>
-                                        <?php if ($isSelf): ?><span class="adm-you">You</span><?php endif; ?>
+                                        <?php if ($isSelf) :
+                                            ?><span class="adm-you">You</span><?php
+                                        endif; ?>
                                     </strong>
                                     <div class="adm-muted" style="font-size:12.5px;"><?php echo h($admin['email']); ?></div>
-                                    <?php if ($admin['phone']): ?>
+                                    <?php if ($admin['phone']) : ?>
                                         <div class="adm-muted" style="font-size:12.5px; margin-top:2px;">&#128222; <?php echo h($admin['phone']); ?></div>
                                     <?php endif; ?>
                                 </td>
@@ -562,7 +564,7 @@ $panelOpen = $panelMode !== '';
                                         <a class="adm-action" href="<?php echo h(adminPageUrl($listState, ['edit' => $admin['id'], 'reset' => null, 'add' => null])); ?>">Edit</a>
                                         <a class="adm-action" href="<?php echo h(adminPageUrl($listState, ['reset' => $admin['id'], 'edit' => null, 'add' => null])); ?>">Reset</a>
 
-                                        <?php if ($admin['status'] === 'active'): ?>
+                                        <?php if ($admin['status'] === 'active') : ?>
                                             <form method="post" action="<?php echo h(adminPageUrl($listState)); ?>" onsubmit="return confirm('Block this admin account?');" style="display:inline;">
                                                 <?php echo csrfInput(); ?>
                                                 <input type="hidden" name="action" value="set_status">
@@ -570,7 +572,7 @@ $panelOpen = $panelMode !== '';
                                                 <input type="hidden" name="target_status" value="blocked">
                                                 <button type="submit" class="adm-action is-danger"<?php echo $isSelf ? ' disabled title="You cannot block your own account."' : ''; ?>>Block</button>
                                             </form>
-                                        <?php else: ?>
+                                        <?php else : ?>
                                             <form method="post" action="<?php echo h(adminPageUrl($listState)); ?>" style="display:inline;">
                                                 <?php echo csrfInput(); ?>
                                                 <input type="hidden" name="action" value="set_status">
@@ -587,17 +589,17 @@ $panelOpen = $panelMode !== '';
                 </table>
             </div>
 
-            <?php if ($totalPages > 1): ?>
+            <?php if ($totalPages > 1) : ?>
                 <div class="adm-pager">
-                    <?php if ($page > 1): ?>
+                    <?php if ($page > 1) : ?>
                         <a href="<?php echo h(adminPageUrl($listState, ['page' => $page - 1])); ?>" class="dc-btn-secondary" style="background:var(--surface); text-decoration:none;">Previous</a>
-                    <?php else: ?>
+                    <?php else : ?>
                         <span></span>
                     <?php endif; ?>
                     <span style="font-size:14px; font-weight:600; color:var(--ink-2);">Page <?php echo h($page); ?> of <?php echo h($totalPages); ?></span>
-                    <?php if ($page < $totalPages): ?>
+                    <?php if ($page < $totalPages) : ?>
                         <a href="<?php echo h(adminPageUrl($listState, ['page' => $page + 1])); ?>" class="dc-btn-secondary" style="background:var(--surface); text-decoration:none;">Next</a>
-                    <?php else: ?>
+                    <?php else : ?>
                         <span></span>
                     <?php endif; ?>
                 </div>
@@ -622,7 +624,7 @@ $panelOpen = $panelMode !== '';
             </header>
 
             <div class="adm-panel-body">
-            <?php if ($editAdmin): ?>
+            <?php if ($editAdmin) : ?>
                 <p class="dc-p" style="margin-bottom:20px; font-size:14px;">Update account details without changing the password.</p>
                 <form method="post" action="<?php echo h(adminPageUrl($listState, ['edit' => $editAdmin['id']])); ?>">
                     <?php echo csrfInput(); ?>
@@ -645,7 +647,7 @@ $panelOpen = $panelMode !== '';
                         <label class="adm-field">
                             <span class="adm-field-label">Role</span>
                             <select name="role" required class="dc-input" style="width:100%;">
-                                <?php foreach ($roles as $role): ?>
+                                <?php foreach ($roles as $role) : ?>
                                     <option value="<?php echo h($role); ?>"<?php echo selectedIf($editAdmin['role'], $role); ?>><?php echo h(adminRoleLabel($role)); ?></option>
                                 <?php endforeach; ?>
                             </select>
@@ -653,7 +655,7 @@ $panelOpen = $panelMode !== '';
                         <label class="adm-field">
                             <span class="adm-field-label">Status</span>
                             <select name="status" required class="dc-input" style="width:100%;">
-                                <?php foreach ($statuses as $status): ?>
+                                <?php foreach ($statuses as $status) : ?>
                                     <option value="<?php echo h($status); ?>"<?php echo selectedIf($editAdmin['status'], $status); ?>><?php echo h(ucfirst($status)); ?></option>
                                 <?php endforeach; ?>
                             </select>
@@ -665,7 +667,7 @@ $panelOpen = $panelMode !== '';
                         <a class="adm-panel-cancel" href="<?php echo h(adminPageUrl($listState)); ?>">Cancel</a>
                     </div>
                 </form>
-            <?php elseif ($resetAdmin): ?>
+            <?php elseif ($resetAdmin) : ?>
                 <h2 class="dc-h2" style="font-size:20px; margin-bottom:8px;">Reset Password</h2>
                 <p class="dc-p" style="margin-bottom:24px; font-size:14px;">Set a new password for <?php echo h($resetAdmin['name']); ?>.</p>
                 <form method="post" action="add_admin.php?reset=<?php echo h($resetAdmin['id']); ?>">
@@ -689,7 +691,7 @@ $panelOpen = $panelMode !== '';
                         <a class="adm-panel-cancel" href="<?php echo h(adminPageUrl($listState)); ?>">Cancel</a>
                     </div>
                 </form>
-            <?php else: ?>
+            <?php else : ?>
                 <h2 class="dc-h2" style="font-size:20px; margin-bottom:8px;">Create Admin</h2>
                 <p class="dc-p" style="margin-bottom:24px; font-size:14px;">Create access for another CarGO admin.</p>
                 <form method="post" action="add_admin.php">
@@ -712,7 +714,7 @@ $panelOpen = $panelMode !== '';
                         <label class="adm-field">
                             <span class="adm-field-label">Role</span>
                             <select name="role" required class="dc-input" style="width:100%;">
-                                <?php foreach ($roles as $role): ?>
+                                <?php foreach ($roles as $role) : ?>
                                     <option value="<?php echo h($role); ?>"<?php echo selectedIf($createRole, $role); ?>><?php echo h(adminRoleLabel($role)); ?></option>
                                 <?php endforeach; ?>
                             </select>
@@ -720,7 +722,7 @@ $panelOpen = $panelMode !== '';
                         <label class="adm-field">
                             <span class="adm-field-label">Status</span>
                             <select name="status" required class="dc-input" style="width:100%;">
-                                <?php foreach ($statuses as $status): ?>
+                                <?php foreach ($statuses as $status) : ?>
                                     <option value="<?php echo h($status); ?>"<?php echo selectedIf($createStatus, $status); ?>><?php echo h(ucfirst($status)); ?></option>
                                 <?php endforeach; ?>
                             </select>

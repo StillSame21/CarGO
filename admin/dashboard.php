@@ -450,7 +450,7 @@ include 'header.php';
             <div class="ov-stamp"><?php echo h(strtoupper(date('D d M Y · H:i'))); ?></div>
         </header>
 
-        <?php if ($error !== ''): ?>
+        <?php if ($error !== '') : ?>
             <p class="message error" style="color: var(--stop); background: var(--stop-soft); padding: 12px 16px; border-radius: 8px; font-weight: 600;"><?php echo h($error); ?></p>
         <?php endif; ?>
 
@@ -458,9 +458,9 @@ include 'header.php';
         <section>
             <div class="ov-section-head">
                 <h2>Needs you now</h2>
-                <?php if ($totalActionable > 0): ?>
+                <?php if ($totalActionable > 0) : ?>
                     <span class="ov-stamp"><?php echo h($totalActionable); ?> open</span>
-                <?php else: ?>
+                <?php else : ?>
                     <span class="ov-stamp">All clear</span>
                 <?php endif; ?>
             </div>
@@ -502,16 +502,16 @@ include 'header.php';
 
                 <div class="ov-money-row">
                     <span class="ov-money">RM <?php echo h(number_format($revenueSeries['current'], 2)); ?></span>
-                    <?php if ($revenueDelta === null): ?>
+                    <?php if ($revenueDelta === null) : ?>
                         <span class="ov-delta is-flat">No prior period</span>
-                    <?php elseif ($revenueDelta >= 0): ?>
+                    <?php elseif ($revenueDelta >= 0) : ?>
                         <span class="ov-delta">▲ <?php echo h(number_format($revenueDelta, 1)); ?>% vs prior 14d</span>
-                    <?php else: ?>
+                    <?php else : ?>
                         <span class="ov-delta is-down">▼ <?php echo h(number_format(abs($revenueDelta), 1)); ?>% vs prior 14d</span>
                     <?php endif; ?>
                 </div>
 
-                <?php if ($sparkPoints !== ''): ?>
+                <?php if ($sparkPoints !== '') : ?>
                     <svg class="ov-spark" viewBox="0 0 320 56" preserveAspectRatio="none" role="img"
                          aria-label="Daily revenue collected over the last 14 days.">
                         <line x1="0" y1="18" x2="320" y2="18" stroke="var(--line)" stroke-width="1"></line>
@@ -555,8 +555,8 @@ include 'header.php';
             ];
             ?>
             <div class="ov-fleet-bar">
-                <?php foreach ($fleetSegments as $segment): ?>
-                    <?php if ($segment['count'] > 0): ?>
+                <?php foreach ($fleetSegments as $segment) : ?>
+                    <?php if ($segment['count'] > 0) : ?>
                         <div class="ov-fleet-seg" style="flex: <?php echo h($segment['count']); ?>; background: <?php echo $segment['color']; ?>;">
                             <?php echo h($segment['count'] . ' ' . $segment['label']); ?>
                         </div>
@@ -582,9 +582,9 @@ include 'header.php';
                 <h2>Latest bookings</h2>
                 <a class="ov-link" href="bookings.php">View all →</a>
             </div>
-            <?php if (count($recentBookings) === 0): ?>
+            <?php if (count($recentBookings) === 0) : ?>
                 <p class="ov-empty">No bookings found.</p>
-            <?php else: ?>
+            <?php else : ?>
                 <div class="ov-tbl-scroll">
                     <table class="ov-tbl">
                         <thead>
@@ -598,7 +598,7 @@ include 'header.php';
                             </tr>
                         </thead>
                         <tbody>
-                            <?php foreach ($recentBookings as $booking): ?>
+                            <?php foreach ($recentBookings as $booking) : ?>
                                 <?php
                                 $status = (string) $booking['booking_status'];
                                 $label = $status === 'approved' ? 'Awaiting pickup' : ucfirst($status);
@@ -614,7 +614,7 @@ include 'header.php';
                                     </td>
                                     <td>
                                         <?php echo h(formatDashboardDate($booking['pickup_date']) . ' – ' . formatDashboardDate($booking['return_date'])); ?>
-                                        <?php if ($datesReversed): ?>
+                                        <?php if ($datesReversed) : ?>
                                             <div class="ov-flag">▲ Return before pickup</div>
                                         <?php endif; ?>
                                     </td>
@@ -635,10 +635,10 @@ include 'header.php';
                     <a class="ov-link" href="customers.php">View all →</a>
                 </div>
                 <div class="dc-list-container">
-                    <?php if (count($recentCustomers) === 0): ?>
+                    <?php if (count($recentCustomers) === 0) : ?>
                         <p class="ov-empty">No customers found.</p>
-                    <?php else: ?>
-                        <?php foreach ($recentCustomers as $customer): ?>
+                    <?php else : ?>
+                        <?php foreach ($recentCustomers as $customer) : ?>
                             <div class="dc-list-item">
                                 <div style="display:flex; flex-direction:column; gap:5px; min-width:0;">
                                     <span style="font-size:14.5px; font-weight:700;"><?php echo h($customer['name']); ?></span>
@@ -656,9 +656,9 @@ include 'header.php';
                     <h2>Recent cars</h2>
                     <a class="ov-link" href="manage_cars.php">View all →</a>
                 </div>
-                <?php if (count($recentCars) === 0): ?>
+                <?php if (count($recentCars) === 0) : ?>
                     <p class="ov-empty">No cars found.</p>
-                <?php else: ?>
+                <?php else : ?>
                     <div class="ov-tbl-scroll">
                         <table class="ov-tbl" style="min-width:0;">
                             <thead>
@@ -670,7 +670,7 @@ include 'header.php';
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php foreach ($recentCars as $car): ?>
+                                <?php foreach ($recentCars as $car) : ?>
                                     <tr>
                                         <td>
                                             <div style="font-weight:600;"><?php echo h($car['brand'] . ' ' . $car['model']); ?></div>

@@ -25,16 +25,16 @@ if (count($ids) < 2) {
         // Same availability rule as browse_cars.php, so a car can never be
         // comparable but unlistable.
         $stmt = $conn->prepare("SELECT * FROM cars WHERE id IN ($placeholders) AND status = 'available' AND archived_at IS NULL");
-        
+
         $types = str_repeat('i', count($ids));
         $stmt->bind_param($types, ...$ids);
         $stmt->execute();
         $result = $stmt->get_result();
-        
+
         while ($row = $result->fetch_assoc()) {
             $cars[] = $row;
         }
-        
+
         if (count($cars) < 2) {
             $error = 'Could not find enough available cars to compare. They might be unavailable.';
         }
@@ -63,15 +63,15 @@ include 'header.php';
         </div>
     </header>
 
-    <?php if ($error !== ''): ?>
+    <?php if ($error !== '') : ?>
         <p class="message error" style="color: #c23a52; background: #fbeaed; padding: 12px; border-radius: 8px; font-weight: 600; margin-bottom:24px;"><?php echo htmlspecialchars($error); ?></p>
-    <?php else: ?>
+    <?php else : ?>
         <div style="overflow-x: auto; padding-bottom: 24px;">
             <table class="compare-table">
                 <thead>
                     <tr>
                         <th style="background: #f1f3f9; border-right: 1px solid #e4e8f1;">Feature</th>
-                        <?php foreach ($cars as $car): ?>
+                        <?php foreach ($cars as $car) : ?>
                             <th style="background: #fff; vertical-align: top;">
                                 <div class="compare-car-media">
                                     <?php echo carImageTag(
@@ -90,31 +90,31 @@ include 'header.php';
                 <tbody>
                     <tr>
                         <td class="feature-col">Daily Rate</td>
-                        <?php foreach ($cars as $car): ?>
+                        <?php foreach ($cars as $car) : ?>
                             <td><strong style="font-size: 18px;">RM <?php echo number_format((float) $car['daily_rate'], 2); ?></strong></td>
                         <?php endforeach; ?>
                     </tr>
                     <tr>
                         <td class="feature-col">Car Type</td>
-                        <?php foreach ($cars as $car): ?>
+                        <?php foreach ($cars as $car) : ?>
                             <td><?php echo htmlspecialchars($car['car_type']); ?></td>
                         <?php endforeach; ?>
                     </tr>
                     <tr>
                         <td class="feature-col">Transmission</td>
-                        <?php foreach ($cars as $car): ?>
+                        <?php foreach ($cars as $car) : ?>
                             <td><?php echo htmlspecialchars($car['transmission']); ?></td>
                         <?php endforeach; ?>
                     </tr>
                     <tr>
                         <td class="feature-col">Fuel Type</td>
-                        <?php foreach ($cars as $car): ?>
+                        <?php foreach ($cars as $car) : ?>
                             <td><?php echo htmlspecialchars($car['fuel_type']); ?></td>
                         <?php endforeach; ?>
                     </tr>
                     <tr>
                         <td class="feature-col">Seats</td>
-                        <?php foreach ($cars as $car): ?>
+                        <?php foreach ($cars as $car) : ?>
                             <td><?php echo htmlspecialchars($car['seats']); ?></td>
                         <?php endforeach; ?>
                     </tr>

@@ -18,7 +18,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
             <a href="manage_cars.php" class="<?php echo $currentPage === 'manage_cars.php' ? 'active' : ''; ?>">Cars</a>
             <a href="bookings.php" class="<?php echo $currentPage === 'bookings.php' ? 'active' : ''; ?>">Bookings</a>
             <a href="customers.php" class="<?php echo $currentPage === 'customers.php' ? 'active' : ''; ?>">Customers</a>
-            <?php if (isSuperAdmin()): ?>
+            <?php if (isSuperAdmin()) : ?>
                 <a href="add_admin.php" class="<?php echo $currentPage === 'add_admin.php' ? 'active' : ''; ?>">Admin Management</a>
             <?php endif; ?>
         </nav>
