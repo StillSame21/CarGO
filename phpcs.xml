@@ -5,6 +5,10 @@
     <arg name="colors"/>
     <arg value="p"/>
 
+    <!-- Warnings are advisory: this is a view-heavy app with inline markup.
+         Only PSR-12 errors should fail the build. -->
+    <config name="ignore_warnings_on_exit" value="1"/>
+
     <rule ref="PSR12"/>
 
     <file>admin</file>

@@ -12,12 +12,9 @@ unset($_SESSION['demo_notice']);
 <div class="demo-banner">
     <div class="demo-banner-inner">
         <span class="demo-banner-text">
-            <strong>Demo mode.</strong> You're exploring a shared demo account &mdash; changes to cars, customers,
-            and admin settings are disabled.
+            <strong>Demo mode.</strong> You're exploring a shared demo account &mdash; changes to cars, customers, and admin settings are disabled.
             <?php if ($demoNotice !== '') : ?>
-                <span class="demo-banner-notice">
-                    <?php echo htmlspecialchars($demoNotice, ENT_QUOTES, 'UTF-8'); ?>
-                </span>
+                <span class="demo-banner-notice"><?php echo htmlspecialchars($demoNotice, ENT_QUOTES, 'UTF-8'); ?></span>
             <?php endif; ?>
         </span>
         <form method="post" action="../logout.php" class="demo-banner-leave">
