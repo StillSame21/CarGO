@@ -4,6 +4,7 @@ $customerDisplayName = $_SESSION['customer_name'] ?? $_SESSION['user_email'] ?? 
 $avatarLetters = strtoupper(substr(preg_replace('/[^a-zA-Z]/', '', $customerDisplayName) . 'AA', 0, 2));
 $currentPage = basename($_SERVER['PHP_SELF']);
 ?>
+<?php include __DIR__ . '/../includes/demo_banner.php'; ?>
 <header class="dc-header">
     <div class="dc-header-inner">
         <a href="dashboard.php" class="dc-logo">

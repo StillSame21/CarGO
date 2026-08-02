@@ -654,3 +654,62 @@ a {
         grid-template-columns: 1fr;
     }
 }
+
+/* Demo mode banner (includes/demo_banner.php) */
+.demo-banner {
+    position: sticky;
+    top: 0;
+    z-index: 31;
+    background: var(--wait-soft, #fbeed6);
+    border-bottom: 1px solid var(--wait, #9a6410);
+}
+
+.demo-banner-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 10px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    text-align: center;
+}
+
+.demo-banner-text {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--wait, #9a6410);
+}
+
+.demo-banner-text strong {
+    font-weight: 700;
+}
+
+.demo-banner-notice {
+    display: block;
+    margin-top: 2px;
+    font-weight: 600;
+}
+
+.demo-banner-leave {
+    margin: 0;
+    flex-shrink: 0;
+}
+
+.demo-banner-leave button {
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--wait, #9a6410);
+    background: #fff;
+    border: 1px solid var(--wait, #9a6410);
+    border-radius: 999px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.demo-banner-leave button:hover {
+    background: var(--wait, #9a6410);
+    color: #fff;
+}

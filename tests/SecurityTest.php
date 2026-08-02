@@ -29,4 +29,29 @@ class SecurityTest extends TestCase
         $this->assertFalse(isValidCsrfToken('invalid-token-string'));
         $this->assertFalse(isValidCsrfToken(null));
     }
+
+    public function testIsDemoSessionFalseWhenUnset(): void
+    {
+        unset($_SESSION['is_demo']);
+        $this->assertFalse(isDemoSession());
+    }
+
+    public function testIsDemoSessionFalseWhenNotStrictlyTrue(): void
+    {
+        // Only a strict `true` marks a demo session -- a truthy-but-wrong
+        // type (e.g. a stray string) must not grant demo status.
+        $_SESSION['is_demo'] = 'true';
+        $this->assertFalse(isDemoSession());
+        unset($_SESSION['is_demo']);
+    }
+
+    public function testIsDemoSessionTrueWhenSet(): void
+    {
+        $_SESSION['is_demo'] = true;
+        $this->assertTrue(isDemoSession());
+        unset($_SESSION['is_demo']);
+    }
+
+    // blockDemoWrite()'s header()+exit redirect isn't observable from plain CLI
+    // PHPUnit; its check (isDemoSession()) is covered above instead.
 }

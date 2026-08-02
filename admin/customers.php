@@ -6,11 +6,13 @@ require_once __DIR__ . '/includes/auth.php';
 
 startSecureSession();
 
+// HTML-escapes a value for safe output.
 function h($value): string
 {
     return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
 }
 
+// Human-readable date+time, or "Not set" when empty.
 function formatCustomerDate(?string $date): string
 {
     if ($date === null || $date === '') {
@@ -20,16 +22,19 @@ function formatCustomerDate(?string $date): string
     return date('d M Y, h:i A', strtotime($date));
 }
 
+// ' selected' attribute string when the two values match, else ''.
 function selectedIf($currentValue, $optionValue): string
 {
     return $currentValue === $optionValue ? ' selected' : '';
 }
 
+// CSS status-pill class for a customer status. Currently unused - see dead code report.
 function customerStatusClass(string $status): string
 {
     return 'status-' . preg_replace('/[^a-z0-9-]/', '-', strtolower($status));
 }
 
+// bind_param() takes args by reference, so build a by-reference array before splatting it.
 function bindStatementParams(mysqli_stmt $stmt, string $types, array $params): void
 {
     if ($types === '') {
@@ -49,6 +54,7 @@ function bindStatementParams(mysqli_stmt $stmt, string $types, array $params): v
     call_user_func_array([$stmt, 'bind_param'], $bindValues);
 }
 
+// Rebuild the list URL keeping search, filters and page intact.
 function customerPageUrl(array $state, array $overrides = []): string
 {
     $params = array_merge($state, $overrides);
@@ -64,6 +70,7 @@ function customerPageUrl(array $state, array $overrides = []): string
     return 'customers.php' . ($query !== '' ? '?' . $query : '');
 }
 
+// Customer row for the edit form, or null when the id doesn't resolve.
 function loadCustomer(mysqli $conn, int $customerId): ?array
 {
     $stmt = $conn->prepare(
@@ -80,6 +87,7 @@ function loadCustomer(mysqli $conn, int $customerId): ?array
     return $customer ?: null;
 }
 
+// True if another customer already uses this email.
 function customerEmailExists(mysqli $conn, string $email, int $customerId): bool
 {
     $stmt = $conn->prepare('SELECT id FROM customers WHERE email = ? AND id <> ? LIMIT 1');
@@ -89,6 +97,7 @@ function customerEmailExists(mysqli $conn, string $email, int $customerId): bool
     return (bool) $stmt->get_result()->fetch_assoc();
 }
 
+// Booking count, latest booking date, and the 5 most recent bookings for this customer.
 function loadCustomerBookingSummary(mysqli $conn, int $customerId): array
 {
     $summary = [
@@ -174,6 +183,7 @@ try {
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         requireValidCsrfToken();
+        blockDemoWrite('customers.php');
 
         $action = trim($_POST['action'] ?? '');
         $postedCustomerId = filter_input(INPUT_POST, 'customer_id', FILTER_VALIDATE_INT) ?: 0;

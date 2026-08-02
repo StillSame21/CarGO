@@ -1,5 +1,6 @@
 <?php
 
+// Starts a session with strict, cookie-only, HttpOnly/SameSite=Lax settings. No-op if already started.
 function startSecureSession(): void
 {
     if (session_status() === PHP_SESSION_ACTIVE) {
@@ -22,6 +23,7 @@ function startSecureSession(): void
     session_start();
 }
 
+// This session's CSRF token, generating one on first use.
 function csrfToken(): string
 {
     if (empty($_SESSION['csrf_token'])) {
@@ -31,6 +33,7 @@ function csrfToken(): string
     return (string) $_SESSION['csrf_token'];
 }
 
+// Issues a fresh CSRF token for this session, invalidating the old one.
 function regenerateCsrfToken(): string
 {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
@@ -38,6 +41,7 @@ function regenerateCsrfToken(): string
     return (string) $_SESSION['csrf_token'];
 }
 
+// Hidden CSRF token field, ready to drop into any state-changing <form>.
 function csrfInput(): string
 {
     $token = htmlspecialchars(csrfToken(), ENT_QUOTES, 'UTF-8');
@@ -45,6 +49,7 @@ function csrfInput(): string
     return '<input type="hidden" name="csrf_token" value="' . $token . '">';
 }
 
+// True if $token matches this session's CSRF token via a timing-safe comparison.
 function isValidCsrfToken(?string $token): bool
 {
     return is_string($token)
@@ -60,6 +65,25 @@ function requireValidCsrfToken(): void
     }
 }
 
+// True if the current session is a demo login (customer or admin).
+function isDemoSession(): bool
+{
+    return isset($_SESSION['is_demo']) && $_SESSION['is_demo'] === true;
+}
+
+// Rejects a demo session's write with a flash notice, since demo accounts are shared and public.
+function blockDemoWrite(string $redirect): void
+{
+    if (!isDemoSession()) {
+        return;
+    }
+
+    $_SESSION['demo_notice'] = 'Demo mode: this action is disabled.';
+    header('Location: ' . $redirect);
+    exit;
+}
+
+// Clears session data, expires the session cookie, and destroys the session.
 function destroySecureSession(): void
 {
     $_SESSION = [];

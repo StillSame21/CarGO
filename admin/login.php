@@ -9,7 +9,8 @@ if (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true
     exit;
 }
 
-$error = '';
+$error = (string) ($_SESSION['demo_error'] ?? '');
+unset($_SESSION['demo_error']);
 $email = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -98,6 +99,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 <button type="submit" class="dc-btn-primary">Login</button>
             </form>
+
+            <div class="auth-divider">or</div>
+
+            <form method="post" action="../demo_login.php" class="demo-launch">
+                <?php echo csrfInput(); ?>
+                <input type="hidden" name="type" value="admin">
+                <button type="submit" class="dc-btn-secondary">Try Admin Demo</button>
+            </form>
+            <p class="demo-launch-copy">Explore the admin dashboard on a shared demo account &mdash; car, customer, and admin edits are disabled.</p>
 
             <div class="auth-links">
                 <p>Customer login? <a href="../customer/login.php">Go to customer login</a></p>

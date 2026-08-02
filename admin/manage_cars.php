@@ -9,11 +9,13 @@ require_once __DIR__ . '/includes/filter_bar.php';
 
 startSecureSession();
 
+// HTML-escapes a value for safe output.
 function h($value): string
 {
     return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
 }
 
+// ' selected' attribute string when the two values match, else ''.
 function selectedIf($currentValue, $optionValue): string
 {
     return $currentValue === $optionValue ? ' selected' : '';
@@ -98,6 +100,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $error === '') {
+    blockDemoWrite('manage_cars.php');
+
     $formAction = trim($_POST['form_action'] ?? 'save_car');
     $postedCarId = filter_input(INPUT_POST, 'car_id', FILTER_VALIDATE_INT) ?: 0;
 

@@ -21,6 +21,7 @@ $error = "";
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     requireValidCsrfToken();
+    blockDemoWrite('damage_sketch.php');
     $car_id = filter_input(INPUT_POST, 'car_id', FILTER_VALIDATE_INT);
     $description = trim($_POST['description'] ?? '');
     

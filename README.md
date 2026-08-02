@@ -96,6 +96,23 @@ The live site runs on [InfinityFree](https://infinityfree.net) shared hosting.
    `util/car_image.php` is tuned for that; only raise it via `CARGO_DECODE_CEILING_MB` on
    hosts you know can handle it.
 
+## Demo Accounts
+
+Both login pages (`customer/login.php`, `admin/login.php`) offer a "Try Demo" button that
+signs into a dedicated, public demo account via `demo_login.php` — no real customer or admin
+credentials are ever used or exposed:
+
+- **Demo customer** (`demo.customer@cargo.demo`): can browse cars and run the booking flow
+  (create, pay, cancel) end to end; profile edits are blocked.
+- **Demo admin** (`demo.admin@cargo.demo`): has the `manager` role, not `super_admin`, so
+  Admin Management is hidden and out of reach; car, customer, and booking writes are blocked.
+
+Both accounts are seeded by `database/ensure_demo_accounts.sql` (run automatically by
+`database/migrate.php`) and have no password anyone can log in with directly — the demo
+buttons are the only way in. A demo session is marked with `$_SESSION['is_demo']`; write
+attempts are rejected by `blockDemoWrite()` in `includes/security.php`, and a persistent
+banner (`includes/demo_banner.php`) makes the demo state visible with a "Leave demo" link.
+
 ## Security Notes
 
 - All SQL uses prepared statements (`mysqli` bound params); see `util/` and `admin/`/`customer/` pages.

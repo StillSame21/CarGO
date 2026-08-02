@@ -9,7 +9,8 @@ if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true) {
     exit;
 }
 
-$error = '';
+$error = (string) ($_SESSION['demo_error'] ?? '');
+unset($_SESSION['demo_error']);
 $email = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -97,18 +98,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <button type="submit" class="dc-btn-primary">Login</button>
             </form>
 
-            <div class="dc-btn-group" style="margin-top:16px; flex-wrap:nowrap;">
-                <form method="post" action="../demo_login.php" style="flex:1 1 0; min-width:0;">
-                    <?php echo csrfInput(); ?>
-                    <input type="hidden" name="type" value="customer">
-                    <button type="submit" class="dc-btn-primary" style="width:100%; border-radius:8px; font-size:13px; font-weight:600; margin-top:0; white-space:nowrap;">Try Customer Demo</button>
-                </form>
-                <form method="post" action="../demo_login.php" style="flex:1 1 0; min-width:0;">
-                    <?php echo csrfInput(); ?>
-                    <input type="hidden" name="type" value="admin">
-                    <button type="submit" class="dc-btn-primary" style="width:100%; border-radius:8px; font-size:13px; font-weight:600; margin-top:0; white-space:nowrap;">Try Admin Demo</button>
-                </form>
-            </div>
+            <div class="auth-divider">or</div>
+
+            <form method="post" action="../demo_login.php" class="demo-launch">
+                <?php echo csrfInput(); ?>
+                <input type="hidden" name="type" value="customer">
+                <button type="submit" class="dc-btn-secondary">Try Customer Demo</button>
+            </form>
+            <p class="demo-launch-copy">Browse cars and make a sandbox booking on a shared demo account &mdash; no signup needed.</p>
 
             <div class="auth-links">
                 <p>New customer? <a href="register.php">Create an account</a></p>
